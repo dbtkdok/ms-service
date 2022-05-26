@@ -1,0 +1,1853 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sci4s.msa.mapper.BorgMapper">
+	<!-- =================================
+	       COM0000 query test 페이지 실행 start
+	     ================================= 
+	-->
+	<select id="getQuery4Test" parameterType="hashmap" resultType="hashmap">
+		${queryText}
+	</select>
+	
+	<insert id="insQuery4Test" parameterType="hashmap">
+		${queryText}
+	</insert>
+	
+	<update id="updQuery4Test" parameterType="hashmap">
+		${queryText}
+	</update>
+	
+	<delete id="delQuery4Test" parameterType="hashmap">
+		${queryText}
+    </delete>
+    <!-- =================================
+	     COM0000   query test 페이지 실행 end
+	     ================================= 
+	-->
+
+
+
+	<!-- 고객사별 사용자 정보 THR0081-->
+	<select id="getCustUserAll4Combo" parameterType="hashmap" resultType="hashmap">
+		SELECT userUID, userNM
+		  FROM tbl_userinfo
+		 WHERE agentID = #{agentID}
+		   AND custID = #{custID}
+		   AND dbSTS   = 'Y'
+		 ORDER BY userNM ASC
+	</select>
+
+	<!-- 운영 담당자별 고객사 정보 THR0100-->
+	<select id="getUserCustAll4Combo" parameterType="hashmap" resultType="hashmap">
+		SELECT custID, custNM
+		  FROM tbl_userCust
+		 WHERE agentID = #{agentID}
+		   AND userUID = #{userUID}
+		   AND dbSTS   = 'Y'
+		 ORDER BY custNM ASC
+	</select>
+
+	<!-- 고객사 정보 THR0101 -->
+	<select id="getCustInfoAll4Combo" parameterType="hashmap" resultType="hashmap">
+		SELECT custID, custNM
+		  FROM tbl_custInfo
+		 WHERE agentID = #{agentID}
+		   AND dbSTS   = 'Y'
+		 ORDER BY custNM ASC
+	</select>
+	
+	<!-- 고객사 정보 THR0400 -->
+	<select id="getCustInfo4Auto" parameterType="hashmap" resultType="hashmap">
+		SELECT custID, custNM
+		  FROM tbl_custInfo
+		 WHERE agentID = #{agentID}
+		 <if test='srchText != null and srchText != ""'>
+			<choose>
+			    <when test='SQLMODE == "mariadb"'>
+			AND CONCAT(custID, IFNULL(custNM,'')) REGEXP #{srchText}
+			    </when>
+			    <otherwise>
+			AND (custID || NVL(custNM,'')) LIKE '%'|| #{srchText} ||'%'; 
+			    </otherwise>
+			</choose>
+		</if>
+		   AND dbSTS   = 'Y'
+		 ORDER BY custNM ASC
+	</select>
+	
+	<!-- 협력사 거래고객사 정보 THR0102 -->
+	<select id="getVdPartners4Combo" parameterType="hashmap" resultType="hashmap">
+		SELECT custID, custNM
+		  FROM tbl_vdpartners
+		 WHERE agentID = #{agentID}
+		   AND vdID = #{obuID}
+		   AND dbSTS   = 'Y'
+		 ORDER BY custNM ASC
+	</select>
+	
+	<!-- 협력사 거래고객사 등록 THR0103 -->
+	<insert id="insVdPartners" parameterType="hashmap" >
+		<foreach item="item" collection="list" separator=";">
+			INSERT INTO tbl_vdpartners (
+				 agentID
+		         ,vdID
+		         ,custID
+				 ,custNM
+				 ,dbSTS
+				 ,createrID
+				 ,createDT
+			) value (
+				 #{item.agentID}
+				,#{item.vdID}
+				,#{item.custID}
+				,#{item.custNM}
+				,'Y'
+				,#{item.userUID}
+		  <choose>
+		    <when test='item.SQLMODE == "mariadb"'>
+				,NOW()
+		    </when>
+		    <otherwise>
+		    	,sysdate
+		    </otherwise>
+		 </choose>
+			)
+		 </foreach>
+	</insert>
+	
+	
+	<!-- 사용자별 고객사 정보 THR0104-->
+	<select id="getUserCust" parameterType="hashmap" resultType="hashmap">
+		SELECT custID, custNM ,UUID ,userUID
+	<choose>
+	    <when test='SQLMODE == "mariadb"'>
+	     ,DATE_FORMAT(createDT,'%Y-%m-%d') AS createDT
+	     ,DATE_FORMAT(updateDT,'%Y-%m-%d') AS updateDT
+	    </when>
+	    <otherwise>
+		,TO_CHAR(createDT,'YYYY-MM-DD') AS createDT
+		,TO_CHAR(updateDT,'YYYY-MM-DD') AS updateDT
+	    </otherwise>
+	 </choose>
+		  FROM tbl_userCust
+		 WHERE agentID = #{agentID}
+		   AND userUID = #{userUID}
+		   AND dbSTS   = 'Y'
+		 ORDER BY UUID DESC
+	</select>
+	<!-- 사용자별 고객사 정보 등록 THR0105-->
+	<insert id="insUserCust" parameterType="hashmap" >
+		<foreach item="item" collection="list" separator=";">
+			INSERT INTO  tbl_usercust (
+					UUID
+					,userUID
+					,custID
+					,custNM
+					,createrID
+					,createDT
+					,dbSTS
+					,agentID
+				) VALUES (
+				<choose>
+				    <when test='item.SQLMODE == "mariadb"'>
+				  getUUID('tbl_usercust')
+				    </when>
+				    <otherwise>
+				  seq_uuid.nextval
+				    </otherwise>
+				</choose>
+				,#{item.userUID}
+				,#{item.custID}
+				,#{item.custNM}
+				,#{item.userUID}
+		  <choose>
+		    <when test='item.SQLMODE == "mariadb"'>
+				,NOW()
+		    </when>
+		    <otherwise>
+		    	,sysdate
+		    </otherwise>
+		 </choose>
+				,'Y'
+				,#{item.agentID}
+			)
+		 </foreach>
+	</insert>
+	
+	<!-- 사용자별 고객사 정보 삭제 THR0106-->
+	<delete id="delUserCust">
+		<foreach item="item" collection="list" separator=";">
+		DELETE FROM tbl_usercust WHERE UUID = #{item.UUID}
+		</foreach>
+	</delete>
+	
+	<!-- 프로잭트 권한별 사용자 정보 THR0200-->
+	<select id="getProjectLeadUser" parameterType="hashmap" resultType="hashmap">
+		SELECT aa.custID
+		     , (select custNM from tbl_custinfo where custID = aa.custID) as custNM
+		     , aa.borgID, aa.borgNM, aa.loginID, aa.userUID, aa.userNM, aa.gridColor
+		  FROM tbl_userinfo aa
+		 WHERE aa.agentID = #{agentID}
+		   AND aa.custID  = #{custID}
+		   AND aa.dbSTS   = 'Y'
+<!-- 	   <choose> -->
+<!-- 		    <when test='SQLMODE == "mariadb"'> -->
+<!-- 			  AND IFNULL((SELECT GROUP_CONCAT(DISTINCT b.scopeID) AS menuID FROM tbl_rolescopes a  -->
+<!-- 			INNER JOIN tbl_scopes b ON b.scopeUID = a.scopeUID AND b.dbSTS = 'Y' -->
+<!-- 			WHERE a.roleID = aa.roleID),'') REGEXP #{roleID} -->
+<!-- 		    </when> -->
+<!-- 		    <otherwise> -->
+<!-- 		  AND NVL((SELECT WM_CONCAT(DISTINCT b.scopeID) AS menuID FROM tbl_rolescopes a  -->
+<!-- 		INNER JOIN tbl_scopes b ON b.scopeUID = a.scopeUID AND b.dbSTS = 'Y' -->
+<!-- 		WHERE a.roleID = aa.roleID),'') LIKE '%'|| #{roleID} ||'%' -->
+<!-- 		    </otherwise> -->
+<!-- 		</choose> -->
+		 ORDER BY aa.userNM
+	</select>
+	
+	<!-- 프로잭트 권한별 사용자 정보 THR0210-->
+	<select id="getProjectUser" parameterType="hashmap" resultType="hashmap">
+		SELECT aa.custID
+		     , (select custNM from tbl_custinfo where custID = aa.custID) as custNM
+		     , aa.borgID, aa.borgNM, aa.loginID, aa.userUID, aa.userNM, aa.gridColor
+		     , aa.attachID
+		  FROM tbl_userinfo aa
+		 WHERE aa.agentID = #{agentID}
+		   AND aa.custID  = #{custID}
+		   AND aa.dbSTS   = 'Y'
+<!-- 		   <choose> -->
+<!-- 			    <when test='SQLMODE == "mariadb"'> -->
+<!-- 			  AND IFNULL((SELECT GROUP_CONCAT(DISTINCT b.scopeID) AS menuID FROM tbl_rolescopes a  -->
+<!-- 			INNER JOIN tbl_scopes b ON b.scopeUID = a.scopeUID AND b.dbSTS = 'Y' -->
+<!-- 			WHERE a.roleID = aa.roleID),'') NOT LIKE CONCAT_WS('','%',#{proleID},'%') -->
+<!-- 			    </when> -->
+<!-- 			    <otherwise> -->
+<!-- 			  AND NVL((SELECT WM_CONCAT(DISTINCT b.scopeID) AS menuID FROM tbl_rolescopes a  -->
+<!-- 			INNER JOIN tbl_scopes b ON b.scopeUID = a.scopeUID AND b.dbSTS = 'Y' -->
+<!-- 			WHERE a.roleID = aa.roleID),'') NOT LIKE '%'|| #{roleID} ||'%' -->
+<!-- 			    </otherwise> -->
+<!-- 			</choose> -->
+			<if test='srchText != null and srchText != ""'>
+			<choose>
+			    <when test='SQLMODE == "mariadb"'>
+			AND CONCAT(aa.loginID, IFNULL(aa.userNM,'')) REGEXP #{srchText}
+			    </when>
+			    <otherwise>
+			AND (aa.loginID || NVL(aa.userNM,'')) LIKE '%'|| #{srchText} ||'%'; 
+			    </otherwise>
+			</choose>
+		</if>
+		 ORDER BY aa.userNM
+	</select>
+	
+	<!-- 부서검색 팝업 THR0180 -->
+	<select id="getBorgPopList" parameterType="hashmap" resultType="hashmap">
+		SELECT a.borgID
+		  , a.borgNM
+		  , a.borgUID
+		  ,(SELECT custNM FROM tbl_custinfo WHERE custID= a.custID) AS custNM 
+		  FROM tbl_borgs a
+		  WHERE a.agentID = #{agentID}
+		 <if test='agentID != "14"'>
+		  AND a.custID  = #{custID}
+		 </if>
+		<if test='srchText != null and srchText != ""'>
+			<choose>
+			    <when test='SQLMODE == "mariadb"'>
+			AND CONCAT(a.borgID, IFNULL(a.borgNM,'')) REGEXP #{srchText}
+			    </when>
+			    <otherwise>
+			AND (a.borgID || NVL(a.borgNM,'')) LIKE '%'|| #{srchText} ||'%'; 
+			    </otherwise>
+			</choose>
+		</if>
+		 AND a.dbSTS   = 'Y'
+		 ORDER BY a.borgUID DESC
+	</select>
+	
+	<!-- 부서검색 팝업 THR0180 -->
+	<select id="getCustPosPopList" parameterType="hashmap" resultType="hashmap">
+		SELECT a.custRUID as custID, a.custNM, a.bizNO, a.custID AS custUids
+
+		FROM tbl_custinfo a 
+		
+		WHERE a.agentID = #{agentID}
+		 <if test='agentID != "14"'>
+		  AND a.custID  = #{custID}
+		 </if>
+		 <if test='mobile != null and mobile != ""'>
+		  AND a.repMobile  = #{mobile}
+		 </if>
+		<if test='srchText != null and srchText != ""'>
+			<choose>
+			    <when test='SQLMODE == "mariadb"'>
+			AND CONCAT(a.custID, IFNULL(a.custNM,''), IFNULL(a.bizNO,'')) REGEXP #{srchText}
+			    </when>
+			    <otherwise>
+			AND (a.custID || NVL(a.custNM,'') || NVL(a.bizNO,'')) LIKE '%'|| #{srchText} ||'%'; 
+			    </otherwise>
+			</choose>
+		</if>
+		 AND a.dbSTS   = 'Y'
+		 ORDER BY a.custID DESC
+	</select>
+	
+	<!-- 자동완성 부서 검색 THR0185 -->
+	<select id="getBorgList4Srch" parameterType="hashmap" resultType="hashmap">
+		SELECT a.borgNM AS stkNM
+		     , a.borgID AS stkID
+		  FROM tbl_borgs a
+		  WHERE a.agentID = #{agentID}
+		    AND a.custID  = #{custID}
+		<if test='stkNM != null and stkNM != ""'>
+			<choose>
+			    <when test='SQLMODE == "mariadb"'>
+			AND CONCAT(a.borgID, IFNULL(a.borgNM,'')) REGEXP #{stkNM}
+			    </when>
+			    <otherwise>
+			AND (a.borgID || NVL(a.borgNM,'')) LIKE '%'|| #{stkNM} ||'%'; 
+			    </otherwise>
+			</choose>
+		</if>
+		 AND a.dbSTS   = 'Y'
+		 ORDER BY a.borgNM ASC
+	</select>
+	
+	<!-- 부서관리 리스트 THR0180 -->
+	<select id="getBorgsList" parameterType="hashmap" resultType="hashmap">
+		  SELECT a.borgUID
+		  ,a.borgID
+		  ,a.borgNM
+		  ,a.custID
+		  ,a.dbSTS
+		  ,a.addr1
+		  ,a.addr2
+		  ,a.telNO
+		  ,(SELECT custNM FROM tbl_custinfo WHERE custID= a.custID) AS custNM
+		  FROM tbl_borgs a
+		  WHERE agentID = #{agentID}
+	<if test='borgID != null and borgID != ""'>
+		<choose>
+		    <when test='SQLMODE == "mariadb"'>
+		    AND a.borgID LIKE CONCAT_WS('','%',#{borgID},'%')
+		    </when>
+		    <otherwise>
+			AND (NVL(a.borgID,'') LIKE '%'|| #{borgID} ||'%'; 
+		    </otherwise>
+		</choose>
+	</if>
+	<if test='borgNM != null and borgNM != ""'>
+		AND a.borgNM LIKE CONCAT_WS('','%',#{borgNM},'%')
+	</if>
+	<if test='custID != null and custID != ""'>
+		AND a.custID LIKE CONCAT_WS('','%',#{custID},'%')
+	</if>
+	<if test='dbSTS != null and dbSTS != ""'>
+		AND a.dbSTS = #{dbSTS}
+	</if>
+	ORDER BY a.borgUID DESC
+	</select>
+	
+	<!-- 부서관리 상세조회 THR0181  -->
+	 <select id="getBorgDtl" parameterType="hashmap" resultType="hashmap">
+			SELECT a.borgUID 
+			,a.custID
+			,a.borgID 
+			,a.borgNM 
+			,a.zipCD
+			,a.addr1 
+			,a.addr2
+			,a.telNO
+			,a.createrID
+			,a.createDT
+			,a.updaterID
+			,a.updateDT
+			,a.agentID 
+			,a.dbSTS
+			,(SELECT custNM FROM tbl_custinfo WHERE custID= a.custID) AS custNM
+			FROM tbl_borgs a
+			WHERE a.agentID = #{agentID}
+			AND a.borgUID = #{pborgUID}
+	 </select>
+	 
+	<!-- 부서코드, 부서명  존재하는지를 조회함.THR0182 -->
+    <select id="chkBorg" parameterType="hashmap" resultType="int">
+    	SELECT count(borgID) AS existCnt FROM tbl_borgs
+    	 WHERE 1=1
+		<if test='borgID != null and borgID != ""'>
+		 	 AND borgID = #{borgID}
+		</if>
+		<if test='borgNM != null and borgNM != ""'>
+		 	 AND borgNM = #{borgNM}
+		</if>
+    </select>
+    
+    <!-- 부서관리 등록  THR0183-->
+	<insert id="insBorgDtl" parameterType="hashmap">
+		INSERT INTO tbl_borgs (
+		   borgUID 
+		,  custID
+		,  borgID
+		,  borgNM
+		,  zipCD
+		,  addr1
+		,  addr2
+		,  telNO
+		,  createrID
+		,  agentID
+		,  dbSTS		
+		)
+		values (
+  	<choose>
+	    <when test='SQLMODE == "mariadb"'>
+	  getUUID('tbl_borgs')
+	    </when>
+	    <otherwise>
+	  seq_uuid.nextval
+	    </otherwise>
+	</choose>
+		,  #{custID  }
+		,  #{borgID  }
+		,  #{borgNM  }
+		,  #{zipCD  }
+		,  #{addr1 }
+		,  #{addr2}
+		,  #{telNO }
+		,  #{userUID  }
+		,  #{agentID }
+		,  #{dbSTS   }
+		)
+	</insert>
+	
+	<!-- 부서관리 수정  THR0184-->
+    <update id="updBorgDtl" parameterType="hashmap">
+		UPDATE tbl_borgs
+		    SET borgID = #{borgID} 
+			<if test='custID != null and custID != ""'>
+			  , custID = #{custID}
+			</if>
+			<if test='borgNM != null and borgNM != ""'>
+			  , borgNM = #{borgNM}
+			</if>
+			<if test='zipCD != null and zipCD != ""'>
+			  , zipCD = #{zipCD}
+			</if>
+			<if test='addr1 != null and addr1 != ""'>
+			  , addr1 = #{addr1}
+			</if>
+			<if test='addr2 != null and addr2 != ""'>
+			  , addr2 = #{addr2}
+			</if>
+			<if test='telNO != null and telNO != ""'>
+			  , telNO = #{telNO}
+			</if>
+			<if test='dbSTS != null and dbSTS != ""'>
+			  , dbSTS  = #{dbSTS}
+			</if>   
+			<if test='agentID != null and agentID != ""'>
+			  , agentID = #{agentID}
+			</if> 
+			  , updaterID = #{userUID}
+			<choose>
+			    <when test='SQLMODE == "mariadb"'>
+			  , updateDT = current_timestamp()
+			    </when>
+			    <otherwise>
+			  , updateDT = TO_DATE(SYSDATE,'MM-DD-YYYY HH24:MI:SS')
+			    </otherwise>
+			</choose>
+		where borgUID = #{pborgUID} 
+	</update>
+
+	<!-- 부서관리 삭제  THR0189-->
+    <update id="delBorgList" parameterType="hashmap">
+    	<foreach item="item" collection="list" separator=";">
+			UPDATE tbl_borgs
+			    SET 
+			    updaterID = #{item.userUID}
+			    <choose>
+				    <when test='item.SQLMODE == "mariadb"'>
+				  , updateDT = current_timestamp()
+				    </when>
+				    <otherwise>
+				  , updateDT = TO_DATE(SYSDATE,'MM-DD-YYYY HH24:MI:SS')
+				    </otherwise>
+				</choose>
+				<if test='item.dbSTS != null and item.dbSTS != ""'>
+				  , dbSTS  = #{item.dbSTS}
+				</if>
+				
+			where borgUID = #{item.pborgUID} 
+		</foreach>
+	</update>
+<!-- 
+**************************************
+			사용자관리 start
+***********************************
+-->	
+	<!-- 사용자관리 리스트 THR0010 -->
+	<select id="getUserInfoList" parameterType="hashmap" resultType="hashmap">
+		  SELECT  
+		   ui.userUID
+		  ,ui.custID AS custID
+		  ,ui.loginID AS loginID
+		  ,CASE WHEN ui.userGB = 'V' THEN (SELECT vdNM FROM tbl_vdinfo WHERE vdID = ui.custID)
+			 	 WHEN ui.agentID = '14' THEN (SELECT custNM FROM tbl_custinfo WHERE custRUID = ui.custID)
+			     ELSE (SELECT custNM FROM tbl_custinfo WHERE custID = ui.custID) 
+			     END as custNM
+		  ,IFNULL(ui.userNM ,'')  AS userNM
+		  ,IFNULL(ui.borgNM ,'')  AS borgNM
+		  ,IFNULL(ui.roleID ,'')  AS roleID
+		  ,IFNULL(ui.userNM,'')   AS userNM
+		  ,IFNULL(ui.borgNM,'')   AS borgNM
+		  ,IFNULL(ui.grade,'')    AS grade
+		  ,IFNULL(ui.empNO,'')    AS empNO
+		  ,IFNULL(ui.mobile,'')   AS mobile
+		  ,IFNULL(ui.offTelNo,'') AS offTelNo
+		  ,IFNULL(ui.faxNO,'')    AS faxNO
+		  ,IFNULL(ui.zipCD,'')    AS zipCD
+		  ,IFNULL(ui.addr1,'')    AS addr1
+  		  ,IFNULL(ui.addr2,'')    AS addr2
+		  ,IFNULL(ui.sign,'')     AS sign
+		  ,IFNULL(ui.attachID,'')     AS attachID
+		  ,ui.dbSTS
+		  ,ui.userUID
+	 <choose>
+	    <when test='SQLMODE == "mariadb"'>
+	     ,DATE_FORMAT(ui.createDT,'%Y-%m-%d') AS createDT
+	     ,DATE_FORMAT(ui.updateDT,'%Y-%m-%d') AS updateDT
+	    </when>
+	    <otherwise>
+		,TO_CHAR(ui.createDT,'YYYY-MM-DD') AS createDT
+		,TO_CHAR(ui.updateDT,'YYYY-MM-DD') AS updateDT
+	    </otherwise>
+	 </choose>		  
+		  FROM tbl_userinfo ui
+		  WHERE ui.agentID = #{agentID}
+		  <choose>
+			    <when test='agentID == "14"'>
+			    	<if test='custID != null and custID != ""'>
+			    		<choose>
+						    <when test='types == "Y"'>
+						AND (ui.custID = #{custID}
+							OR ui.userUID IN (SELECT userUID FROM tbl_userscusts WHERE custID = #{custRUID}))
+						    </when>
+						    <otherwise>
+						AND ui.custID = #{custID} 
+						    </otherwise>
+						</choose>
+			    	</if>
+					<if test='srchText != null and srchText != ""'>
+							<choose>
+							    <when test='SQLMODE == "mariadb"'>
+							AND CONCAT(ui.loginID, IFNULL(ui.userNM,''), IFNULL((SELECT custNM FROM tbl_custinfo WHERE custRUID = ui.custID),'')) REGEXP #{srchText}
+							    </when>
+							    <otherwise>
+							AND (ui.loginID || NVL(ui.userNM,'')) || NVL((SELECT custNM FROM tbl_custinfo WHERE custID = ui.custID),'')) LIKE '%'|| #{srchText} ||'%'; 
+							    </otherwise>
+							</choose>
+					</if>
+					<if test='borgNM != null and borgNM != ""'>
+						AND (SELECT custNM FROM tbl_custinfo WHERE custID = ui.custID) LIKE CONCAT_WS('','%',#{borgNM},'%')
+					</if>
+			    </when>
+			    <otherwise>
+			AND ui.custID = #{custID}
+			<if test='srchText != null and srchText != ""'>
+					<choose>
+					    <when test='SQLMODE == "mariadb"'>
+					AND CONCAT(ui.loginID, IFNULL(ui.userNM,''), IFNULL(ui.borgNM,'')) REGEXP #{srchText}
+					    </when>
+					    <otherwise>
+					AND (ui.loginID || NVL(ui.userNM,'')) || NVL(ui.borgNM,'')) LIKE '%'|| #{srchText} ||'%'; 
+					    </otherwise>
+					</choose>
+			</if>
+			<if test='borgNM != null and borgNM != ""'>
+				AND ui.borgNM LIKE CONCAT_WS('','%',#{borgNM},'%')
+			</if>
+			    </otherwise>
+			</choose>
+	
+	<if test='loginID != null and loginID != ""'>
+		<choose>
+		    <when test='SQLMODE == "mariadb"'>
+		    AND ui.loginID LIKE CONCAT_WS('','%',#{loginID},'%')
+		    </when>
+		    <otherwise>
+			AND (NVL(ui.loginID,'') LIKE '%'|| #{loginID} ||'%'; 
+		    </otherwise>
+		</choose>
+	</if>
+	<if test='dbSTS != null and dbSTS != ""'>
+		AND ui.dbSTS = #{dbSTS}
+	</if>
+	<if test='userNM != null and userNM != ""'>
+		AND ui.userNM LIKE CONCAT_WS('','%',#{userNM},'%')
+	</if>
+	
+	ORDER BY ui.userNM DESC
+	</select>
+	
+	<!-- 사용자관리/ 사용자 상세정보 THR0011 -->
+	 <select id="getUserInfoDtl" parameterType="hashmap" resultType="hashmap">
+		  SELECT 
+			ui.custID 
+			 ,CASE WHEN ui.userGB = 'V' THEN (SELECT vdNM FROM tbl_vdinfo WHERE vdID = ui.custID)
+			 	 WHEN ui.agentID = '14' THEN (SELECT custNM FROM tbl_custinfo WHERE custRUID = ui.custID)
+			     ELSE (SELECT custNM FROM tbl_custinfo WHERE custID = ui.custID) 
+			     END as custNM
+			 ,ui.loginID
+			 ,ui.userNMEng
+			 ,ui.userNMCN
+			 ,ui.pwd  AS pwd
+			 ,ui.telNo
+			 ,ui.userNM
+			 ,ui.borgUID
+			 ,ui.borgNM 
+			 ,ui.borgID
+			 ,ui.roleID 
+			 ,ui.email 
+			 ,ui.grade 
+			 ,ui.empNO 
+			 ,ui.mobile 
+			 ,ui.offTelNo 
+			 ,ui.faxNO 
+			 ,ui.zipCD 
+			 ,ui.addr1 
+			 ,ui.addr2 
+			 ,ui.sign 
+			 ,ui.gridColor 
+			 ,ui.dbSTS
+			 ,ui.gender
+			 ,ui.workStatus
+			 ,ui.job
+			 ,ui.pay
+			 ,ui.payType
+			 ,ui.userUID
+			 ,ui.attachID
+	  <choose>
+	    <when test='SQLMODE == "mariadb"'>
+	     ,DATE_FORMAT(ui.createDT,'%Y-%m-%d') AS createDT
+	     ,IFNULL(DATE_FORMAT(ui.updateDT,'%Y-%m-%d'),'') AS updateDT
+	     ,IFNULL(DATE_FORMAT(ui.joinDT,'%Y-%m-%d'),'') AS joinDT
+	    </when>
+	    <otherwise>
+		,TO_CHAR(ui.createDT,'YYYY-MM-DD') AS createDT
+		,TO_CHAR(ui.updateDT,'YYYY-MM-DD') AS updateDT
+		,TO_CHAR(ui.joinDT,'YYYY-MM-DD') AS joinDT
+	    </otherwise>
+	 </choose>
+		  FROM tbl_userinfo ui
+		  WHERE ui.agentID = #{agentID} 
+		  AND ui.loginID = #{loginID}
+	<if test='agentID != null and agentID != "14"'>
+		AND ui.custID = #{custID}
+	</if>
+	 </select>
+	 
+	 <select id="getUserCustInfoList" parameterType="hashmap" resultType="hashmap">
+		  SELECT 
+				A.custID
+				, B.custNM
+				, B.custID AS custRID
+				, A.UUID AS userCustUID
+			FROM tbl_userscusts A
+			INNER JOIN tbl_custinfo B ON A.custID = B.custRUID
+			INNER JOIN tbl_userinfo C ON A.userUID = C.userUID 
+			WHERE A.dbSTS = 'Y' 
+			  AND C.loginID = #{loginID}
+	 </select>
+	 
+	 <delete id="delTblCustUserList">
+    	<foreach item="item" collection="list" separator=";">	
+			DELETE FROM tbl_userscusts WHERE custID = #{item.custID} AND userUID = #{item.puserUID}
+		</foreach>
+    </delete>
+    
+    <delete id="delTblCustUsers">
+    	UPDATE tbl_userscusts SET 
+			chkSyncYN  = 'N'
+			, dbSTS = 'N'
+		WHERE userUID = #{puserUID}
+    </delete>
+	 
+	 <insert id="insCustUserInfos" parameterType="hashmap">
+	 	<foreach item="item" collection="list" separator=";">	
+			INSERT INTO tbl_userscusts (
+				UUID
+				,userUID
+				,custID
+				,createDT
+				,createrID
+				,dbSTS
+				,chkSyncYN
+			) VALUES (
+			<choose>
+	    		<when test='item.userCustUID != null and item.userCustUID != ""'>
+			   		#{item.userCustUID}
+			    </when>
+			    <otherwise>
+			   		<choose>
+			    		<when test='item.SQLMODE == "mariadb"'>
+					   getUUID('tbl_userinfo')
+					    </when>
+					    <otherwise>
+					   seq_uuid.nextval
+					    </otherwise>
+					</choose>
+			    </otherwise>
+			</choose>
+				,#{item.puserUID}
+				,#{item.custID}
+			<choose>
+				<when test='item.SQLMODE == "mariadb"'>
+			    ,  now()
+			    </when>
+			    <otherwise>
+			   	, TO_DATE(SYSDATE,'MM-DD-YYYY HH24:MI:SS')
+			    </otherwise>
+			</choose>
+				,#{item.userUID}
+				,'Y'
+				,'N'
+			) ON DUPLICATE KEY UPDATE
+				userUID        = #{item.puserUID}
+				,custID        = #{item.custID}
+				,dbSTS         = 'Y'
+				,chkSyncYN     = 'N'
+		</foreach>
+	 </insert>
+	 
+	 <!-- 사용자ID 중복체크 THR0012 -->
+	<select id="chkLoginID" parameterType="hashmap" resultType="int">
+		select count(1) as cnt
+		  from tbl_userinfo
+		 where loginID = #{loginID}
+	</select>
+	 
+	 
+	 <!-- 사용자관리 등록  THR0013-->
+	<insert id="insUserInfoDtl" parameterType="hashmap">
+		INSERT INTO tbl_userinfo (
+		  userUID			
+		, custID
+		, loginID
+		, pwd
+		, rawPWD
+		<!-- 2022.02.16...추가 // 로그인 tbl_userinfo로 통합후 추가된 컬럼  -->
+		, userPW
+		, aes256pw
+		, userNM
+		, userNMEng
+		, userNMCN
+		, userGB
+		, borgUID
+		, borgNM
+		, borgID
+		, email
+		, roleID
+		, grade
+		, empNO
+		, mobile
+		, telNo
+		, offTelNo
+		, faxNO
+		, zipCD
+		, addr1
+		, addr2
+		, sign
+		, dbSTS
+	<if test='gender != null and gender != ""'>
+		, gender
+	</if>
+	<if test='workStatus != null and workStatus != ""'>
+		, workStatus
+	</if>
+	<if test='job != null and job != ""'>
+		, job
+	</if>
+	<if test='pay != null and pay != ""'>
+		, pay
+	</if>
+	<if test='payType != null and payType != ""'>
+		, payType
+	</if>
+	<if test='chkSyncYN != null and chkSyncYN != ""'>
+		 , chkSyncYN
+	</if>
+		, joinDT
+		, createDT
+		, createrID
+		, agentID
+	<if test='attachID != null and attachID != ""'>
+		, attachID
+	</if>
+		)
+		values (
+  	<choose>
+	    <when test='SQLMODE == "mariadb"'>
+	   getUUID('tbl_userinfo')
+	    </when>
+	    <otherwise>
+	   seq_uuid.nextval
+	    </otherwise>
+	</choose>
+		, #{	custsID      }
+		, #{	loginID     }
+		, #{	pwd         }
+		, #{	pwd         }
+		<!-- 2022.02.16...추가 // 로그인 tbl_userinfo로 통합후 추가된 컬럼  -->
+		, #{	pwd         }
+		, #{	pwd         }
+		, #{	userNM      }
+		, #{    userNMEng   }       
+		, #{    userNMCN    }
+		, #{    userGB      }
+		, #{	pborgUID    }
+		, #{	borgNM      }
+		, #{	borgID      }
+		, #{	email       }
+		, #{	proleID     }
+		, #{	grade       }
+		, #{	empNO       }
+		, #{	mobile      }
+		, #{	telNo       }
+		, #{	offTelNo    }
+		, #{	faxNO       }
+		, #{	zipCD       }
+		, #{	addr1       }
+		, #{  	addr2       }
+		, #{	sign        }
+		, #{	dbSTS	    }
+		<if test='gender != null and gender != ""'>
+			, #{gender}
+		</if>
+		<if test='workStatus != null and workStatus != ""'>
+			, #{workStatus}
+		</if>
+		<if test='job != null and job != ""'>
+			, #{job}
+		</if>
+		<if test='pay != null and pay != ""'>
+			, #{payType}
+		</if>
+		<if test='payType != null and payType != ""'>
+			, payType
+		</if>
+		<if test='chkSyncYN != null and chkSyncYN != ""'>
+			 , #{chkSyncYN}
+		</if>
+	<choose>
+		<when test='joinDT != null and joinDT != ""'>
+	    	, #{joinDT}
+	    </when>
+	    <otherwise>
+	   		<choose>
+				<when test='SQLMODE == "mariadb"'>
+			    ,  now()
+			    </when>
+			    <otherwise>
+			   	, TO_DATE(SYSDATE,'MM-DD-YYYY HH24:MI:SS')
+			    </otherwise>
+			</choose>
+	    </otherwise>
+	</choose>
+		
+	<choose>
+		<when test='SQLMODE == "mariadb"'>
+	    ,  now()
+	    </when>
+	    <otherwise>
+	   	, TO_DATE(SYSDATE,'MM-DD-YYYY HH24:MI:SS')
+	    </otherwise>
+	</choose>
+		, #{	userUID   }
+		, #{	agentID   }
+	<if test='attachID != null and attachID != ""'>
+		, #{	attachID   }
+	</if>
+		)
+	 </insert>
+	 <!-- THR0013_01 -> puserUID 값 구하는것-->
+	 <select id="selUserUID" parameterType="hashmap" resultType="string">
+	 SELECT 
+		a.userUID
+		FROM tbl_userinfo a
+		WHERE a.loginID = #{loginID}
+	 </select>
+	 
+	 <!-- 사용자관리 수정  THR0014-->
+	 <update id="updUserInfo" parameterType="hashmap">
+			UPDATE tbl_userinfo
+			SET 
+			updaterID = #{userUID}
+			<choose>
+		        <when test='SQLMODE == "mariadb"'>
+			  , updateDT       = now()
+			    </when>
+			    <otherwise>
+			  , updateDT       = TO_DATE(SYSDATE,'MM-DD-YYYY HH24:MI:SS')
+			    </otherwise>
+			</choose>
+			<if test='agentID != null and agentID == "14"'>
+				, custID = #{custsID}	
+			</if>
+			<if test='pwd != null and pwd != ""'>
+				, pwd = #{pwd}
+			</if>
+			<if test='userNMEng != null and userNMEng != ""'>
+				, userNMEng = #{userNMEng}
+			</if>
+			<if test='userNMCN != null and userNMCN != ""'>
+				, userNMCN = #{userNMCN}
+			</if>
+			<if test='rawPWD != null and rawPWD != ""'>
+				, rawPWD = #{rawPWD}
+			</if>
+			<if test='borgID != null and borgID != ""'>
+				, borgID = #{borgID}
+			</if>
+			<if test='pborgUID != null and pborgUID != ""'>
+				, borgUID = #{pborgUID}
+			</if>
+			<if test='gender != null and gender != ""'>
+				, gender = #{gender}
+			</if>
+			<if test='workStatus != null and workStatus != ""'>
+				, workStatus = #{workStatus}
+			</if>
+			<if test='job != null and job != ""'>
+				, job = #{job}
+			</if>
+			<if test='pay != null and pay != ""'>
+				, pay = #{pay}
+			</if>
+			<if test='payType != null and payType != ""'>
+				, payType = #{payType}
+			</if>
+			<if test='borgNM != null and borgNM != ""'>
+				, borgNM = #{borgNM}
+			</if>
+			<if test='proleID != null and proleID != ""'>
+				, roleID = #{proleID}
+			</if>
+			<if test='grade != null and grade != ""'>
+				, grade = #{grade}
+			</if>
+			<if test='empNO != null and empNO != ""'>
+				, empNO = #{empNO}
+			</if>
+			<if test='email != null and email != ""'>
+				, email = #{email}
+			</if>
+			<if test='mobile != null and mobile != ""'>
+				, mobile = #{mobile}
+			</if>
+			<if test='telNo != null and telNo != ""'>
+				, telNo = #{telNo}
+			</if>
+			<if test='offTelNo != null and offTelNo != ""'>
+				, offTelNo = #{offTelNo}
+			</if>
+			<if test='faxNO != null and faxNO != ""'>
+				, faxNO = #{faxNO}
+			</if>
+			<if test='zipCD != null and zipCD != ""'>
+				, zipCD = #{zipCD}
+			</if>
+			<if test='addr1 != null and addr1 != ""'>
+				, addr1 = #{addr1}
+			</if>
+			<if test='addr2 != null and addr2 != ""'>
+				, addr2 = #{addr2}
+			</if>
+			<if test='sign != null and sign != ""'>
+				, sign = #{sign}
+			</if>
+			<if test='userNM != null and userNM != ""'>
+				, userNM = #{userNM}
+			</if>
+			<if test='gridColor != null and gridColor != ""'>
+				, gridColor = #{gridColor}
+			</if>
+			<if test='attachID != null and attachID != ""'>
+				, attachID = #{attachID}
+			</if>
+			<if test='joinDT != null and joinDT != ""'>
+				, joinDT = #{joinDT}
+			</if>
+			<if test='dbSTS != null and dbSTS != ""'>
+				, dbSTS = #{dbSTS}
+			</if>
+			<if test='chkSyncYN != null and chkSyncYN != ""'>
+			  	, chkSyncYN = #{chkSyncYN}
+			</if>
+			
+			WHERE userUID = #{puserUID} 
+			AND agentID   = #{agentID}
+			<if test='agentID != null and agentID != "14"'>
+				AND custID    = #{custID}		
+			</if>
+	</update>
+	 
+	 <update id="updSyncUserInfos" parameterType="hashmap">
+		<foreach item="item" collection="list" separator=";">
+			UPDATE tbl_userinfo SET 
+				chkSyncYN          = 'Y'
+			where userUID = #{item.userUID} 
+		</foreach>
+	</update>
+	 
+	 
+	 <update id="updSyncCustInfos" parameterType="hashmap">
+		<foreach item="item" collection="list" separator=";">
+			UPDATE tbl_custinfo SET 
+				chkSyncYN          = 'Y'
+			where custID = #{item.custID} 
+		</foreach>
+	</update>
+	
+	<update id="updSyncUserCustInfos" parameterType="hashmap">
+		<foreach item="item" collection="list" separator=";">
+			UPDATE tbl_userscusts SET 
+				chkSyncYN          = 'Y'
+			where userUID = #{item.userUID} 
+			  and custID = #{item.custID} 
+		</foreach>
+	</update>
+<!-- 
+**************************************
+			사용자관리 end
+***********************************
+-->
+	 
+	 <!-- 고객사관리 삭제  THR0019-->
+	<update id="delUserInfo" parameterType="hashmap">
+		<foreach item="item" collection="list" separator=";">
+			UPDATE tbl_userinfo
+			    SET 
+				dbSTS          = 'N'
+			  , updaterID = #{item.userUID}
+			  <if test='item.chkSyncYN != null and item.chkSyncYN != ""'>
+			  	, chkSyncYN = #{item.chkSyncYN}
+			</if>
+			<choose>
+			    <when test='item.SQLMODE == "mariadb"'>
+			  , updateDT       = now()
+			    </when>
+			    <otherwise>
+			  , updateDT       = TO_DATE(SYSDATE,'MM-DD-YYYY HH24:MI:SS')
+			    </otherwise>
+			</choose>
+			where userUID = #{item.puserUID} 
+		</foreach>
+	</update>
+	
+	<!-- 고객사관리 리스트 THR0020 -->
+	<select id="getCustInfoList" parameterType="hashmap" resultType="hashmap">
+		  SELECT 
+			A.custID
+			, A.custNM
+			, A.custRUID
+			, A.custRUID
+			, A.custNMEng
+			, A.custNMCN
+			, A.custGB
+			, A.bizNO
+			, A.repNM
+			, A.repMobile
+			, A.telNO
+			, A.faxNO
+			, A.bizTP
+			, A.bizCon
+			, A.dbSTS
+			, A.custUserInfo
+			, A.zipCD
+			, A.addr1
+			, A.addr2
+			, A.updaterID
+			, A.headOfficeYn
+			, A.localFolder
+			<choose>
+			    <when test='SQLMODE == "mariadb"'>
+			 ,DATE_FORMAT(A.updateDT,'%Y-%m-%d') AS updateDT
+			 ,DATE_FORMAT(A.bizStartDt,'%Y-%m-%d') AS bizStartDt
+			    </when>
+			    <otherwise>
+			 ,TO_DATE(A.updateDT,'YYYY-MM-DD') AS updateDT
+			 ,TO_DATE(A.bizStartDt,'YYYY-MM-DD') AS bizStartDt
+			    </otherwise>
+			</choose>
+		  FROM tbl_custinfo A
+		  WHERE 
+		  <choose>
+		    <when test='custID != null and custID != ""'>
+		   		A.custID = #{custID}
+		    </when>
+			<otherwise>
+				A.agentID = #{agentID}
+				<if test='srchText != null and srchText != ""'>
+					<choose>
+					    <when test='SQLMODE == "mariadb"'>
+					AND CONCAT(A.custID, IFNULL(A.custNM,''),IFNULL(A.bizNO,'')) REGEXP #{srchText}
+					    </when>
+					    <otherwise>
+					AND (A.custID || NVL(A.custNM,'') || NVL(A.bizNO,'')) LIKE '%'|| #{srchText} ||'%'; 
+					    </otherwise>
+					</choose>
+				</if>
+				<if test='schCustID != null and schCustID != ""'>
+					<choose>
+					    <when test='SQLMODE == "mariadb"'>
+					    AND A.custID LIKE CONCAT_WS('','%',#{schCustID},'%')
+					    </when>
+					    <otherwise>
+						AND A.custID LIKE '%'|| #{schCustID} ||'%'; 
+					    </otherwise>
+					</choose>
+				</if>
+				<if test='custNM != null and custNM != ""'>
+					<choose>
+					    <when test='SQLMODE == "mariadb"'>
+					    AND A.custNM LIKE CONCAT_WS('','%',#{custNM},'%')
+					    </when>
+					    <otherwise>
+						AND A.custNM LIKE '%'|| #{custNM} ||'%'; 
+					    </otherwise>
+					</choose>
+				</if>
+				<if test='custGB != null and custGB != ""'>
+					AND A.custGB = #{custGB}
+				</if>
+				<if test='bizNO != null and bizNO != ""'>
+					<choose>
+					    <when test='SQLMODE == "mariadb"'>
+					    AND A.bizNO LIKE CONCAT_WS('','%',#{bizNO},'%')
+					    </when>
+					    <otherwise>
+						AND A.bizNO LIKE '%'|| #{bizNO} ||'%'; 
+					    </otherwise>
+					</choose>
+				</if>
+				<if test='repNM != null and repNM != ""'>
+					<choose>
+					    <when test='SQLMODE == "mariadb"'>
+					    AND A.repNM LIKE CONCAT_WS('','%',#{repNM},'%')
+					    </when>
+					    <otherwise>
+						AND A.repNM LIKE '%'|| #{repNM} ||'%'; 
+					    </otherwise>
+					</choose>
+				</if>
+				<if test='bizTP != null and bizTP != ""'>
+					<choose>
+					    <when test='SQLMODE == "mariadb"'>
+					    AND A.bizTP LIKE CONCAT_WS('','%',#{bizTP},'%')
+					    </when>
+					    <otherwise>
+						AND A.bizTP LIKE '%'|| #{bizTP} ||'%'; 
+					    </otherwise>
+					</choose>
+				</if>
+				<if test='bizCon != null and bizCon != ""'>
+					<choose>
+					    <when test='SQLMODE == "mariadb"'>
+					    AND A.bizCon LIKE CONCAT_WS('','%',#{bizCon},'%')
+					    </when>
+					    <otherwise>
+						AND A.bizCon LIKE '%'|| #{bizCon} ||'%'; 
+					    </otherwise>
+					</choose>
+				</if>
+				<if test='dbSTS != null and dbSTS != ""'>
+					AND A.dbSTS = #{dbSTS}
+				</if>
+			</otherwise>
+		</choose>
+	ORDER BY A.custNM DESC
+	</select>
+	
+	<!-- 사업자번호 중복체크 THR0021 -->
+	<select id="chkBizNO" parameterType="hashmap" resultType="int">
+		select count(1) as cnt
+		  from tbl_custinfo
+		 where bizNO = #{bizNO} 
+	</select>
+	
+	<!-- 고객사ID 중복체크 THR0022 -->
+	<select id="chkCustID" parameterType="hashmap" resultType="int">
+		select count(1) as cnt
+		  from tbl_custinfo
+		 where custID = #{custID} 
+	</select>
+	
+	
+	
+	<!-- 고객사관리 등록  THR0023-->
+	<insert id="insCustInfo">
+		INSERT INTO tbl_custinfo (
+		   custID
+			, custNM
+			, custNMEng
+			, custNMCN
+			, custGB
+			, dbSTS
+			, createrID
+			, createDT
+			, agentID
+		  	, bizNO
+		<if test='repNM != null and repNM != ""'>
+		  	, repNM
+		</if>
+		<if test='custRUID != null and custRUID != ""'>
+		  	, custRUID
+		</if>
+		<if test='bizTP != null and bizTP != ""'>
+		  	, bizTP
+		</if>
+		<if test='bizCon != null and bizCon != ""'>
+		  	, bizCon
+		</if>
+		<if test='custUserInfo != null and custUserInfo != ""'>
+		  	, custUserInfo
+		</if>
+		<if test='latitude != null and latitude != ""'>
+		  	,  latitude
+		</if>
+		<if test='longitude != null and longitude != ""'>
+		  	,  longitude
+		</if>
+		<if test='zipCD != null and zipCD != ""'>
+		  	, zipCD
+		</if>
+		<if test='addr != null and addr != ""'>
+		  	, addr1
+		</if>
+		<if test='dtlAddr != null and dtlAddr != ""'>
+		  	, addr2
+		</if>
+		<if test='repMobile != null and repMobile != ""'>
+		  	, repMobile
+		</if>
+		<if test='telNO != null and telNO != ""'>
+		  	, telNO
+		</if>
+		<if test='faxNO != null and faxNO != ""'>
+		  	, faxNO
+		</if>
+		<if test='bizStartDt != null and bizStartDt != ""'>
+		  	, bizStartDt
+		</if>
+		<if test='chkSyncYN != null and chkSyncYN != ""'>
+		  	, chkSyncYN
+		</if>
+		<if test='headOfficeYn != null and headOfficeYn != ""'>
+		  	, headOfficeYn
+		</if>
+		<if test='localFolder != null and localFolder != ""'>
+		  	, localFolder
+		</if>
+		)
+		values (
+			#{custID}
+			,  #{custNM}
+			,  #{custNMEng}
+			,  #{custNMCN}
+			,  #{custGB}
+			,  #{dbSTS}
+			,  #{userUID}
+			<choose>
+			    <when test='SQLMODE == "mariadb"'>
+			  , now()
+			    </when>
+			    <otherwise>
+			  , TO_DATE(SYSDATE,'MM-DD-YYYY HH24:MI:SS')
+			    </otherwise>
+			</choose>
+			,  #{agentID}
+		  	,  #{bizNO}
+		<if test='repNM != null and repNM != ""'>
+		  	,  #{repNM}
+		</if>
+		<if test='custRUID != null and custRUID != ""'>
+		  	, #{custRUID}
+		</if>
+		<if test='bizTP != null and bizTP != ""'>
+		  	,  #{bizTP}
+		</if>
+		<if test='bizCon != null and bizCon != ""'>
+		  	,  #{bizCon}
+		</if>
+		<if test='custUserInfo != null and custUserInfo != ""'>
+		  	,  #{custUserInfo}
+		</if>
+		<if test='latitude != null and latitude != ""'>
+		  	,  #{latitude}
+		</if>
+		<if test='longitude != null and longitude != ""'>
+		  	,  #{longitude}
+		</if>
+		<if test='zipCD != null and zipCD != ""'>
+		  	,  #{zipCD}
+		</if>
+		<if test='addr != null and addr != ""'>
+		  	,  #{addr}
+		</if>
+		<if test='dtlAddr != null and dtlAddr != ""'>
+		  	,  #{dtlAddr}
+		</if>
+		<if test='repMobile != null and repMobile != ""'>
+		  	, #{repMobile}
+		</if>
+		<if test='telNO != null and telNO != ""'>
+		  	, #{telNO}
+		</if>
+		<if test='faxNO != null and faxNO != ""'>
+		  	, #{faxNO}
+		</if>
+		<if test='bizStartDt != null and bizStartDt != ""'>
+		  	, #{bizStartDt}
+		</if>
+		<if test='chkSyncYN != null and chkSyncYN != ""'>
+		  	, #{chkSyncYN}
+		</if>
+		<if test='headOfficeYn != null and headOfficeYn != ""'>
+		  	, #{headOfficeYn}
+		</if>
+		<if test='localFolder != null and localFolder != ""'>
+		  	, #{localFolder}
+		</if>
+		)
+	</insert>
+	
+	<!-- 고객사관리 수정  THR0024-->
+    <update id="updCustInfo" parameterType="hashmap">
+		UPDATE tbl_custinfo
+		    SET 
+		    custGB           = #{custGB}
+			, dbSTS          = #{dbSTS}
+			, custNMEng      = #{custNMEng}
+			, custNMCN       = #{custNMCN}
+		  	, bizNO          = #{bizNO}
+		  	, repNM          = #{repNM}
+		  	, bizTP          = #{bizTP}
+		  	, bizCon         = #{bizCon}
+		  	, custUserInfo   = #{custUserInfo}
+		  	, zipCD          = #{zipCD}
+		  	, addr1          = #{addr1}
+		  	, addr2          = #{addr2}
+		  	, updaterID      = #{userUID}
+		<if test='repMobile != null and repMobile != ""'>
+		  	, repMobile = #{repMobile}
+		</if>
+		<if test='latitude != null and latitude != ""'>
+		  	, latitude = #{latitude}
+		</if>
+		<if test='longitude != null and longitude != ""'>
+		  	, longitude = #{longitude}
+		</if>
+		<if test='telNO != null and telNO != ""'>
+		  	, telNO = #{telNO}
+		</if>
+		<if test='faxNO != null and faxNO != ""'>
+		  	, faxNO = #{faxNO}
+		</if>
+		<if test='bizStartDt != null and bizStartDt != ""'>
+		  	, bizStartDt = #{bizStartDt}
+		</if>
+		<if test='chkSyncYN != null and chkSyncYN != ""'>
+		  	, chkSyncYN = #{chkSyncYN}
+		</if>
+		  	, headOfficeYn = #{headOfficeYn}
+		  	, localFolder = #{localFolder}
+		<choose>
+		    <when test='SQLMODE == "mariadb"'>
+		  , updateDT         = now()
+		    </when>
+		    <otherwise>
+		  , updateDT         = TO_DATE(SYSDATE,'MM-DD-YYYY HH24:MI:SS')
+		    </otherwise>
+		</choose>
+		where custID = #{custID} 
+	</update>
+	
+	<!-- 고객사관리 삭제  THR0029-->
+	<update id="delCustInfo" parameterType="hashmap">
+		<foreach item="item" collection="list" separator=";">
+			UPDATE tbl_custinfo
+			    SET 
+				dbSTS          = 'N'
+			  , updaterID      = #{item.userUID}
+			<choose>
+			    <when test='item.SQLMODE == "mariadb"'>
+			  , updateDT       = now()
+			    </when>
+			    <otherwise>
+			  , updateDT       = TO_DATE(SYSDATE,'MM-DD-YYYY HH24:MI:SS')
+			    </otherwise>
+			</choose>
+			where custID = #{item.custID} 
+		</foreach>
+	</update>
+	
+	<!-- =================================
+                    권한별 영역정보 싱크 쿼리 파트 시작
+	     ================================= 
+	     agentID|roleUID|scopeUID|roleID
+	-->
+	<!-- 권한별 영역정보  존재여부 체크 -->
+	<select id="existsTblRolescopes" parameterType="com.sci4s.grpc.batch.TblRolescopes" resultType="int">
+	<![CDATA[
+		select count(1) from tbl_rolescopes
+	     where roleUID  = #{roleUID}
+	       and scopeUID = #{scopeUID}
+		]]>
+	</select>
+
+	<!-- 권한별 영역정보 마스터 싱크 -->
+	<insert id="insTblRolescopes" parameterType="com.sci4s.grpc.batch.TblRolescopes">
+		insert into tbl_rolescopes (
+				 roleUID
+		         ,scopeUID
+		         ,roleID
+				 ,agentID
+			) value (
+				#{roleUID}
+	            , #{scopeUID}
+	            , #{roleID}
+				, #{agentID}
+			)
+	</insert>
+	
+	<!-- 권한별 영역정보 마스터 싱크 -->
+	<update id="updTblRolescopes" parameterType="com.sci4s.grpc.batch.TblRolescopes">
+		UPDATE tbl_rolescopes
+		   SET
+		    agentID = #{agentID}
+			<if test='roleID != null and roleID != ""'>
+            , roleID = #{roleID}
+			</if>
+         WHERE roleUID  = #{roleUID}
+           AND scopeUID = #{scopeUID}
+	</update>
+    <!-- =================================
+                    권한별 영역정보 싱크 쿼리 파트 끝
+	     ================================= 
+	-->
+	
+	<!-- =================================
+                    영역관리 싱크 쿼리 파트 시작
+	     ================================= 
+	     agentID|scopeUID|scopeID|scopeNM|scopeRemk|svcTypeID|svcTypeNM|dbSTS|createrID
+	-->
+	<!-- 영역관리  존재여부 체크 -->
+	<select id="existsTblScopes" parameterType="com.sci4s.grpc.batch.TblScopes" resultType="int">
+	<![CDATA[
+		select count(1) from tbl_scopes
+	     where scopeUID  = #{scopeUID}
+		]]>
+	</select>
+
+	<!-- 영역관리 마스터 싱크 -->
+	<insert id="insTblScopes" parameterType="com.sci4s.grpc.batch.TblScopes">
+		insert into tbl_scopes (
+				 scopeUID
+		         ,scopeID
+		         ,scopeNM
+				 ,scopeRemk
+				 ,svcTypeID
+				 ,svcTypeNM
+				 ,dbSTS
+				 ,agentID
+			) value (
+				#{scopeUID}
+	            , #{scopeID}
+	            , #{scopeNM}
+				, #{scopeRemk}
+				, #{svcTypeID}
+				, #{svcTypeNM}
+				, #{dbSTS}
+			    , #{agentID}
+			)
+	</insert>
+	
+	<!-- 영역관리 마스터 싱크 -->
+	<update id="updTblScopes" parameterType="com.sci4s.grpc.batch.TblScopes">
+		UPDATE tbl_scopes
+		   SET
+		   	<choose>
+			  <when test='SQLMODE == "oracle"'>
+		     updateDT = sysdate
+			  </when>
+			  <otherwise>
+		     updateDT = now()
+			  </otherwise>
+			</choose> 
+			, updaterID = CASE WHEN #{updaterID} IS NULL THEN 'system' ELSE #{updaterID} END
+			<if test='scopeID != null and scopeID != ""'>
+            , scopeID = #{scopeID}
+			</if>
+			<if test='scopeNM != null and scopeNM != ""'>
+            , scopeNM = #{scopeNM}
+			</if>
+			<if test='scopeRemk != null and scopeRemk != ""'>
+            , scopeRemk = #{scopeRemk}
+			</if>
+			<if test='svcTypeID != null and svcTypeID != ""'>
+            , svcTypeID = #{svcTypeID}
+			</if>
+			<if test='svcTypeNM != null and svcTypeNM != ""'>
+            , svcTypeNM = #{svcTypeNM}
+			</if>
+			<if test='dbSTS != null and dbSTS != ""'>
+            , dbSTS = #{dbSTS}
+			</if>
+         WHERE scopeUID  = #{scopeUID}
+	</update>
+    <!-- =================================
+                    영역관리 싱크 쿼리 파트 끝
+	     ================================= 
+	-->
+    <!-- =================================
+                   결재관리 쿼리 시작  
+	     ================================= 
+	-->
+	<!--THR0220 getApvGrpMaster -->
+	
+	<select id="getApvGrpMaster" parameterType="hashmap" resultType="hashmap">
+     SELECT 
+		gr.apvGrpUID
+		,gr.apvGrpNM
+		,gr.custID
+		,gr.grpAdmUID
+		,gr.dbSTS
+		,gr.createrID
+	<choose>
+       <when test='SQLMODE == "mariadb"'>
+		,DATE_FORMAT(gr.createDT,'%Y-%m-%d') AS createDT
+		,DATE_FORMAT(gr.updateDT,'%Y-%m-%d') AS updateDT
+	   </when>
+	   <otherwise>
+		,TO_DATE(gr.createDT,'YYYY-MM-DD') AS createDT
+		,TO_DATE(gr.updateDT,'YYYY-MM-DD') AS updateDT
+	    </otherwise>
+	</choose>
+		,gr.updaterID
+		,gr.agentID
+		,gr.grpAdmNM
+		,gr.defaultGrp
+		,gr.apvGrpID
+	 FROM tbl_apvgrpmaster gr 
+	 	WHERE gr.custID  = #{custID}
+ 		AND gr.grpAdmUID = #{userUID}
+ 		<if test='srchText != null and srchText != ""'>
+			<choose>
+			    <when test='SQLMODE == "mariadb"'>
+			AND CONCAT(gr.apvGrpNM, IFNULL(gr.apvGrpID,'')) REGEXP #{srchText}
+			    </when>
+			    <otherwise>
+			AND (gr.apvGrpNM || NVL(gr.apvGrpID,'')) LIKE '%'|| #{srchText} ||'%'; 
+			    </otherwise>
+			</choose>
+		</if>
+	</select>
+<!--THR0221 getApvgrpdetail -->	
+	<select id="getApvgrpdetail" parameterType="hashmap" resultType="hashmap">
+     SELECT 
+		agd.apvGrpDtlUID
+		,agd.apvGrpUID
+		,agd.apvLNO
+		,agd.apvUserUID
+		,agd.apvUserNM
+		,agd.dbSTS
+		,agd.createrID
+		,agd.updaterID
+	<choose>
+       <when test='SQLMODE == "mariadb"'>
+		,DATE_FORMAT(agd.createDT,'%Y-%m-%d') AS createDT
+		,DATE_FORMAT(agd.updateDT,'%Y-%m-%d') AS updateDT
+	   </when>
+	   <otherwise>
+		,TO_DATE(agd.createDT,'YYYY-MM-DD') AS createDT
+		,TO_DATE(agd.updateDT,'YYYY-MM-DD') AS updateDT
+	    </otherwise>
+	</choose>
+		,agd.agentID
+		FROM tbl_apvgrpdetail agd
+		WHERE agd.apvGrpUID = #{apvGrpUID}
+		ORDER BY apvLNO
+	</select>
+	
+	<!--THR0222 chkApvGrpMaster -->
+	<select id="chkApvGrpMaster" parameterType="hashmap" resultType="int">
+    	 SELECT count(apvGrpID) AS existCnt FROM tbl_apvgrpmaster
+		 WHERE apvGrpID = #{apvGrpID}
+		 AND grpAdmUID = #{userUID}
+    </select>
+    
+	<!--THR0223 insApvGrpMaster -->
+	<insert id="insApvGrpMaster" parameterType="hashmap">
+		<selectKey keyProperty="apvGrpUID" resultType="Long" order="BEFORE">
+       		 SELECT getUUID('tbl_apvgrpmaster') as apvGrpUID
+    	</selectKey>
+		INSERT INTO tbl_apvgrpmaster 
+				 (
+				 apvGrpUID
+				,apvGrpNM
+				,custID
+				,dbSTS
+				,createrID
+				,createDT
+				,agentID
+				,grpAdmNM
+				,grpAdmUID
+				,defaultGrp
+				,apvGrpID
+		 )VALUES(
+				#{apvGrpUID}
+				,#{apvGrpNM}
+				,#{custID}
+				,'Y'
+				,#{userUID}
+			<choose>
+				<when test='SQLMODE == "mariadb"'>
+				, NOW()
+				</when>
+				<otherwise>
+				, sysdate
+				</otherwise>
+			</choose>
+				,#{agentID}
+				,#{grpAdmNM}
+				,#{userUID}
+				,#{defaultGrp}
+				,#{apvGrpID}
+		)
+	</insert>
+	
+	<!--THR0223_01 /THR0224_01 insApvGrpDetail -->
+	<insert id="insApvGrpDetail" parameterType="com.sci4s.grpc.batch.TblScopes">
+		<foreach item="item" collection="list" separator=";">
+			INSERT INTO tbl_apvgrpdetail 
+			 	 (
+				 apvGrpDtlUID
+				 ,apvGrpUID
+				 ,apvLNO
+				 ,apvUserUID
+				 ,apvUserNM
+				 ,dbSTS
+				 ,createrID
+				 ,createDT
+				 ,agentID
+			 )VALUES(
+			     getUUID('tbl_apvgrpdetail')
+				,#{item.apvGrpUID}
+				,#{item.apvLNO}
+				,#{item.apvUserUID}
+				,#{item.apvUserNM}
+				,'Y'
+				,#{item.userUID}
+			<choose>
+				<when test='item.SQLMODE == "mariadb"'>
+				, NOW()
+				</when>
+				<otherwise>
+				, sysdate
+				</otherwise>
+			</choose>
+				,#{item.agentID}
+		    )
+		   </foreach>
+	</insert>
+	
+	<!-- THR0226 updApvGrpMaster update defaultGrp -->
+	<update id="updApvGrpMasterDefaultGrp" parameterType="hashmap">
+		UPDATE tbl_apvgrpmaster
+		    SET defaultGrp = 'N'
+	</update>
+	
+	<!--THR0225 chkApvGrpMaster -->
+	<select id="chkExistDefaultGrp" parameterType="hashmap" resultType="int">
+    	 SELECT COUNT(apvGrpUID) AS exitCnt FROM tbl_apvgrpmaster
+		 WHERE defaultGrp = #{defaultGrp}
+		 AND grpAdmUID = #{userUID}
+    </select>
+	
+	<!-- THR0224 updApvGrpMaster -->
+	<update id="updApvGrpMaster" parameterType="hashmap">
+		UPDATE tbl_apvgrpmaster
+		SET 
+		 <choose>
+			  <when test='SQLMODE == "oracle"'>
+		     updateDT = sysdate
+			  </when>
+			  <otherwise>
+		     updateDT = NOW()
+			  </otherwise>
+		</choose> 
+		<if test='dbSTS != null and dbSTS != ""'>
+           , dbSTS = #{dbSTS}
+		</if>
+		<if test='defaultGrp != null and defaultGrp != ""'>
+           , defaultGrp = #{defaultGrp}
+		</if>
+		<if test='apvGrpNM != null and apvGrpNM != ""'>
+           , apvGrpNM = #{apvGrpNM}
+		</if>
+		<if test='apvGrpID != null and apvGrpID != ""'>
+           , apvGrpID = #{apvGrpID}
+		</if>
+		 WHERE apvGrpUID  = #{apvGrpUID}
+	</update>
+
+	<!--delApvGrpDetail -->
+	<delete id="delApvGrpDetail">
+		DELETE FROM tbl_apvgrpdetail WHERE apvGrpUID = #{apvGrpUID}
+	</delete>
+	
+	<!--delApvGrpDetail -->
+	<delete id="delApvGrpMaster">
+		<foreach item="item" collection="list" separator=";">
+			DELETE FROM tbl_apvgrpmaster WHERE apvGrpUID = #{item.apvGrpUID}
+		</foreach>
+	</delete>
+	
+	
+	<!--delApvGrpDetailList-->
+	<delete id="delApvGrpDetailList">
+		<foreach item="item" collection="list" separator=";">
+		DELETE FROM tbl_apvgrpdetail WHERE apvGrpUID = #{item.apvGrpUID}
+		</foreach>
+	</delete>
+	
+	
+	   <!-- =================================
+                   결재관리 쿼리 끝 
+	     ================================= 
+	-->
+	
+	<!-- 계약용 고객협력사 코드 생성 -->
+	<insert id="insNewCustVdInfo" parameterType="hashmap">
+		INSERT INTO tbl_custvdinfo (
+		 vdUID
+		,custID
+		,vdID
+		,custVdID
+		,exceptChargeGB
+		,taxPassGB
+		,orgCustVdID
+		,buyCardGB
+		,createDT
+		,createrID
+		,dbSTS
+		,agentID
+		) 
+		SELECT
+		 #{uuID}     AS vdUID
+		,#{custID}   AS custID
+		,vdID
+		,#{custVdID} AS custVdID
+		,NULL        AS exceptChargeGB
+		,NULL        AS taxPassGB
+		,NULL        AS orgCustVdID
+		,NULL        AS buyCardGB
+		 <choose>
+			  <when test='SQLMODE == "oracle"'>
+		,SYSDATE     AS createDT
+			  </when>
+			  <otherwise>
+		,now()       AS createDT
+			  </otherwise>
+		</choose> 
+		,#{userUID}  AS createrID
+		,'Y'         AS dbSTS
+		,#{agentID}  AS agentID
+		 FROM tbl_vdInfo 	
+		WHERE vdUID = #{vdUID}
+	</insert>
+	
+	<!-- 자동완성 고객 협력사 검색 THR0107 -->
+	<select id="getCustVdList4Srch" parameterType="hashmap" resultType="hashmap">
+		SELECT a.vdID
+		     , b.vdNM
+		  FROM tbl_custvdinfo a
+		       INNER JOIN tbl_vdInfo b ON a.vdID = b.vdID 
+		  WHERE a.agentID = #{agentID}
+		    AND a.custID  = #{custID}
+		<if test='vdNM != null and vdNM != ""'>
+			<choose>
+			    <when test='SQLMODE == "mariadb"'>
+			AND CONCAT(b.vdID, IFNULL(b.vdNM,'')) REGEXP #{vdNM}
+			    </when>
+			    <otherwise>
+			AND (b.vdID || NVL(b.vdNM,'')) LIKE '%'|| #{vdNM} ||'%'; 
+			    </otherwise>
+			</choose>
+		</if>
+		 AND a.dbSTS   = 'Y'
+		 AND b.dbSTS   = 'Y'
+		 ORDER BY b.vdNM ASC
+	</select>
+	
+	<!-- 조직목록 검색 THR00300 -->
+	<select id="getOrg4Srch" parameterType="hashmap" resultType="hashmap">
+		SELECT 
+		<choose>
+			<when test='svcType == "A" || svcType == "C"  || svcType == "S"' >
+			   cc.custID AS srchID  , cc.custNM AS srchNM
+			   ,cc.addr1,cc.addr2, cc.telNO ,cc.zipCD
+			FROM tbl_custinfo cc
+			WHERE 1=1
+			<if test='srchText != null and srchText != ""'>
+				<choose>
+				    <when test='SQLMODE == "mariadb"'>
+				AND CONCAT(cc.custID , IFNULL(cc.custNM,'')) REGEXP #{srchText}
+				</when>
+				    <otherwise>
+				AND (cc.custID || NVL(cc.custNM,'')) LIKE '%'|| #{srchText} ||'%'; 
+				    </otherwise>
+				</choose>
+			</if>
+		    </when>
+		     <when test='svcType == "V"' >
+		    cc.vdID AS srchID  , cc.vdNM AS srchNM
+		    ,cc.addr1,cc.addr2, cc.telNO ,cc.zipCD
+			FROM tbl_vdinfo cc
+			WHERE 1=1
+			<if test='srchText != null and srchText != ""'>
+				<choose>
+				    <when test='SQLMODE == "mariadb"'>
+				AND CONCAT(cc.vdID , IFNULL(cc.vdNM,'')) REGEXP #{srchText}
+				</when>
+				    <otherwise>
+				AND (cc.vdID || NVL(cc.vdNM,'')) LIKE '%'|| #{srchText} ||'%'; 
+				    </otherwise>
+				</choose>
+			</if>
+		    </when>
+		</choose>
+	</select>
+	
+	<!-- 결재그룹 반려 정보 조회 THR221-->
+	<select id="getApvReturn4Option" parameterType="hashmap" resultType="hashmap">
+		SELECT 
+		<choose>
+		    <when test='SQLMODE == "mariadb"'>
+			GROUP_CONCAT(AA.apvUserNM, ' : ', IFNULL(AA.apvOpinion,'')) AS causeOfReturn
+		</when>
+		    <otherwise>
+			WM_CONCAT(AA.apvUserNM || NVL(AA.apvOpinion,'')) AS causeOfReturn
+		    </otherwise>
+		</choose>
+			FROM (
+				SELECT  
+				  A.apvOpinion
+				  , A.apvUserNM
+				FROM tbl_apvmaster B 
+				INNER JOIN tbl_apvdetail A ON A.apvUID = B.apvUID
+				WHERE B.docID = #{docID}
+				  AND A.apvGB  = #{apvGB}
+		) AA
+	</select>
+</mapper>

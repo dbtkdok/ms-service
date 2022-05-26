@@ -1,0 +1,254 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<services>
+	<proc>
+        <step PID="THR0082" method="getTempLoginUserList" query="N" service="loginService"/>
+    </proc>
+    <proc>
+        <step PID="THR0080" method="query4Data" query="getBorgUserPopList" service="commService"/>
+    </proc>
+    <proc>
+        <step PID="THR0100" method="query4Data" query="getUserCustAll4Combo" service="commService"/>
+    </proc>
+    <proc>
+        <step PID="THR0186" method="query4Data" query="getBorgPopList" service="commService"/>
+    </proc>
+    <proc>
+        <step PID="THR0187" method="query4Data" query="getCustPosPopList" service="commService"/>
+    </proc>
+    <proc>
+        <step PID="THR0180" method="query4Data" query="getBorgsList" service="commService"/>
+    </proc>
+    <proc>
+        <step PID="THR0181" method="query4Data" query="getBorgDtl" service="commService"/>
+    </proc>
+    <proc>
+        <step PID="THR0182" method="query4Data" query="chkBorg" service="commService"/>
+    </proc>
+    <proc>
+        <step PID="THR0183" method="query4Update" query="insBorgDtl" service="commService"/>
+    </proc>
+    <proc>
+        <step PID="THR0184" method="query4Update" query="updBorgDtl" service="commService"/>
+    </proc>
+    <proc>
+        <step PID="THR0101" method="query4Data" query="getCustInfoAll4Combo" service="commService"/>
+    </proc>
+    <proc>
+        <step PID="THR0081" method="query4Data" query="getCustUserAll4Combo" service="commService"/>
+    </proc>
+    <proc>
+        <step PID="THR0010" method="query4Data" query="getUserInfoList" service="commService"/>
+    </proc>
+    <proc>
+        <step PID="THR0011" method="query4Data" query="getUserInfoDtl" service="commService"/>
+    </proc>
+    <proc>
+        <step PID="THR0015" method="query4Data" query="getUserCustInfoList" service="commService"/>
+    </proc>
+    
+    <proc>
+    	<step PID="THR0018"  service="commService" query="delTblCustUserList" method="query4Updates"/>
+    </proc>
+    
+    <proc>
+        <step PID="THR0020" method="query4Data" query="getCustInfoList" service="commService"/>
+    </proc>
+    <proc>
+        <step PID="THR0022" method="query4Data" query="chkCustID" service="commService"/>
+    </proc>
+    <proc>
+        <step PID="THR0023" method="query4Update" query="insCustInfo" service="commService"/>
+    </proc>
+    <proc>
+        <step PID="THR0024" method="query4Update" query="updCustInfo" service="commService"/>
+    </proc>
+    <proc>
+        <step PID="THR0029" method="query4Updates" query="delCustInfo" service="commService"/>
+    </proc>
+    <proc>
+        <step PID="THR0012" method="query4Data" query="chkLoginID" service="commService"/>
+    </proc>
+    <proc>
+        <step PID="THR0019" method="query4Updates" query="delUserInfo" service="commService"/>
+    </proc>
+    <!-- 사용자관리 수정 -->
+<!--     <proc> -->
+<!--         <step PID="THR0014" method="query4Update" query="updUserInfo" service="commService"/> -->
+<!--     </proc> -->
+    <proc>
+        <step PID="THR0014" method="saveUserInfo" query="N" service="thrService"/>
+    </proc>
+    <proc>
+        <step PID="THR0189" method="query4Updates" query="delBorgList" service="commService"/>
+    </proc>
+    <proc>
+        <step PID="SECU001" method="query4Data" query="getLoginUserInfoForAll" service="commService"/>
+    </proc>
+        
+    <proc>
+        <step PID="SECU800" method="query4Update" query="insPersistentLogins" service="commService"/>
+    </proc>
+    <proc>
+        <step PID="SECU801" method="query4Update" query="updPersistentLogins" service="commService"/>
+    </proc>
+    <proc>
+        <step PID="SECU802" method="query4Update" query="delPersistentLogins" service="commService"/>
+    </proc>
+    <proc>
+        <step PID="SECU803" method="query4Data"   query="selPersistentLogins" service="commService"/>
+    </proc>
+
+    <proc>
+        <step PID="THR0200" method="query4Data" query="getProjectLeadUser" service="commService"/>
+    </proc>
+    <proc>
+        <step PID="THR0210" method="query4Data" query="getProjectUser" service="commService"/>
+    </proc>
+    <proc>
+        <step PID="THR0021" method="query4Data" query="chkBizNO" service="commService"/>
+    </proc>
+    <!-- 사용자관리상세 등록 -->
+<!--     <proc> -->
+<!--         <step PID="THR0013" method="query4Update" query="insUserInfoDtl" service="commService"/> -->
+<!--         <step PID="THR0013_01" caseDoRun="After" caseRET="Boolean" getParams="attachID|puserUID|docGB|docKey" getVar="attachID" method="query4Msa" query="updTblAttach4DocNO" service="commService"> -->
+<!--             <caseDo execMode="One" service="commService" subMethod="none" subQuery1="continue"> -->
+<!--                 <caseIF><![CDATA['attachID'!='']]></caseIF> -->
+<!--             </caseDo> -->
+<!--         </step> -->
+<!--     </proc> -->
+    <proc>
+        <step PID="THR0013" method="saveUserInfo" query="N" service="thrService"/>
+    </proc>
+    <proc>
+        <step PID="THR220" method="query4Data" query="getApvgrpmaster" service="commService"/>
+    </proc>
+    <proc>
+        <step PID="THR0220" method="query4Data" query="getApvGrpMaster" service="commService"/>
+    </proc>
+    <proc>
+        <step PID="THR0221" method="query4Data" query="getApvgrpdetail" service="commService"/>
+    </proc>
+    <proc>
+        <step PID="THR0222" method="query4Data" query="chkApvGrpMaster" service="commService"/>
+    </proc>
+    <proc>
+        <step PID="THR0800" method="query4Data" query="getApvGrpMasterList" service="commService"/>
+    </proc>
+    <proc>
+        <step PID="THR0810" method="query4Data" query="getApvDetailList" service="commService"/>
+    </proc>
+    <proc>
+        <step PID="THR0229" getKey="apvGrpUID" getParams="apvGrpUID" method="query4Updates" query="delApvGrpMaster" service="commService"/>
+        <step PID="THR0229_01" getKey="apvGrpUID" getParams="apvGrpUID" method="update4sub" query="delApvGrpDetailList" service="commService"/>
+    </proc>
+    <proc>
+        <step PID="THR0224" caseDoRun="Before" caseRET="Boolean" getKey="apvGrpUID" getParams="apvGrpUID" getVar="apvGrpUID" method="query4Update" prevMethod="query4Update" prevQuery="delApvGrpDetail" query="updApvGrpMaster" service="commService">
+            <caseDo execMode="Auto" service="commService" subMethod="none" subQuery1="continue" subQuery2="throw"/>
+        </step>
+        <step PID="THR0224_01" getKey="apvGrpUID" getParams="apvGrpUID" method="update4sub" query="insApvGrpDetail" service="commService"/>
+    </proc>
+    <proc>
+        <step PID="THR0225" method="query4Data" query="chkExistDefaultGrp" service="commService"/>
+    </proc>
+    <proc>
+        <step PID="THR0226" method="query4Update" query="updApvGrpMasterDefaultGrp" service="commService"/>
+    </proc>
+    <proc>
+        <step PID="THR0223" caseDoRun="Before" getKey="apvGrpUID" 
+        	getParams="apvGrpUID|apvGrpNM|custID|createID|dbSTS|agentID|grpAdmNM|apvGrpID|defaultGrp" 
+        	getVar="apvGrpUID" method="query4Update" query="insApvGrpMaster" service="commService"/>
+        <step PID="THR0223_01" method="update4sub" query="insApvGrpDetail" service="commService" getKey="apvGrpUID" 
+        	getParams="apvGrpUID|apvGrpNM|custID|createID|dbSTS|agentID|grpAdmNM|apvGrpID|defaultGrp" />
+    </proc>
+    <proc>
+        <step PID="THR0UID" method="query4Data" query="getUUID" service="commService"/>
+    </proc>
+    <proc>
+        <step PID="THR3023R" method="query4Data" query="getContChk4DupApv" service="commService"/>
+    </proc>
+    <proc>
+        <step PID="THR0820" caseDoRun="After" caseRET="Choice" getParams="agentID|userUID|uuID|apvCustID|custIDm|custNM|vdID|vdNM|apvGrpUID|docID|docNO|docGB|procSTS|contMethod|aprContent|apvTitle|prBorgNM|srcTot|contTot|bdgTot|srcLeadTime|attachID|apvLNOm" getVar="apvUID" method="query4Updates" postMethod="query4Update" postQuery="insApvMaster" query="insApvDetail4Batch" service="commService">
+            <caseDo execMode="One" service="commService" subMethod="none" subQuery1="batch" subQuery2="throw" throwMsg="결재상신UID가 없습니다.">
+                <caseIF><![CDATA[('uuID'!='' && 'uuID'!='0'?'subQuery1':'subQuery2')]]></caseIF>
+            </caseDo>
+        </step>
+    </proc>
+    <proc>
+        <step PID="THR0824" method="query4Data" query="getApvMasterList" service="commService"/>
+    </proc>
+    <proc>
+        <step PID="THR0813" method="query4Data" query="getCurrApvDetailList" service="commService"/>
+    </proc>
+    <proc>
+        <step PID="THR0812" method="query4Data" query="getCurrApvUserUID" service="commService"/>
+    </proc>
+    <proc>
+        <step PID="THR0825A" caseDoRun="After" caseRET="Choice" getKey="uuID" getParams="agentID|userUID|apvUID|apvLNO|apvSTS|causeOfReturn|sufxSTS" getVar="apvUID" method="query4Updates" postMethod="query4Update" postQuery="updApvMaster" prevMethod="query4Data" prevQuery="getUUID" query="updApvDetail4Batch" service="commService">
+            <caseDo execMode="One" service="commService" subMethod="none" subQuery1="batch" subQuery2="throw" throwMsg="결재상신UID가 없습니다.">
+                <caseIF><![CDATA[('apvUID'!='' && 'apvUID'!='0'?'subQuery1':'subQuery2')]]></caseIF>
+            </caseDo>
+        </step>
+        <step PID="THR0825A_01" caseDoRun="After" caseRET="Choice" chkKey="apvUID" getKey="apvUID" getVar="sufxSTS" method="query4Update" query="updApvDetail4RejectGB" service="commService">
+            <caseDo execMode="One" service="commService" subMethod="none" subQuery1="continue" subQuery2="skip">
+                <caseIF><![CDATA[('sufxSTS'=='26'?'subQuery1':'subQuery2')]]></caseIF>
+            </caseDo>
+        </step>
+    </proc>
+    <proc>
+        <step PID="THR0825D" caseDoRun="After" caseRET="Choice" getParams="agentID|userUID|apvUID" getVar="apvUID" method="query4Update" postMethod="query4Update" postQuery="insApvDetailHist" query="insApvMasterHist" service="commService">
+            <caseDo execMode="One" service="commService" subMethod="none" subQuery1="continue" subQuery2="throw" throwMsg="결재상신UID가 없습니다.">
+                <caseIF><![CDATA[('apvUID'!='' && 'apvUID'!='0'?'subQuery1':'subQuery2')]]></caseIF>
+            </caseDo>
+        </step>
+        <step PID="THR0825D_01" method="query4Update" postMethod="query4Update" postQuery="delApvMaster4apvUID" query="delApvDetail4apvUID" service="commService"/>
+    </proc>
+    <proc>
+        <step PID="SYNC001" method="getMstInfo" query="N" service="commService"/>
+    </proc>
+    <proc>
+        <step PID="THR0103" getParams="vdID" method="query4Updates" query="insVdPartners" service="commService"/>
+    </proc>
+    <proc>
+        <step PID="THR0102" method="query4Data" query="getVdPartners4Combo" service="commService"/>
+    </proc>
+    <proc>
+        <step PID="THR0104" method="query4Data" query="getUserCust" service="commService"/>
+    </proc>
+    <proc>
+        <step PID="THR0105" method="query4Updates" query="insUserCust" service="commService"/>
+    </proc>
+    <proc>
+        <step PID="THR0106" method="query4Updates" query="delUserCust" service="commService"/>
+        <step PID="THR0106_01" method="update4sub" query="insUserCust" service="commService"/>
+    </proc>
+    <proc>
+        <step PID="THR0185" method="query4Data" query="getBorgList4Srch" service="commService"/>
+    </proc>
+    <proc>
+        <step PID="THR0107" method="query4Data" query="getCustVdList4Srch" service="commService"/>
+    </proc>
+    <proc>
+        <step PID="THR0300" method="query4Data" query="getOrg4Srch" service="commService"/>
+    </proc>
+    <proc>
+        <step PID="THR0400" method="query4Data" query="getCustInfo4Auto" service="commService"/>
+    </proc>
+    <proc>
+        <step PID="COM0000" method="query4Test" query="N" service="commService"/>
+    </proc>
+    <proc>
+        <step PID="THR221" method="query4Data" query="getApvReturn4Option" service="commService"/>
+    </proc>
+    <proc>
+        <step PID="THR001" method="getUserInfos" query="N" service="thrService"/>
+    </proc>
+    <proc>
+        <step PID="THR002" method="getCustInfos" query="N" service="thrService"/>
+    </proc>
+    <proc>
+        <step PID="THR003" method="getUserCustInfos" query="N" service="thrService"/>
+    </proc>
+        <proc>
+        <step PID="CRT0001" method="getFirstAuthData" query="N" service="loginService"/>
+    </proc>
+</services>

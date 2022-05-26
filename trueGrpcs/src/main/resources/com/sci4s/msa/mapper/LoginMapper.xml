@@ -1,0 +1,883 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sci4s.msa.mapper.LoginMapper">
+	<!-- 일괄작업ID -->
+	<select id="getUUID" parameterType="hashmap" resultType="hashmap">
+		<choose>
+		  <when test='SQLMODE == "mariadb"'>
+			SELECT getUUID('tbl_uuids') AS uuID
+		  </when>
+		  <otherwise>
+		  	SELECT seq_uuid.nextval AS uuID FROM DUAL
+		  </otherwise>
+		</choose>
+	</select>
+
+	<select id="getLoginUserInfoForAll" parameterType="hashmap" resultType="com.sci4s.msa.hr.dto.UserInfo">
+		SELECT
+		  AA.userUID
+		, AA.loginID
+		, AA.pwd
+		, AA.userPW
+		<choose>
+			<when test='series != null and series != "" and series != "0"'>
+		, (SELECT token FROM tbl_persistent_logins WHERE series = #{series} limit 1) as token
+			</when>
+			<otherwise>
+		, 'N' AS token
+			</otherwise>
+		</choose>
+		, AA.userNM
+		, AA.userNMEng
+		, AA.userNMCN
+		, AA.empNO
+		, ''        AS regionCD
+		, ''        AS regionNM
+		, AA.zipCD
+		, AA.telNO
+		, AA.mobile
+		, AA.userGB AS userType
+		, CASE WHEN AA.dbSTS = 'Y' THEN 1 ELSE 0 END AS isActive
+		, AA.roleID
+		, AA.grade
+		, AA.faxNO
+		, CASE WHEN AA.roleID = 'AU0000' OR AA.roleID = 'AU0001' THEN 1 ELSE 0 END AS totAdminYn
+		, AA.addr1
+		, AA.addr2
+		, AA.email
+		, AA.custID
+		, CASE WHEN AA.userGB = 'V' THEN (SELECT vdNM FROM tbl_vdinfo WHERE vdID = AA.custID)
+		       ELSE (SELECT custNM FROM tbl_custinfo WHERE custID = AA.custID) 
+		       END AS custNM
+		, CASE WHEN AA.userGB = 'V' THEN (SELECT vdNMEng FROM tbl_vdinfo WHERE vdID = AA.custID)
+		       ELSE (SELECT custNMEng FROM tbl_custinfo WHERE custID = AA.custID) 
+		       END AS custNMEng
+		, CASE WHEN AA.userGB = 'V' THEN (SELECT vdNMCN FROM tbl_vdinfo WHERE vdID = AA.custID)
+		       ELSE (SELECT custNMCN FROM tbl_custinfo WHERE custID = AA.custID) 
+		       END AS custNMCN
+		, AA.custID AS obuID
+		, CASE WHEN AA.userGB = 'V' THEN (SELECT vdNM FROM tbl_vdinfo WHERE vdID = AA.custID)
+		       ELSE (SELECT custNM FROM tbl_custinfo WHERE custID = AA.custID) 
+		       END AS obuNM
+		, AA.borgUID
+		, AA.borgID
+		, AA.borgNM
+		, AA.agentID
+		, ''         AS userActFile
+		, AA.dbSTS
+		, AA.gridColor
+		, AA.sign
+		FROM tbl_userinfo AA
+		WHERE 
+		<choose>
+			<when test='userUID != null and userUID != "" and userUID != "0"'>
+				AA.userUID = #{userUID}
+			</when>
+			<otherwise>
+				AA.dbSTS = 'Y'		
+ 				<if test='custID != null and custID != "" and custID != "0"'> 
+ 			AND AA.custID  = #{custID} 
+				</if> 
+				<if test='loginID != null and loginID != ""'>
+			AND AA.loginID = #{loginID}
+				</if>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<!--  사용자 로그인 히스토리 저장...sci4s...2020.08.05 -->
+	<insert id="insUserLoginHistory" parameterType="hashmap">
+		insert into tbl_loginhistory (
+			 histUID
+			,csKey
+			,agentID
+			,userUID
+			,borgUID
+			,userIP
+			,serverIP
+		<if test='userMacAddr != null and userMacAddr != ""'>
+			,userMacAddr
+		</if>
+		) value (
+		     getUUID('uuID')
+			,#{csKey,    jdbcType=VARCHAR}
+			,#{agentID,  jdbcType=VARCHAR}
+			,#{userUID,  jdbcType=BIGINT}
+			,#{borgUID,  jdbcType=BIGINT}
+			,#{userIP,   jdbcType=VARCHAR}
+			,#{serverIP, jdbcType=VARCHAR}
+		<if test='userMacAddr != null and userMacAddr != ""'>
+			,#{userMacAddr, jdbcType=VARCHAR}
+		</if>
+		)
+	</insert>
+	
+	<!-- 스프링 시큐리티에 보내는 단순 로그인 정보임. -->
+	<select id="loginSecurityInfo" parameterType="hashmap" resultType="com.sci4s.msa.hr.dto.MemberVO">
+			select aa.loginID
+			     , aa.pwd AS userPW
+			     , case AA.dbSTS 
+					when 'Y' then 1
+					ELSE 2 END AS enabled 
+			     , aa.userNM
+			     , aa.createDT as regDate
+			     , aa.updateDT as updDate
+			     , aa.userUID
+			     , aa.borgUID
+			     , aa.borgNM
+			     , aa.agentID
+			     , aa.pwd AS aes256PW
+		<choose>
+			<when test='series != null and series != "" and series != "0"'>
+				 , (SELECT token FROM tbl_persistent_logins WHERE series = #{series} limit 1) as token
+			</when>
+			<otherwise>
+				 , 'N' AS token
+			</otherwise>
+		</choose>			     
+		  from tbl_userInfo aa 
+		 where aa.loginID = #{loginID}
+	</select>
+	
+	<!-- 부서별 사용자 정보 -->
+	<select id="getBorgUserPopList" parameterType="hashmap" resultType="hashmap">
+		SELECT aa.custID
+		     ,CASE WHEN aa.userGB = 'V' THEN (SELECT vdNM FROM tbl_vdinfo WHERE vdID = aa.custID)
+			 	     WHEN aa.agentID = '14' THEN (SELECT custNM FROM tbl_custinfo WHERE custRUID = aa.custID)
+			        ELSE (SELECT custNM FROM tbl_custinfo WHERE custID = aa.custID) 
+			        END as custNM
+		     , aa.borgID, aa.borgNM, aa.loginID, aa.userUID, aa.userNM, aa.gridColor
+		     , aa.grade
+		  FROM tbl_userinfo aa
+		 WHERE aa.agentID = #{agentID}
+		 <choose>
+			    <when test='agentID == "14"'>
+			    </when>
+			    <otherwise>
+			     	AND aa.custID  = #{custID}
+			    </otherwise>
+		</choose>
+		  
+		<if test='borgID != null and borgID != ""'>
+	       AND aa.borgID  = #{borgID}
+		</if>			   
+		<if test='srchText != null and srchText != ""'>
+			<choose>
+			    <when test='SQLMODE == "mariadb"'>
+		   AND CONCAT(aa.loginID,IFNULL(aa.userNM,''),IFNULL(aa.borgNM,'')) REGEXP #{srchText}
+			    </when>
+			    <otherwise>
+		   AND (aa.loginID || NVL(aa.borgNM,'') || NVL(aa.userNM,'')) LIKE '%'|| #{srchText} ||'%'
+			    </otherwise>
+			</choose>
+		</if>
+		   AND aa.dbSTS   = 'Y'
+		 ORDER BY aa.userNM
+	</select>
+	
+	<!-- 임시로그인 사용자 목록 -->
+	<select id="getTempLoginUserList" parameterType="hashmap" resultType="hashmap">
+			SELECT CONCAT('[',userGB,']', userNM) as userNM, loginID, userGB
+			  FROM tbl_userinfo
+			 WHERE empNO = 'TEMPLOGIN'
+		    ORDER BY userNM
+	</select>
+
+	<!-- Approval Line management 
+			{'apvUerNM':'김철수'
+			,'apvDT' : '2020-12-23 12:21'	
+			,'apvGBNM' : '승인 완료'	
+			,'apvRmk' : '승인 요청'
+			,'apvGrpUID' : 'uid1'
+			3024:기안 작성 -> 3028:품의중 -> 결재요청, 3030:승인  -> 3026:승인반려, 3025:협력사거부
+			
+			tbl_apvmaster 결재상태 조회 : 요청(10)/요청(재결재)(15) -> 대기(20)/대기(재결재)(25) -> 승인(40)/승인(재결재)(45)  -> 반려(26) 
+	-->
+    <select id="getApvGrpMasterList" parameterType="hashmap" resultType="hashmap">
+		SELECT apvGrpUID AS code, apvGrpNM AS text, apvGrpID as text2
+		  FROM tbl_apvGrpMaster 
+		 WHERE grpAdmUID = #{userUID}
+		<if test='defGrp != null and defGrp != ""'>
+	       AND defaultGrp  = #{defGrp}
+		</if>		
+		 ORDER BY apvGrpNM
+    </select>
+    <!--  결재상태 조회 함수
+    SELECT fnGetCodeVal1('13', 'APVGB', '40', 'KR') AS apvGBNM
+    -->
+    <select id="getApvDetailList" parameterType="hashmap" resultType="hashmap">
+	    SELECT A.apvGrpDtlUID, B.custID, A.apvGrpUID, A.apvLNO, #{userUID} AS aprUserUID, A.apvUserUID, A.apvUserNM
+	         , A.apGB, '' AS apvDT, '' AS apvOpinion
+		<choose>
+		    <when test='procSTS != null and procSTS != "" and procSTS == "3020"'>
+		    , (CASE WHEN A.apvLNO = 1 THEN '10'
+		            WHEN A.apvLNO = 2 THEN '20' 
+		            ELSE ''
+		            END) AS apvGB
+		    </when>
+		    <otherwise>
+		    , (CASE WHEN A.apvLNO = 1 THEN '15'
+		            WHEN A.apvLNO = 2 THEN '25' 
+		            ELSE ''
+		            END) AS apvGB
+		    </otherwise>
+		</choose>
+		<choose>
+		    <when test='procSTS != null and procSTS != "" and procSTS == "3020"'>
+		    , (CASE WHEN A.apvLNO = 1 THEN fnGetCodeVal1(#{agentID}, 'APVGB', '10', #{clang})
+		            WHEN A.apvLNO = 2 THEN fnGetCodeVal1(#{agentID}, 'APVGB', '20', #{clang})
+		            ELSE ''
+		            END) AS apvGBNM
+		    </when>
+		    <otherwise>
+		    , (CASE WHEN A.apvLNO = 1 THEN fnGetCodeVal1(#{agentID}, 'APVGB', '15', #{clang})
+		            WHEN A.apvLNO = 2 THEN fnGetCodeVal1(#{agentID}, 'APVGB', '25', #{clang})
+		            ELSE ''
+		            END) AS apvGBNM
+		    </otherwise>
+		</choose>
+		  FROM tbl_apvGrpDetail A INNER JOIN tbl_apvGrpMaster B ON A.apvGrpUID = B.apvGrpUID
+		 WHERE 
+		<choose>
+		    <when test='defGrp != null and defGrp != "" and defGrp == "Y"'>
+		      A.apvGrpUID = (SELECT apvGrpUID FROM tbl_apvGrpMaster WHERE grpAdmUID = #{userUID} AND defaultGrp = 'Y')
+		    </when>
+		    <otherwise>
+		      A.apvGrpUID = #{apvGrpUID}
+		    </otherwise>
+		</choose>
+		  AND A.dbSTS = 'Y'
+		ORDER BY A.apvLNO
+    </select>
+    
+	<!-- 기결재 건 존재여부 조회 -->
+	<select id="getContChk4DupApv" parameterType="hashmap" resultType="hashmap">
+		SELECT COUNT(*)  AS apvChk
+		  FROM tbl_apvMaster
+		 WHERE apvUID = #{contApvUID}
+		   AND procSTS IN ('10', '15', '20', '25', '40', '45')
+		   AND dbSTS  = 'N'
+	</select>
+    
+    <!-- THR0820 : 결재상신 라인등록 , DOCGB : PR(구매요구), SRC(시장조사), BID(입찰), CONT(계약) -->	
+	<insert id="insApvDetail4Batch" parameterType="hashmap">
+	    <foreach item="item" collection="list" index="index" separator=";">
+		    INSERT INTO tbl_apvdetail (
+				 apvDtlUID
+				,apvUID
+				,custID
+				,aprDT
+				,aprUserUID
+				,apvUserUID
+				,apvUserNM
+				,apvLNO
+				,apGB
+				,rejectGB
+				,apvDT				
+				,apvGB
+		<if test='item.apvOpinion != null and item.apvOpinion != ""'>
+	       	    ,apvOpinion
+		</if>
+				,createDT
+				,createrID
+				,dbSTS
+				,agentID
+			) VALUES (
+				 getUUID('apvDtlUID')
+				,#{item.apvUID}
+				,#{item.custID}
+		<choose>
+		  <when test='item.SQLMODE == "mariadb"'>
+		        ,DATE_FORMAT(now(),'%Y%m%d')
+		  </when>
+		  <otherwise>
+		        ,TO_CHAR(SYSDATE,'YYYYMMDD')
+		  </otherwise>
+		</choose>
+				,#{item.aprUserUID} 
+				,#{item.apvUserUID}
+				,#{item.apvUserNM}
+				,#{item.apvLNO}
+				,#{item.apGB}
+				,'N'
+		<choose>
+		  <when test='item.apvGB != null and item.apvGB != "" and item.apvGB == "40"'>
+			<choose>
+			  <when test='item.SQLMODE == "mariadb"'>
+			    ,now()
+			  </when>
+			  <otherwise>
+			    ,SYSDATE
+			  </otherwise>
+			</choose>
+				,#{item.apvGB}     <!-- apvGB 결재구분(10:요청,20:대기,40:결재,26:반려) -->
+		  </when>
+		  <when test='item.apvGB != null and item.apvGB != "" and item.apvGB != "40"'>
+				,null
+				,#{item.apvGB}     <!-- apvGB 결재구분(10:요청,20:대기,40:결재,26:반려) -->
+		  </when>
+		  <otherwise>
+				,null
+				,null
+		  </otherwise>
+		</choose>
+		<if test='item.apvOpinion != null and item.apvOpinion != ""'>
+	       	    ,#{item.apvOpinion}
+		</if>
+		<choose>
+		  <when test='item.SQLMODE == "mariadb"'>
+		        ,now()
+		  </when>
+		  <otherwise>
+		        ,SYSDATE
+		  </otherwise>
+		</choose>
+		        ,#{item.userUID}
+				,'Y'
+				,#{item.agentID}
+			)
+		</foreach>
+	</insert>
+	
+	<!-- THR0825A : 결재승인 , DOCGB : PR(구매요구), SRC(시장조사), BID(입찰), CONT(계약) -->	
+	<update id="updApvDetail4Batch" parameterType="hashmap">
+	    <foreach item="item" collection="list" index="index" separator=";">
+		    UPDATE tbl_apvdetail 
+               SET 
+		<choose>
+		  <when test='item.SQLMODE == "mariadb"'>
+		         updateDT = now()
+		        ,apvDT = now()
+		  </when>
+		  <otherwise>
+		         updateDT = SYSDATE
+		        ,apvDT = SYSDATE
+		  </otherwise>
+		</choose>
+                ,updaterID  = #{item.userUID}
+                ,apvGB      = #{item.apvGB}
+		<if test='item.apvOpinion != null and item.apvOpinion != ""'>
+	       	    ,apvOpinion = #{item.apvOpinion}
+		</if>
+		        ,jobID      = #{item.uuID}
+		    WHERE apvDtlUID = #{item.apvDtlUID}
+		</foreach>
+	</update>
+	
+	<!-- THR0825A_01 : 반려일 경우, 반려된건인지여부='Y'로 수정함. -->	
+	<update id="updApvDetail4RejectGB" parameterType="hashmap">
+		UPDATE tbl_apvdetail SET rejectGB  = 'Y' WHERE apvUID = #{apvUID}
+	</update>
+	
+	<!-- THR0825A : 결재승인 , DOCGB : PR(구매요구), SRC(시장조사), BID(입찰), CONT(계약) -->	
+	<update id="updApvMaster" parameterType="hashmap">
+		    UPDATE tbl_apvMaster
+               SET 
+		<choose>
+		  <when test='SQLMODE == "mariadb"'>
+		         updateDT = now()
+		  </when>
+		  <otherwise>
+		         updateDT = SYSDATE
+		  </otherwise>
+		</choose>
+                ,updaterID = #{userUID}
+		<if test='causeOfReturn != null and causeOfReturn != ""'>
+	       	    ,causeOfReturn = #{causeOfReturn}
+			<choose>
+			  <when test='SQLMODE == "mariadb"'>
+		        ,rejectDT = now()
+			  </when>
+			  <otherwise>
+		        ,rejectDT = SYSDATE
+			  </otherwise>
+			</choose>
+		</if>
+		<if test='apvSTS != null and apvSTS != ""'>
+	       	    ,procSTS = #{apvSTS}
+		</if>
+		<if test='apvLNO != null and apvLNO != ""'>
+	       	    ,apvLNO = #{apvLNO}
+		</if>
+		    WHERE apvUID = #{apvUID}
+	</update>
+	    
+    <!-- THR0820 : 결재상신 등록 , DOCGB : PR(구매요구), SRC(시장조사), BID(입찰), CONT(계약) -->	
+	<insert id="insApvMaster" parameterType="hashmap">
+		INSERT INTO tbl_apvmaster (
+		   apvUID,         custID,        custNM,
+		<if test='adtUID != null and adtUID != ""'>
+	       adtUID,
+		</if>  
+		   apvGrpUID,      docID,         docNO,
+		   docGB,          
+		   aprDT,
+		   procSTS,        aprUserUID,    
+		   aprUserNM,
+		   vdID,           vdNM,
+		<if test='usages != null and usages != ""'>
+	       usages,
+		</if>
+		<if test='bdgGB != null and bdgGB != ""'>
+	       bdgGB,
+		</if>
+		<if test='contMethod != null and contMethod != ""'>
+	       contMethod,
+		</if>
+		   aprContent,
+		   apvTitle,
+		   prBorgNM,
+		<if test='srcTot != null and srcTot != ""'>
+	       srcTot,
+		</if>
+		<if test='bdgTot != null and bdgTot != ""'>
+	       bdgTot,
+		</if>
+		<if test='contTot != null and contTot != ""'>
+	       contTot,
+		</if>
+		<if test='srcLeadTime != null and srcLeadTime != ""'>
+	       srcLeadTime,
+		</if>
+		<if test='apvCustID != null and apvCustID != ""'>
+	       apvCustID,
+		</if>
+		<if test='attachID != null and attachID != ""'>
+	       attachID,
+		</if>
+		<if test='apvLNOm != null and apvLNOm != ""'>
+	       apvLNO,
+		</if>
+		<if test='causeOfReturn != null and causeOfReturn != ""'>
+	       causeOfReturn,
+		</if>
+		   dbSTS,         createDT,       createrID,
+		   agentID
+		) VALUES (
+		   #{uuID},       #{custIDm},    #{custNM},
+		<if test='adtUID != null and adtUID != ""'>
+	       #{adtUID},
+		</if>
+		   #{apvGrpUID},   #{docID},      #{docNO},
+		   #{docGB},
+		<choose>
+		  <when test='SQLMODE == "mariadb"'>
+		   DATE_FORMAT(now(),'%Y%m%d'),
+		  </when>
+		  <otherwise>
+		   TO_CHAR(SYSDATE,'YYYYMMDD'),
+		  </otherwise>
+		</choose>
+		   #{procSTS},     #{userUID},
+		   (SELECT userNM FROM tbl_userinfo WHERE userUID = #{userUID}),
+		   #{vdID},        #{vdNM},
+		<if test='usages != null and usages != ""'>
+	       #{usages},
+		</if>
+		<if test='bdgGB != null and bdgGB != ""'>
+	       #{bdgGB},
+		</if>
+		<if test='contMethod != null and contMethod != ""'>
+	       #{contMethod},
+		</if>
+		   #{aprContent},
+		   #{apvTitle},
+		   #{prBorgNM},
+		<if test='srcTot != null and srcTot != ""'>
+	       #{srcTot},
+		</if>
+		<if test='bdgTot != null and bdgTot != ""'>
+	       #{bdgTot},
+		</if>
+		<if test='contTot != null and contTot != ""'>
+	       #{contTot},
+		</if>
+		<if test='srcLeadTime != null and srcLeadTime != ""'>
+	       #{srcLeadTime},
+		</if>
+		<if test='apvCustID != null and apvCustID != ""'>
+	       #{apvCustID},
+		</if>
+		<if test='attachID != null and attachID != ""'>
+	       #{attachID},
+		</if>
+		<if test='apvLNOm != null and apvLNOm != ""'>
+	       #{apvLNOm},
+		</if>
+		<if test='causeOfReturn != null and causeOfReturn != ""'>
+	       #{causeOfReturn},
+		</if>
+		   'Y',
+		<choose>
+		  <when test='SQLMODE == "mariadb"'>
+		   now(),
+		  </when>
+		  <otherwise>
+		   SYSDATE,
+		  </otherwise>
+		</choose>
+		   #{userUID},
+		   #{agentID}
+		)
+<!-- 
+<if test='srcPrice == null or srcPrice == ""'>
+ 	CASE #{docGB} 
+ 	WHEN 'BD1' THEN
+ 		(SELECT SUM(basicPrice * qty) FROM tbl_bidPItemNotice A WHERE totBidNO = #{docID} AND dbSTS = 'Y' )
+ 	WHEN 'BD2' THEN
+ 		(SELECT SUM(basicPrice * qty) FROM tbl_bidPItemNotice A WHERE TOTBIDNO = #{docID} AND dbSTS = 'Y' )
+ 	WHEN 'CONT' THEN
+ 		(SELECT SUM(basicPrice * contQty) FROM tbl_contDetail WHERE custContNO = #{docNO} AND dbSTS = 'Y' )
+ 	ELSE
+		(SELECT SUM(basicPrice * contQty) FROM tbl_contDetail WHERE contID = #{docID} AND dbSTS = 'Y' )
+	END,
+</if>
+<if test='confPrice == null or confPrice == ""'>
+ 	CASE #{docGB} 
+ 	WHEN 'CONT' THEN
+ 		(SELECT SUM(aspectPrice * contQty) FROM tbl_contDetail WHERE custContNO = #{docNO} AND dbSTS = 'Y' ) 
+ 	ELSE
+ 	 	#{confPrice}
+ 	END,
+</if>
+<if test='contPrice == null or contPrice == ""'>
+ 	CASE #{docGB}
+ 	WHEN 'FC' THEN
+ 		(SELECT SUM(contPrice * contQty) FROM tbl_contDetail WHERE contID = #{docID} AND dbSTS = 'Y' )
+ 	WHEN 'FCC' THEN
+ 		(SELECT SUM(contPrice * contQty) FROM tbl_contDetail WHERE contID = #{docID} AND dbSTS = 'Y' )
+ 	WHEN 'FR' THEN
+ 		(SELECT SUM(contPrice * contQty) FROM tbl_contDetail A WHERE custContNO = #{docNO} AND dbSTS = 'Y' )	
+ 	ELSE
+		$fcPrice$
+	END,
+</if>
+-->
+	</insert>
+	
+	<!-- 결재대상 조회 -->
+	<select id="getApvMasterList" parameterType="hashmap" resultType="hashmap">
+	SELECT A.apvUID,     A.custID,      A.custNM  , A.docGB
+	     , fnGetCodeVal1('13', 'APVDOCGB', A.docGB, #{clang}) AS docGBNM
+	     , A.docNO,      A.apvTitle,    A.prBorgNM, A.contMethod
+	     , A.vdID,       A.vdNM,        A.srcTot,   A.bdgTot
+	     , A.contTot,    A.srcLeadTime, A.procSTS
+	     , fnGetCodeVal1(#{agentID}, 'PROCSTS', A.procSTS, #{clang}) AS procSTSNM
+	     , A.docID
+	  FROM (   SELECT S.apvUID
+				 FROM tbl_apvDetail S
+				WHERE S.aprDT BETWEEN REPLACE(#{aprDT1},'-','') AND REPLACE(#{aprDT2},'-','')
+			<if test='aprUserUID != null and aprUserUID != ""'>
+		          AND S.aprUserUID = #{aprUserUID}
+			</if>
+			<if test='apvUID != null and apvUID != ""'>
+                  AND S.apvUID = #{apvUID}
+			</if>
+			<choose>
+			  <when test='procSTS != null and procSTS != "" and procSTS == "28"'>
+	              AND S.apvGB IN ('10','15','20','25')
+	              AND S.rejectGB = 'N'
+			  </when>
+			  <otherwise>
+			      AND S.apvGB IN ('26','40','45')
+			  </otherwise>
+			</choose>
+			<if test='custID != null and custID != ""'>
+                  AND S.custID = #{custID}
+			</if>
+			      AND S.apGB = 'N'
+				  AND S.agentID = #{agentID}
+				GROUP BY S.apvUID
+	  		) T INNER JOIN tbl_apvMaster A ON T.apvUID = A.apvUID
+		WHERE 
+		<choose>
+		  <when test='apvUID != null and apvUID != ""'>
+	          A.apvUID = #{apvUID}
+		  </when>
+		  <otherwise>
+		      A.aprDT BETWEEN REPLACE(#{aprDT1},'-','') AND REPLACE(#{aprDT2},'-','')	  
+			<if test='docID != null and docID != ""'>
+		  AND A.docID = #{docID}
+	 	    </if>
+			<choose>
+			  <when test='consignGB == "N"'>
+	      AND A.custID = (SELECT custID FROM tbl_userinfo where userUID = #{userUID})
+			  </when>
+			  <otherwise>
+				<if test='custID != null and custID != ""'>
+          AND A.custID = #{custID}
+				</if>
+			  </otherwise>
+			</choose>
+			<if test='aprUserUID != null and aprUserUID != ""'>
+          AND A.aprUserUID = #{aprUserUID}
+			</if>	
+		  AND A.agentID = #{agentID}
+			<if test='docNO != null and docNO != ""'>
+				<choose>
+				  <when test='SQLMODE == "mariadb"'>
+		  AND A.docNO LIKE CONCAT_WS('','%',#{docNO},'%')
+				  </when>
+				  <otherwise>
+		  AND A.docNO LIKE '%'|| #{docNO} ||'%'
+				  </otherwise>
+				</choose>
+			</if> 
+			<if test='apvTitle != null and apvTitle != ""'>
+				<choose>
+				  <when test='SQLMODE == "mariadb"'>
+		  AND A.apvTitle LIKE CONCAT_WS('','%',#{apvTitle},'%')
+				  </when>
+				  <otherwise>
+		  AND A.apvTitle LIKE '%'|| #{apvTitle} ||'%'
+				  </otherwise>
+				</choose>
+			</if> 
+ 	    	<if test='procSTS != null and procSTS != ""'>
+				<choose>
+				  <when test='SQLMODE == "mariadb"'>
+		  AND A.procSTS LIKE CONCAT('__',#{procSTS})
+				  </when>
+				  <otherwise>
+		  AND A.procSTS LIKE '__'|| #{procSTS}
+				  </otherwise>
+				</choose>
+ 	    	</if>
+			<if test='docGB != null and docGB != ""'>
+		  AND A.docGB = #{docGB}
+ 	    	</if>
+		  </otherwise>
+		</choose>
+		  AND A.dbSTS = 'Y'
+		ORDER BY A.aprDT DESC
+    </select>
+    
+    <!-- 상신된 품의 현재 결재자  정보 조회 -->
+    <select id="getCurrApvUserUID" parameterType="hashmap" resultType="hashmap">	    
+	    SELECT apvUserUID 
+	      FROM tbl_apvDetail 
+	     WHERE apvDtlUID = (SELECT MIN(apvDtlUID) FROM tbl_apvDetail WHERE apvUID = #{apvUID} AND apvGB IN ('10','15') AND dbSTS = 'Y')
+    </select>
+    <!-- 현재 품의 결재자 라인 조회 -->
+    <select id="getCurrApvDetailList" parameterType="hashmap" resultType="hashmap">
+	    SELECT A.apvDtlUID, A.custID, A.apvUID, A.apvLNO, aprUserUID, A.apvUserUID, A.apvUserNM
+	         , A.apGB
+		<choose>
+		  <when test='SQLMODE == "mariadb"'>
+		     ,DATE_FORMAT(A.apvDT,'%Y-%m-%d %H:%i') AS apvDT
+		  </when>
+		  <otherwise>
+		     ,TO_CHAR(A.apvDT,'YYYY-MM-DD HH24:MI') AS apvDT
+		  </otherwise>
+		</choose>
+	        , A.apvOpinion
+	        , A.apvGB
+		    , (CASE WHEN A.apvGB IS NOT NULL THEN fnGetCodeVal1(#{agentID}, 'APVGB', A.apvGB, #{clang})
+		            ELSE ''
+		            END) AS apvGBNM
+		  FROM tbl_apvDetail A
+		 WHERE A.apvUID = #{apvUID}
+		   AND A.dbSTS  = 'Y'
+		ORDER BY A.apvLNO
+    </select>
+    
+	<insert id="insApvMasterHist" parameterType="hashmap">
+	    INSERT INTO tbl_apvMasterHist (
+			 bakDT        
+			,apvUID       ,apvCustID      ,custID
+			,custNM       ,prBorgNM       ,vdID           ,vdNM
+			,aprDT        ,adtUID         ,apvGrpUID      ,docID
+			,docNO        ,docGB          ,procSTS        ,aprUserUID
+			,aprUserNM    ,usages         ,bdgGB          ,contMethod
+			,aprContent   ,apvTitle       ,srcTot         ,bdgTot
+			,contTot      ,srcLeadTime    ,attachID       ,apvLNO
+			,causeOfReturn,rejectDT       ,createDT       ,createrID
+			,updateDT     ,updaterID      ,dbSTS          ,agentID
+		)
+		SELECT
+		<choose>
+		  <when test='SQLMODE == "mariadb"'>
+		     now() AS bakDT
+		  </when>
+		  <otherwise>
+		     SYSDATE AS bakDT
+		  </otherwise>
+		</choose>    
+			,apvUID       ,apvCustID      ,custID
+			,custNM       ,prBorgNM       ,vdID           ,vdNM
+			,aprDT        ,adtUID         ,apvGrpUID      ,docID
+			,docNO        ,docGB          ,procSTS        ,aprUserUID
+			,aprUserNM    ,usages         ,bdgGB          ,contMethod
+			,aprContent   ,apvTitle       ,srcTot         ,bdgTot
+			,contTot      ,srcLeadTime    ,attachID       ,apvLNO
+			,causeOfReturn,rejectDT       ,createDT       ,createrID
+			,updateDT     ,updaterID      ,dbSTS          ,agentID
+		  FROM tbl_apvMaster
+		 WHERE apvUID = #{apvUID}
+	</insert>
+	
+	<insert id="insApvDetailHist" parameterType="hashmap">
+		INSERT INTO tbl_apvDetailHist (
+			 bakDT       
+			,apvDtlUID   ,apvUID        ,custID
+			,aprDT       ,aprUserUID    ,apvUserUID   ,apvUserNM
+			,apvLNO      ,apvDT         ,apGB         ,apvGB
+			,apvOpinion  ,rejectGB      ,jobID        ,createDT
+			,createrID   ,updateDT      ,updaterID    ,dbSTS
+			,agentID     
+		)
+		SELECT
+		<choose>
+		  <when test='SQLMODE == "mariadb"'>
+		     now() AS bakDT
+		  </when>
+		  <otherwise>
+		     SYSDATE AS bakDT
+		  </otherwise>
+		</choose>    
+			,apvDtlUID   ,apvUID        ,custID
+			,aprDT       ,aprUserUID    ,apvUserUID   ,apvUserNM
+			,apvLNO      ,apvDT         ,apGB         ,apvGB
+			,apvOpinion  ,rejectGB      ,jobID        ,createDT
+			,createrID   ,updateDT      ,updaterID    ,dbSTS
+			,agentID  
+		  FROM tbl_apvDetail
+		 WHERE apvUID = #{apvUID}
+	</insert>
+	
+	<delete id="delApvMaster4apvUID" parameterType="hashmap">
+		DELETE FROM tbl_apvMaster WHERE apvUID = #{apvUID}
+	</delete>	
+	
+	<delete id="delApvDetail4apvUID" parameterType="hashmap">
+		DELETE FROM tbl_apvDetail WHERE apvUID = #{apvUID}
+	</delete>
+	
+	<select id="getUserInfos" parameterType="hashmap" resultType="hashmap">
+		SELECT
+		  	A.userUID
+			,A.custID
+			,A.loginID
+			,A.userNM
+			,A.email
+			,A.zipCD
+			,A.addr1
+			,A.addr2
+			,A.telNo
+			,A.offTelNO
+			,A.mobile
+			,A.faxNO
+			,A.pwd
+			,A.gender
+			,A.workStatus
+			,A.job
+			,A.pay
+			,A.payType
+			<choose>
+			    <when test='SQLMODE == "mariadb"'>
+			    ,DATE_FORMAT(A.createDT,'%Y-%m-%d %H:%i') AS createDT
+				,DATE_FORMAT(A.updateDT,'%Y-%m-%d %H:%i') AS updateDT
+				,DATE_FORMAT(A.joinDT,'%Y-%m-%d %H:%i') AS joinDT
+			    </when>
+			    <otherwise>
+				,TO_CHAR(A.createDT,'YYYY-MM-DD HH24:MI') AS createDT
+				,TO_CHAR(A.updateDT,'YYYY-MM-DD HH24:MI') AS updateDT
+				,TO_CHAR(A.joinDT,'YYYY-MM-DD HH24:MI') AS joinDT
+			    </otherwise>
+			</choose>
+			,A.createrID
+			,A.updaterID
+			,A.dbSTS
+			,A.agentID
+			,A.roleID
+		FROM tbl_userinfo A
+		WHERE A.agentID = #{agentID}
+		  AND A.chkSyncYN = 'N'
+	</select>
+	
+	<select id="getCustInfos" parameterType="hashmap" resultType="hashmap">
+		SELECT
+		  	A.custID
+			, A.custRUID
+			, A.custNM
+			, A.bizNO
+			, A.telNO
+			, A.faxNO
+			, A.zipCD
+			, A.addr1
+			, A.addr2
+			, A.repNM
+			, A.repMobile
+			, A.headOfficeYn
+			, A.localFolder
+			, A.createrID
+			, A.updaterID
+			, A.latitude
+			, A.longitude
+			, A.bizTP
+			, A.bizCon
+			, A.dbSTS
+			, A.agentID
+			<choose>
+			    <when test='SQLMODE == "mariadb"'>
+			    ,DATE_FORMAT(A.createDT,'%Y-%m-%d %H:%i') AS createDT
+				,DATE_FORMAT(A.updateDT,'%Y-%m-%d %H:%i') AS updateDT
+				,DATE_FORMAT(A.bizStartDT,'%Y-%m-%d') AS bizStartDT
+			    </when>
+			    <otherwise>
+				,TO_CHAR(A.createDT,'YYYY-MM-DD HH24:MI') AS createDT
+				,TO_CHAR(A.updateDT,'YYYY-MM-DD HH24:MI') AS updateDT
+				,TO_CHAR(A.bizStartDT,'YYYY-MM-DD') AS bizStartDT
+			    </otherwise>
+			</choose>
+		FROM tbl_custinfo A
+		WHERE A.agentID = #{agentID}
+		  AND A.chkSyncYN = 'N'
+	</select>
+	
+	<select id="getUserCustInfos" parameterType="hashmap" resultType="hashmap">
+		SELECT
+		  	A.userUID
+			, A.custID
+			, A.createrID
+			, A.dbSTS
+			<choose>
+			    <when test='SQLMODE == "mariadb"'>
+			    ,DATE_FORMAT(A.createDT,'%Y-%m-%d %H:%i') AS createDT
+			    </when>
+			    <otherwise>
+				,TO_CHAR(A.createDT,'YYYY-MM-DD HH24:MI') AS createDT
+			    </otherwise>
+			</choose>
+		FROM tbl_userscusts A
+		WHERE A.chkSyncYN = 'N'
+	</select>
+	
+	<!-- 매장 어플리케이션 실행 시, 필요한 인증서 정보를 리턴한다. -->
+    <select id="getFirstAuthData" resultType="hashmap">	    
+	    SELECT com_ca_pem AS caPem, com_crt_pem AS crtPem, com_key AS comKey
+	      FROM tbl_certinfo 
+    </select>
+    
+    <!-- REMEMBER-ME -->
+    <insert id="insPersistentLogins" parameterType="hashmap">
+		INSERT INTO tbl_persistent_logins (
+			 username       ,series    ,token        ,last_used
+		) VALUES (
+			#{username}     ,#{series} ,#{token}     ,#{last_used}
+		)
+	</insert>
+	<update id="updPersistentLogins" parameterType="hashmap">
+		UPDATE tbl_persistent_logins 
+		   SET last_used = #{last_used}, token = #{token}
+		WHERE series = #{series}
+	</update>
+	<delete id="delPersistentLogins" parameterType="hashmap">
+		DELETE FROM tbl_persistent_logins WHERE username = #{username}
+	</delete>
+	<select id="selPersistentLogins" parameterType="hashmap" resultType="hashmap">
+		SELECT username ,series ,token
+			 , last_used
+		FROM tbl_persistent_logins WHERE series = #{series}
+	</select>
+</mapper>

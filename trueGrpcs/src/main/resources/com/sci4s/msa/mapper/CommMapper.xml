@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sci4s.msa.mapper.CommMapper">
+	<!-- 마스터 싱크용 I/F 대상 정보 마킹 업데이트  -->
+	<update id="updMstInfoList" parameterType="hashmap">
+		UPDATE tbl_infInfo SET ifKey = #{svcKey}
+		 WHERE  tblName = #{tblName}
+		    AND agentID = #{agentID}
+		    AND ifKey IS NULL
+	</update>
+
+	<!-- 마스터 싱크용 I/F 정보 조회 -->
+	<select id="getMstInfoList" parameterType="hashmap" resultType="hashmap">
+		SELECT aa.ifUID, aa.tblName, aa.keyCols, aa.keyVals, aa.keyTyps, aa.infCols
+		  FROM tbl_infInfo aa
+		 WHERE  aa.tblName = #{tblName}
+		    AND aa.agentID = #{agentID}
+		    AND aa.ifKey   = #{svcKey}
+		ORDER BY aa.ifUID
+	</select>
+	
+	<!-- 마스터 테이블 싱크용 쿼리 -->
+	<select id="getSyncMstData" parameterType="hashmap" resultType="hashmap">
+		${value}
+	</select>
+	
+	<!--  마스터 테이블 싱크 히스토리 저장 -->
+	<insert id="insInfInfoHist" parameterType="hashmap">
+		<choose>
+		  <when test='SQLMODE == "mariadb"'>
+		insert into tbl_infInfoHist (
+			 svcKey
+			,tblName
+			,ifUID
+			,createDT
+		) value (
+			 #{svcKey}
+			,#{tblName}
+			,#{ifUID}
+			,now()
+		)
+		  </when>
+		  <otherwise>
+		insert into tbl_infInfoHist (
+		     histID
+			,svcKey
+			,tblName
+			,ifUID
+			,createDT
+		) value (
+		     seq_uuid.nextval
+			,#{svcKey}
+			,#{tblName}
+			,#{ifUID}
+			,sysdate
+		)
+		  </otherwise>
+		</choose>
+	</insert>
+	
+	    
+	<!-- =================================
+	          사용자권한정보 변경  연계  시작
+	     ================================= 
+	-->
+	<select id="getTblUserAuthIFCnt" parameterType="hashmap" resultType="int">
+		SELECT COUNT(1) FROM tbl_userAuthIF A WHERE jobID IS NULL
+	</select>
+	<update id="updTblUserAuthIF" parameterType="hashmap">
+		UPDATE tbl_userAuthIF A
+		   SET
+			<choose>
+			  <when test='SQLMODE == "oracle"'>
+		     A.ifDT = SYSDATE
+			  </when>
+			  <otherwise>
+		     A.ifDT = now()
+			  </otherwise>
+			</choose> 
+            ,A.jobID = #{uuID}
+         WHERE A.jobID IS NULL
+	</update>
+		
+    <select id="getTblUserAuthIFList" parameterType="hashmap" resultType="hashmap">
+		SELECT 
+			  bakUID
+			, userUID
+			, borgUID
+			, roleID
+	        , dbSTS
+			, jobID
+		  FROM tbl_userAuthIF
+		 WHERE jobID = #{uuID}
+		ORDER BY bakUID
+    </select>
+	<!-- =================================
+	          사용자권한정보 변경  연계  끝
+	     ================================= 
+	-->
+</mapper>
