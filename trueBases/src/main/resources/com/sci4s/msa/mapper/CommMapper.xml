@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sci4s.msa.mapper.CommMapper">
+	<!-- 일괄작업ID-->
+	<select id="getUUID" parameterType="hashmap" resultType="hashmap">
+		<choose>
+		  <when test='SQLMODE == "mariadb"'>
+			SELECT getUUID('tbl_uuids') AS uuID
+		  </when>
+		  <otherwise>
+		  	SELECT seq_uuid.nextval AS uuID FROM DUAL
+		  </otherwise>
+		</choose>
+	</select>
+	
+	<!-- 문서ID-->
+	<select id="getDocUID" parameterType="hashmap" resultType="hashmap">
+  	  <choose>
+	    <when test='SQLMODE == "mariadb"'>
+	    CONCAT(#{docNO}, CAST(getUUID(#{tblNM}) AS CHAR)) AS docUID
+	    </when>
+	    <otherwise>
+	    #{docNO} || TO_CHAR(seq_uuid.nextval) AS docUID
+	    </otherwise>
+	  </choose>    
+	</select>
+	
+	<!-- 마스터 싱크용 I/F 대상 정보 마킹 업데이트  -->
+	<update id="updMstInfoList" parameterType="hashmap">
+		UPDATE tbl_infInfo SET ifKey = #{svcKey}
+		 WHERE  tblName = #{tblName}
+		    AND agentID = #{agentID}
+		    AND ifKey IS NULL
+		    AND flag != 'WMS'
+	</update>
+
+	<update id="updMstInfoList4Wms" parameterType="hashmap">
+		UPDATE tbl_infInfo SET ifKey = #{svcKey}
+		 WHERE  tblName = #{tblName}
+		    AND agentID = #{agentID}
+		    AND ifKey IS NULL
+		    AND flag = 'WMS'
+	</update>
+
+	<!-- 마스터 싱크용 I/F 정보 조회 -->
+	<select id="getMstInfoList" parameterType="hashmap" resultType="hashmap">
+		SELECT aa.ifUID, aa.tblName, aa.keyCols, aa.keyVals, aa.keyTyps, aa.infCols
+		  FROM tbl_infInfo aa
+		 WHERE  aa.tblName = #{tblName}
+		    AND aa.agentID = #{agentID}
+		    AND aa.ifKey   = #{svcKey}
+		ORDER BY aa.ifUID
+	</select>
+
+	<!-- 마스터 테이블 싱크용 쿼리 -->
+	<select id="getSyncMstData" parameterType="hashmap" resultType="hashmap">
+		${value}
+	</select>
+	
+	<!--  마스터 테이블 싱크 히스토리 저장 -->
+	<insert id="insInfInfoHist" parameterType="hashmap">
+		<choose>
+		  <when test='SQLMODE == "mariadb"'>
+		insert into tbl_infInfoHist (
+			 svcKey
+			,tblName
+			,ifUID
+			,createDT
+		) value (
+			 #{svcKey}
+			,#{tblName}
+			,#{ifUID}
+			,now()
+		)
+		  </when>
+		  <otherwise>
+		insert into tbl_infInfoHist (
+		     histID
+			,svcKey
+			,tblName
+			,ifUID
+			,createDT
+		) value (
+		     seq_uuid.nextval
+			,#{svcKey}
+			,#{tblName}
+			,#{ifUID}
+			,sysdate
+		)
+		  </otherwise>
+		</choose>
+	</insert>
+	
+	<!-- SMS 전송 메시지 저장 -->
+	<insert id="insTsysTblSmsInfo" parameterType="hashmap">
+		INSERT INTO tbl_smsInfo (
+		 custID
+		,smsUID
+		,createDT
+		,createTime
+		,member
+		,senderID
+		,senderNM
+		,recvPhone1
+		,recvPhone2
+		,recvPhone3
+		,receiverNM
+		,sendPhone1
+		,sendPhone2
+		,sendPhone3
+		,msg
+		,updateDT
+		,updateTime
+		,result
+		,agentID
+		) VALUES (
+	      #{custID}
+	<choose>
+	  <when test='SQLMODE == "mariadb"'>
+		, tsys.getUUID('tbl_smsInfo')
+		, DATE_FORMAT(now(),'%Y%m%d')
+		, DATE_FORMAT(now(),'%h%s%i')
+	  </when>
+	  <otherwise>
+		, seq_uuid.nextval
+		, TO_CHAR(SYSDATE,'YYYYMMDD')
+		, TO_CHAR(SYSDATE,'HH24MISS')
+	  </otherwise>
+	</choose>
+		, '0'
+		, #{userUID}
+		, (SELECT userNM FROM tbl_userinfo where userUID = #{userUID})
+		, #{recvPhone1}
+		, #{recvPhone2}
+		, #{recvPhone3}
+		, #{receiverNM}
+		, '000' 
+		, '0000'
+		, '0000'
+		, #{smsMsg}
+		, '00000000'
+		, '000000'
+		, 'N' 
+		, #{agentID}
+		)
+	</insert>
+</mapper>

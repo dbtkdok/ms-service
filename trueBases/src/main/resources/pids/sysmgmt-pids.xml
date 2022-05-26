@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<services>
+	<proc><step PID="COM0000"  service="commService" query="N" method="query4Test"/></proc>
+	
+	<!-- Activities management -->
+	<proc><step PID="SYS0001"  service="commService" query="getTblActivitiesList" method="query4Data"/></proc>
+	<proc><step PID="SYS0002"  service="sysMgmtService" query="N" method="procActPrivileges"/></proc>
+	<proc><step PID="SYS0009"  service="commService" query="delTblActivities" method="query4Updates"/></proc>
+	<proc><step PID="SYS0012"  service="commService" query="chkTblActivities" method="query4Data"/></proc>
+	<proc><step PID="SYS0013"  service="commService" query="insTblActivities4One" method="query4Update"/></proc>
+	<proc><step PID="SYS0014"  service="commService" query="updTblActivities4One" method="query4Update"/></proc>
+	
+	<!-- Menu management -->
+	<proc><step PID="SYS0020"  service="commService" query="getTblMenuList" method="query4Data"/></proc>
+	<proc><step PID="SYS0021"  service="sysMgmtService" query="N" method="getMenuDtlInfo"/></proc>
+	<proc><step PID="SYS0022"  service="commService" query="chkTblMenus" method="query4Data"/></proc>
+	<proc><step PID="SYS0023"  service="commService" query="getMenuByLevel" method="query4Data"/></proc>
+	<proc><step PID="SYS0024"  service="commService" query="getMenuSortORD" method="query4Data"/></proc>
+	<proc><step PID="SYS0025"  service="commService" query="getSrchDict" method="query4Data"/></proc>
+	<proc>
+		<step PID="SYS0026"    service="commService" query="insTblMenus4One" method="query4Update"/>
+		<step PID="SYS0026_01" service="commService" query="updSortORDTblMenus4Ins" method="update4sub"/>
+	</proc>	
+	<proc>
+		<step PID="SYS0027"    service="commService" query="updTblMenu4One" method="query4Update"/>
+		<step PID="SYS0027_01" service="commService" query="upDownSortORDTblMenus" method="update4sub"/>
+		<step PID="SYS0027_02" service="commService" query="upDownSortORDTblMenus" method="update4sub"/>
+		<step PID="SYS0027_03" service="commService" query="updSortORDTblMenu4One" method="update4sub"/>
+	</proc>
+	<proc><step PID="SYS0028"  service="commService" query="getSrchMenu" method="query4Data"/></proc>
+	<proc>
+		<step PID="SYS0029"    service="commService" query="delTblMenu4One" method="query4Update"/>
+		<step PID="SYS0029_01" service="commService" query="upDownSortORDTblMenus" method="update4sub"/>
+	</proc>
+	
+	<!-- Page management -->
+	<proc><step PID="SYS0030"  service="commService" query="getTblPageList" method="query4Data"/></proc>
+	<proc><step PID="SYS0031"  service="commService" query="getTblPageActList" method="query4Data"/></proc>
+	<proc><step PID="SYS0036"  service="commService" query="getMenues" method="query4Data"/></proc>
+	<proc><step PID="SYS0032"  service="commService" query="updTblPages4List" method="query4Updates"/></proc>
+
+	<proc>
+		<step PID="SYS0033"	   prevQuery="getUUID" prevMethod="query4Data"
+		      service="commService" query="insTblPages4One" method="query4Update" 
+			  getKey="pageUID" getParams="uuID|pageID|menuUID"/>
+		<step PID="SYS0033_01" service="commService" query="insTblPageActs" method="update4sub" getParams="uuID|pageID|menuUID"/>
+		<step PID="SYS0033_02" prevQuery="updTblPageSearchTemp" prevMethod="query4Data" 
+		 	  service="commService" query="insNewTblPageSearch" method="query4Update"
+		 	  postQuery="delTblPageSearchTemp" postMethod="query4Data" getParams="pageUID|uuID|pageID"/>
+	</proc>
+	<proc>
+		<step PID="SYS0034"    service="commService" query="updTblPages4One" method="query4Update" getKey="pageUID" getParams="menuUID|pageUID"/>
+		<step PID="SYS0034_01" service="commService" query="delTblPageActs"  method="update4sub"/>
+		<step PID="SYS0034_02" service="commService" query="insTblPageActs"  method="update4sub"/>
+	</proc>
+	<proc><step PID="SYS0035"  service="commService" query="chkTblPages" method="query4Data"/></proc>
+	<proc>
+		<step PID="SYS0039" service="commService" query="delTblPage4One" method="query4Updates" caseDoRun="Before" getParams="pageUID">
+			<caseDo service="commService" subQuery1="delTblPageActs" subMethod="query4Update"/>
+		</step>
+	</proc>
+	
+	<proc><step PID="SYS0060"  service="commService" query="getTblPageSearch" method="query4Data"/></proc>
+	<proc><step PID="SYS0061"  service="commService" query="getTblPageSearchTemp" method="query4Data"/></proc>
+	<proc><step PID="SYS0062"  service="commService" query="updTblPageSearch" method="query4Update"/></proc>
+	<proc><step PID="SYS0063"  service="commService" query="insTblPageSearch" method="query4Update"/></proc>
+	<proc>
+		  <step PID="SYS0064"  prevQuery="getUUID" prevMethod="query4Data" getParams="uuID"
+	 			service="commService" query="insTblPageSearchTemp" method="query4Update"/>
+	</proc>
+	<proc>
+		<step PID="SYS0065"  service="commService" query="delTblPageSearch" method="query4Updates"/>
+		<step PID="SYS0065_01"  service="commService" query="updTblPageContents" method="query4Update"/>
+	</proc>
+	
+	<!-- Scope management -->
+	<proc><step PID="SYS0040"  service="commService" query="getTblScopeList" method="query4Data"/></proc>
+	<proc><step PID="SYS0041"  service="commService" query="getTblScopeActList" method="query4Data"/></proc>
+	<proc><step PID="SYS0042"  service="commService" query="chkTblScopes" method="query4Data"/></proc>
+	
+	<proc>
+		<step PID="SYS0043"    service="commService" query="insTblScopes4One" method="query4Update" getKey="scopeUID" getParams="menuUID"/>
+		<step PID="SYS0043_01" service="commService" query="insTblScopeActs" method="update4sub"/>
+	</proc>
+	
+	<proc>
+		<step PID="SYS0044" prevQuery="getUUID" prevMethod="query4Data" getParams="scopeUID|uuID"
+		 service="commService" query="updTblScopes4One" method="query4Update"/>
+		<step PID="SYS0044_01" service="commService" query="chkTblScopeActs" method="query4Data" chkKey="scopeUID" caseDoRun="Before" getVar="existCnt" caseRET="Choice" getParams="scopeUID|uuID">
+			<caseDo service="commService" subQuery1="insTblScopeActs4One" subQuery2="updTblScopeActs4One" subMethod="query4Update">
+				<caseIF><![CDATA[(existCnt==0?"subQuery1":"subQuery2")]]></caseIF>
+			</caseDo>
+		</step>
+		<step PID="SYS0044_02" service="commService" query="chkTblScopesIF" method="query4Data" chkKey="scopeUID" getParams="scopeUID|uuID" caseDoRun="Before" getVar="existCnt" caseRET="Choice">
+			<caseDo  subPrevQuery="insRolsScopeIF4Batch" subPrevMethod="query4Update"
+				service="commService" subQuery1="skip" subQuery2="continue" subMethod="none"
+				subPostQuery="insRolsScopeMenuIF4Batch" subPostMethod="query4Update">
+				<caseIF><![CDATA[(existCnt==0?"subQuery1":"subQuery2")]]></caseIF>
+			</caseDo>
+		</step>
+		<step PID="SYS0044_03" service="commService" query="delTblScopeActsList" method="update4sub"/>
+	</proc>
+
+	<proc>
+		<step PID="SYS0049" service="commService" query="getUUID" method="query4Update1" getParams="scopeUID|jobSTS|uuID" />
+		<step PID="SYS0049_01" service="commService" query="updTblScopes4Batch" method="update4sub" getParams="uuID"></step>
+		<step PID="SYS0049_02" service="commService" query="chkTblScopesRole" method="query4Data" 
+		getParams="jobSTS|uuID|roleCnt" caseDoRun="Before" chkKey="scopeUID" getVar="roleCnt" caseRET="Choice">
+			<caseDo subPrevQuery="updTblScopeActs4Batch" subPrevMethod="query4Update"
+				service="commService" subQuery1="continue" subQuery2="skip" subMethod="none" 
+				subPostQuery="insRolsScopeIF4Batch" subPostMethod="query4Update" 
+				execMode="Auto" throwMsg="로그인 정보가 없습니다.">
+				<caseIF><![CDATA[('roleCnt'!='' && 'roleCnt'!='0'?"subQuery1":"subQuery2")]]></caseIF>
+			</caseDo>
+		</step>
+		<step PID="SYS0049_03" service="commService" query="delTblScopeActs4JobID" method="query4Update" getParams="uuID" />
+	</proc>	
+		
+	<!-- Role management -->
+ 	<proc><step PID="SYS0050"  service="commService" query="getTblRolesList" method="query4Data"/></proc>
+	<proc><step PID="SYS0051"  service="commService" query="getTblRolesDtl" method="query4Data"/></proc>
+	<proc><step PID="SYS0052"  service="commService" query="chkTblRoles" method="query4Data"/></proc>
+	<proc>
+		<step PID="SYS0053"    service="commService" query="insTblRoles4One" method="query4Update" getKey="roleUID" getParams="proleID|roleUID"/>
+		<step PID="SYS0053_01" service="commService" query="insTblRolescopes" method="update4sub" getParams="proleID|roleUID"
+		postQuery="insRoleMenuIFC4Batch" postMethod="query4Update"/>
+	</proc>
+	<proc>
+		<step PID="SYS0054"  prevQuery="getUUID" prevMethod="query4Data" getParams="roleUID|proleID|uuID"
+				service="commService" query="updTblRoles4one" method="query4Update" />
+		<step PID="SYS0054_01" service="commService" query="chkTblRolesScopes" method="query4Data" getParams="roleUID|proleID|scopeUID|uuID" chkKey="scopeUID" caseDoRun="Before" getVar="existCnt" caseRET="Choice">
+			<caseDo service="commService" subQuery1="insTblRolescopes4One" subQuery2="updTblRolesScope4one" subMethod="query4Update">
+				<caseIF><![CDATA[(existCnt==0?"subQuery1":"subQuery2")]]></caseIF>
+			</caseDo>
+		</step>
+		<step PID="SYS0054_02" service="commService" query="insRolsIF4Batch" method="query4Update" getParams="roleUID|proleID|scopeUID|uuID"
+		postQuery="insRolsMenuIF4Batch" postMethod="query4Update"
+		/>
+		<step PID="SYS0054_03" service="commService" query="delTblRolescopes" method="update4sub" getParams="roleUID|proleID|scopeUID"/>
+	</proc>
+	
+	<proc><step PID="SYS0055" prevQuery="getUUID" prevMethod="query4Data"  getParams="uuID"
+	service="commService" query="updTblRoles4dbSTS" method="query4Updates" postQuery="insRolsIF4Batch" postMethod="query4Update"/></proc>
+	
+	<proc><step PID="SYS0056"  service="commService" query="N" method="query4XmlData"/></proc>
+	
+	<proc><step PID="SYS0059"  service="commService" query="getTblRoles4combo" method="query4Data"/></proc>
+	
+	<proc><step PID="SYS0076"  service="commService" query="N" method="query4XmlData"/></proc>
+	<!-- SYNC management -->
+	<proc><step PID="SYS0120"  service="commService" query="getTblSyncRequest4List" method="query4Data"/></proc>
+	<proc>
+		<step PID="SYS0123"  prevQuery="getUUID" prevMethod="query4Data"
+				service="commService" query="updTblSyncRequest" method="query4Updates"
+				postQuery="insSyncRequestBak4Batch" postMethod="query4Update" />
+		<step PID="SYS0123_01" service="commService" query="insSyncHist4Batch" method="query4Update"
+			postQuery="delTblSyncRequest" postMethod="query4Update" getParams="uuID">
+		</step>
+	</proc>
+	<!-- SYNC management -->
+	<proc><step PID="SYS0140"  service="commService" query="getTblSyncJobHist" method="query4Data"/></proc>
+	<proc>
+		<step PID="SYS0143"  prevQuery="getUUID" prevMethod="query4Data" 
+				service="commService" query="updTblSyncJobHist" method="query4Updates"
+				postQuery="insSyncJobHistBak4Batch" postMethod="query4Update" />
+		<step PID="SYS0143_01" service="commService" query="insSyncJob4Batch" method="query4Update"
+			postQuery="delTblSyncJobHist" postMethod="query4Update" getParams="uuID">
+		</step>
+	</proc>
+	
+	<!-- scheduler Management -->
+	<proc><step PID="SYS0130"  service="commService" query="getSyncJob" method="query4Data"/></proc>
+	<proc><step PID="SYS0131"  service="commService" query="insSyncJob" method="query4Update"/></proc>
+	<proc><step PID="SYS0132"  service="commService" query="updSyncJob" method="query4Update"/></proc>
+	
+	<!-- tbl_userrolemap 에 chkDT확인 -->
+	<proc><step PID="SYS0200"  service="sysMgmtService" query="N" method="getRoleMap"/></proc>
+	
+	<proc><step PID="SYS0300"  service="sysMgmtService" query="N" method="getFileData"/></proc>
+	
+	<proc><step PID="MNU0001"  service="commService" query="getTopMenuList" method="query4Data"/></proc>
+	<proc><step PID="MNU0002"  service="commService" query="getLeftMenuList" method="query4Data"/></proc>
+	<proc><step PID="MNU0003"  service="commService" query="getLeftMenusByTopMenuID" method="query4Data"/></proc>
+</services>

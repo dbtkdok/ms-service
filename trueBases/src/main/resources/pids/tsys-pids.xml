@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<services>
+	<!-- DB Resource management -->
+	<proc><step PID="TSY0000"  service="commService" query="getBaseDictionaryList" method="query4Data"/></proc>
+	<proc><step PID="TSY0002"  service="commService" query="chkBaseDictionary" method="query4Data"/></proc>
+	<proc><step PID="TSY0003"  service="commService" query="insBaseDictionary" method="query4Update"/></proc>
+	<proc><step PID="TSY0004"  service="commService" query="updBaseDictionary" method="query4Update"/></proc>
+	<proc><step PID="TSY0005"  service="commService" query="delBaseDictionary" method="query4Updates"/></proc>	
+	
+	<!-- DictList management -->
+	<proc><step PID="TSY0040"  service="commService" query="getTblDicList" method="query4Data"/></proc>
+	<proc><step PID="TSY0041"  service="commService" query="getTblDicDtl" method="query4Data"/></proc>
+	<proc><step PID="TSY0042"  service="commService" query="chkTblDict" method="query4Data"/></proc>
+	<proc><step PID="TSY0043"  service="commService" query="insTblDict" method="query4Update"/></proc>
+	<proc><step PID="TSY0044"  service="commService" query="updTblDict" method="query4Update"/></proc>
+	<proc><step PID="TSY0045"  service="commService" query="delTblDict" method="query4Updates"/></proc>
+	<proc><step PID="TSY0046"  service="commService" query="N" method="query4XmlData"/></proc>
+	
+	<!-- Table management -->
+	<proc><step PID="TSY0020"  service="commService" query="getTblTableList" method="query4Data"/></proc>
+	<proc><step PID="TSY0021"  service="commService" query="getTblTableDtl" method="query4Data"/></proc>
+	<proc><step PID="TSY0022"  service="commService" query="chkTblTable" method="query4Data"/></proc>
+	<proc><step PID="TSY0023"  service="commService" query="insTblTableList" method="query4Updates"/></proc>
+	<proc>
+		<step PID="TSY0024"    service="commService" query="updTblTable4One" method="query4Update"/>
+		<step PID="TSY0024_01" service="commService" query="delTblTableColumn" method="update4sub"/>
+		<step PID="TSY0024_02" service="commService" query="chkTblTableActs" method="query4Data" 
+			chkKey="tblUID" caseDoRun="Before" getVar="existCnt" caseRET="Choice">
+			<caseDo service="commService" subQuery1="insTblTableOne" subQuery2="updTblTable4ActsOne" subMethod="query4Update" execMode="auto">
+				<caseIF><![CDATA[(existCnt==0?"subQuery1":"subQuery2")]]></caseIF>
+			</caseDo>
+		</step>
+	</proc>
+	<proc><step PID="TSY0029"  service="commService" query="delTblTableList" method="query4Updates"/></proc>
+
+	<!-- Services management -->
+	<proc><step PID="TSY0080"  service="commService" query="getTblServiceList" method="query4Data"/></proc>
+	<proc><step PID="TSY0081"  service="commService" query="getTblServiceDtl" method="query4Data"/></proc>
+	<proc><step PID="TSY0085"  service="commService" query="chkTblServices" method="query4Data"/></proc>
+	<proc>
+		<step PID="TSY0083" service="commService" query="insTblServices4One" method="query4Updates" getKey="procID|procRemk|pidsXml" 
+			caseRun="Before" getVar="subQuery1|subQuery2" caseRET="Boolean" 
+			getParams="stepUID|stepSVC|subPrevQuery|subPrevMethod|subQuery1|subQuery2|subMethod|subPostQuery|subPostMethod|caseIF|throwMsg|execMode|sortORD|dbSTS">
+			<caseDo service="commService" subQuery1="insTblCaseDo4One" subMethod="query4Update" execMode="Auto">
+				<caseIF><![CDATA[('subQuery1'!='' || 'subQuery2'!='')]]></caseIF>
+			</caseDo>
+		</step>
+	</proc>
+	<proc>
+		<step PID="TSY0084" service="commService" prevQuery="delTblServicesByprocID" prevMethod="query4Update"
+			query="insTblServices4One" method="query4Updates" getKey="procID|procRemk|pidsXml"
+			caseRun="Before" getVar="subQuery1|subQuery2" caseRET="Boolean" 
+			getParams="stepUID|stepSVC|subPrevQuery|subPrevMethod|subQuery1|subQuery2|subMethod|subPostQuery|subPostMethod|caseIF|throwMsg|execMode|sortORD|dbSTS">
+			<caseDo service="commService" subPrevQuery="delTblCaseDoBystepUID" subQuery1="insTblCaseDo4One" subMethod="query4Update" execMode="Auto">
+-  				<caseIF><![CDATA[('subQuery1'!='' || 'subQuery2'!='')]]></caseIF>
+			</caseDo>
+		</step>
+	</proc>
+	<proc>
+		<step PID="TSY0089" service="commService" query="delTblServicesBystepUID" method="query4Updates" caseDoRun="Before" getParams="stepUID">
+			<caseDo service="commService" subQuery1="delTblCaseDoBystepUID" subMethod="query4Update" execMode="Auto" />
+		</step>
+	</proc>
+	
+		<!-- CodesList management -->
+	<proc><step PID="TSY0060"  service="commService" query="getTblCodesList" method="query4Data"/></proc>
+	<proc><step PID="TSY0061"  service="commService" query="getTblCodesDtl"  method="query4Data"/></proc>
+	<proc><step PID="TSY0062"  service="commService" query="chkTblCodeType"  method="query4Data"/></proc>
+	
+	<proc>
+		<step PID="TSY0063"    service="commService" query="updTblCodes4One" method="query4Update" getParams="codeType|codeTypeNM|nationCD"/>
+		<step PID="TSY0063_01" service="commService" query="delTblCodesList" method="update4sub"/>
+		<step PID="TSY0063_02" service="commService" query="chkTblCodeActs" method="query4Data" chkKey="codeType|nationCD|flag" caseDoRun="Before" getVar="existCnt" caseRET="Choice">
+			<caseDo service="commService" subQuery1="insTblCodesOne" subQuery2="updTblCodesList" subMethod="query4Update" execMode="auto">
+				<caseIF><![CDATA[(existCnt==0?"subQuery1":"subQuery2")]]></caseIF>
+			</caseDo>
+		</step>
+	</proc>
+
+	<proc>
+		<step PID="TSY0064" service="commService" query="chkTblCodeType" method="query4Update1" caseRun="Before" getVar="cnt" caseRET="Choice" 
+			getParams="codeType|codeTypeNM|nationCD|flag">
+			<caseDo service="commService" subQuery1="continue" subQuery2="throw" subMethod="none" execMode="One" throwMsg="코드유형이 이미 존재합니다.">
+				<caseIF><![CDATA[(cnt==0?"continue":"throw")]]></caseIF>
+			</caseDo>
+		</step>    
+		<step PID="TSY0064_01" service="commService" query="insTblCodesList" method="update4sub"/>
+	</proc>	
+
+	<proc><step PID="TSY0065"  service="commService" query="delTblCodeList" method="query4Updates"/></proc>
+	
+	<!-- Master data sync service  -->
+	<proc><step PID="TSY0100" service="commService" query="N" method="getMstInfo"></step></proc>
+	
+	<proc><step PID="TSY0116" service="commService" query="N" method="getSyncConfigFlat"></step></proc>
+	
+	<proc><step PID="TSY0900" service="commService" query="getTblAttachList" method="query4Data"></step></proc>	
+	<proc>
+		<step PID="TSY0903" service="commService" query="insTblAttach" method="query4Updates"></step>
+	</proc>
+	<proc>
+		<step PID="TSY0904" prevQuery="updTblAttach4DocNO" prevMethod="query4Update" getParams="fileUID|attachID"
+		service="commService" query="updTblAttach4MainYN" method="query4Update"></step>
+	</proc>
+	<proc>
+		<step PID="TSY0906" service="commService" query="updTblAtt4MainYN" method="query4Update"></step>
+	</proc>
+	
+	<proc>
+		<step PID="TSY0909" service="commService" query="delTblAttachList" method="query4Updates"></step>
+	</proc>
+	
+	<proc>
+		<step PID="TSY0910" service="commService" query="getRoleScopesIFList" method="query4Data"></step>
+	</proc>
+	
+</services>

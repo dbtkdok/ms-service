@@ -1,0 +1,1877 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sci4s.msa.mapper.TSysMapper">
+
+	<!-- =================================
+	     DW 서비스 파트 시작
+	     ================================= 
+	-->
+    <select id="getBaseDictionaryList" parameterType="hashmap" resultType="hashmap">
+		SELECT 
+			  UUID
+			, srcCD
+			, objCD
+			, objType
+			, objNM
+			, dataDefault
+			, nullAble
+			, dataDefaultOrcl
+			, objComment
+			, dataType
+			, dataSize
+			, dataPrecision
+			, (SELECT val2 FROM tbl_codes WHERE agentID=#{agentID} AND codeType='DATATYPE' AND codeID=dataType AND nationCD=#{clang}) AS tbl_dataType
+		  FROM basedictionary
+		 WHERE agentID = #{agentID}
+ 		<choose>
+		    <when test='UUID != null and UUID != ""'>
+		   		AND UUID = #{UUID}
+		    </when>
+			<otherwise>
+		        <if test='srchText != null and srchText != ""'>
+	   		  <choose>
+			    <when test='SQLMODE == "mariadb"'>
+			    AND CONCAT(IFNULL(srcCD,''), objCD, objNM, IFNULL(objComment,'')) REGEXP #{srchText}
+			    </when>
+			    <otherwise>
+			    AND (NVL(srcCD,'') || objCD || NVL(objNM,'') || NVL(objComment,'')) LIKE '%'|| #{srchText} ||'%'
+			    </otherwise>
+			  </choose>
+		        </if> 
+		        <if test='objCD != null and objCD != ""'>
+	   		  <choose>
+			    <when test='SQLMODE == "mariadb"'>
+			    AND objCD LIKE CONCAT_WS('','%',#{objCD},'%')
+			    </when>
+			    <otherwise>
+			    AND objCD LIKE '%'||#{objCD} ||'%'
+			    </otherwise>
+			  </choose>
+				</if>
+				<if test='objType != null and objType != ""'>
+				   AND objType = #{objType} 
+				</if>
+				<if test='srcCD != null and srcCD != ""'>
+	   		  <choose>
+			    <when test='SQLMODE == "mariadb"'>
+			    AND srcCD LIKE CONCAT_WS('','%',#{srcCD},'%')
+			    </when>
+			    <otherwise>
+			    AND srcCD LIKE '%'||#{srcCD} ||'%'
+			    </otherwise>
+			  </choose>
+				</if>
+				<if test='objNM != null and objNM != ""'>
+	   		  <choose>
+			    <when test='SQLMODE == "mariadb"'>
+			    AND objNM LIKE CONCAT_WS('','%',#{objNM},'%')
+			    </when>
+			    <otherwise>
+			    AND objNM LIKE '%'||#{objNM} ||'%'
+			    </otherwise>
+			  </choose>
+				</if>
+				<if test='objComment != null and objComment != ""'>
+	   		  <choose>
+			    <when test='SQLMODE == "mariadb"'>
+			    AND objComment LIKE CONCAT_WS('','%',#{objComment},'%')
+			    </when>
+			    <otherwise>
+			    AND objComment LIKE '%'||#{objComment} ||'%'
+			    </otherwise>
+			  </choose>
+				</if>
+				<if test='dataType != null and dataType != ""'>
+				   AND dataType = #{dataType} 
+				</if>
+			</otherwise>
+		</choose>
+		ORDER BY objCD
+    </select>
+    
+	<select id="getDictionaryMaxUID" resultType="int">
+		<![CDATA[
+		select max(UUID)+1 as UUID from tsys.BaseDictionary
+		]]>
+	</select>
+	
+	<insert id="insBaseDictionary" parameterType="hashmap">
+	    <selectKey resultType="Long" keyProperty="UUID" order="BEFORE">
+   		  <choose>
+		    <when test='SQLMODE == "mariadb"'>
+		    SELECT tsys.getUUID('BaseDictionary') AS UUID
+		    </when>
+		    <otherwise>
+		    SELECT seq_uuid.nextval AS UUID FROM dual
+		    </otherwise>
+		  </choose>
+	    </selectKey> 
+		insert into tsys.BaseDictionary (
+		   UUID
+		,  srcCD
+		,  objCD
+		,  objType
+		,  objNM
+		,  nullAble
+		,  dataDefault
+		,  dataDefaultOrcl
+		,  objComment
+		,  dataType
+		,  dataSize
+		,  dataPrecision
+		,  agentID
+		)
+		values (
+           #{UUID}
+		,  #{srcCD}
+		,  #{objCD}
+		,  #{objType}
+		,  #{objNM}
+		,  #{nullAble}
+		,  #{dataDefault}
+		,  #{dataDefaultOrcl}
+		,  #{objComment}
+		,  #{dataType}
+		,  #{dataSize}
+		,  #{dataPrecision}
+		,  #{agentID}
+		)
+	</insert>
+	
+	<update id="updBaseDictionary" parameterType="hashmap">
+		<![CDATA[
+		update tsys.BaseDictionary 
+		set    srcCD           = #{srcCD}
+			,  objType         = #{objType}
+			,  objNM           = #{objNM}
+			,  nullAble        = #{nullAble}
+			,  dataDefault     = #{dataDefault}
+			,  dataDefaultOrcl = #{dataDefaultOrcl}
+			,  objComment      = #{objComment}
+			,  dataType        = #{dataType}
+			,  dataSize        = #{dataSize}
+			,  dataPrecision   = #{dataPrecision}
+		where UUID  = #{UUID}
+		]]>
+	</update>
+	
+	<select id="chkBaseDictionary" parameterType="hashmap" resultType="int">
+		select count(1) as cnt 
+		  from tsys.basedictionary
+		 where 1=1
+	        <if test='srcCD != null and srcCD != ""'>
+	   		  <choose>
+			    <when test='SQLMODE == "mariadb"'>
+			    AND srcCD LIKE CONCAT_WS('','%',#{srcCD},'%')
+			    </when>
+			    <otherwise>
+			    AND srcCD LIKE '%'||#{srcCD} ||'%'
+			    </otherwise>
+			  </choose>
+			</if>
+			<if test='objCD != null and objCD != ""'>
+			   AND objCD = #{objCD} 
+			</if>
+	</select>
+	
+	<delete id="delBaseDictionary">
+		<foreach item="item" collection="list" separator=";">
+		<![CDATA[
+		delete from tsys.BaseDictionary where UUID  = #{item.UUID}
+		]]>
+		</foreach>
+	</delete>
+	
+	<select id="getDictionarySubCnt" parameterType="hashmap" resultType="int">
+		<![CDATA[
+		select count(1) as cnt from tsys.tbl_tables where objCD = #{objCD}
+		]]>
+	</select>
+	
+	<select id="chkDictionaryObjCD" parameterType="hashmap" resultType="int">
+		<![CDATA[
+		select count(1) as cnt from tsys.tbl_tables where objCD = #{objCD}
+		]]>
+	</select>
+	
+    <!-- =================================
+	     DW 서비스 쿼리 파트 끝
+	     ================================= 
+	-->	
+	
+		 <!-- =================================
+	     TABLE 서비스 쿼리 파트 시작
+	     ================================= 
+	-->	
+	<!-- TYS0020 : table을 조회함. -->
+	<select id="getTblTableList" parameterType="hashmap" resultType="hashmap">
+		SELECT 
+			  tblNM
+			, tblComment
+		  FROM tbl_tables
+		 WHERE 1 = 1
+		<if test='srchText != null and srchText != ""'>
+   		  <choose>
+		    <when test='SQLMODE == "mariadb"'>
+		    AND CONCAT(tblNM, tblComment) REGEXP #{srchText}
+		    </when>
+		    <otherwise>
+		    AND (tblNM || NVL(tblComment,'')) LIKE '%'|| #{srchText} ||'%'
+		    </otherwise>
+		  </choose>
+        </if> 
+		<if test='tblNM != null and tblNM != ""'>
+   		  <choose>
+		    <when test='SQLMODE == "mariadb"'>
+		    AND tblNM LIKE CONCAT_WS('','%',#{tblNM},'%')
+		    </when>
+		    <otherwise>
+		    AND tblNM LIKE '%'|| #{tblNM} ||'%'
+		    </otherwise>
+		  </choose>
+        </if>
+        <if test='tblComment != null and tblComment != ""'>
+   		  <choose>
+		    <when test='SQLMODE == "mariadb"'>
+		    AND tblComment LIKE CONCAT_WS('','%',#{tblComment},'%')
+		    </when>
+		    <otherwise>
+		    AND tblComment LIKE '%'|| #{tblComment} ||'%'
+		    </otherwise>
+		  </choose>
+		</if>
+		<if test='colNM != null and colNM != ""'>
+   		  <choose>
+		    <when test='SQLMODE == "mariadb"'>
+		    AND colNM LIKE CONCAT_WS('','%',#{colNM},'%')
+		    </when>
+		    <otherwise>
+		    AND colNM LIKE '%'|| #{colNM} ||'%'
+		    </otherwise>
+		  </choose>
+		</if>
+		<if test='colComment != null and colComment != ""'>
+   		  <choose>
+		    <when test='SQLMODE == "mariadb"'>
+		    AND colComment LIKE CONCAT_WS('','%',#{colComment},'%')
+		    </when>
+		    <otherwise>
+		    AND colComment LIKE '%'|| #{colComment} ||'%'
+		    </otherwise>
+		  </choose>
+		</if>
+		<if test='dataType != null and dataType != ""'>
+   		  AND dataType = #{dataType}
+		</if>
+		<if test='dataSize != null and dataSize != ""'>
+		   AND dataSize = #{dataSize}
+		</if>
+		<if test='dataDefault != null and dataDefault != ""'>
+   		  <choose>
+		    <when test='SQLMODE == "mariadb"'>
+		   AND dataDefault LIKE CONCAT_WS('','%',#{dataDefault},'%')
+		    </when>
+		    <otherwise>
+		   AND dataDefault LIKE '%'|| #{dataDefault} ||'%'
+		    </otherwise>
+		  </choose>
+		</if>
+		<if test='nullAble != null and nullAble != ""'>
+		   AND nullAble = #{nullAble}
+		</if>
+		<if test='oldColNM != null and oldColNM != ""'>
+   		  <choose>
+		    <when test='SQLMODE == "mariadb"'>
+		   AND oldColNM LIKE CONCAT_WS('','%',#{oldColNM},'%')
+		    </when>
+		    <otherwise>
+		   AND oldColNM LIKE '%'|| #{oldColNM} ||'%'
+		    </otherwise>
+		  </choose>
+		</if>
+		GROUP BY tblNM
+		ORDER BY tblNM
+    </select>
+    
+    <!-- TYS0021 : table을 상세조회함 -->
+	<select id="getTblTableDtl" parameterType="hashmap" resultType="hashmap">
+		SELECT 
+			  tblUID
+			  , tblNM
+			  , tblComment
+			  , colNM
+			  , colComment
+			  , dataType
+			  , dataSize
+			  , dataPrecision
+			  , dataDefault
+			  , nullAble
+			  , oldColNM
+		  FROM tbl_tables
+		 WHERE tblNM = #{tblNM}
+		ORDER BY colNM
+    </select>
+    
+    <!-- TYS0022 : table명이 존재하는지를 조회함. -->
+    <select id="chkTblTable" parameterType="hashmap" resultType="int">
+    	SELECT count(tblNM) AS cnt FROM tbl_tables WHERE tblNM = #{tblNM}
+    </select>
+	
+	<!-- TSY0023 : table을 저장함. -->
+	<insert id="insTblTableList">
+		<foreach item="item" collection="list" separator=";">	
+		    INSERT INTO tbl_tables (
+		    	tblUID,
+		    	tblNM,
+		    	<if test='item.tblComment != null or item.tblComment != ""'>
+					tblComment,
+				</if>
+				colNM,
+				colComment,
+				dataType,
+				dataSize,
+				dataPrecision,
+				<if test='item.dataDefault != null or item.dataDefault != ""'>
+					dataDefault,
+				</if>
+				nullAble,
+				oldColNM
+	        ) VALUES (
+	   		  <choose>
+			    <when test='item.SQLMODE == "mariadb"'>
+			   	tsys.getUUID('tbl_tables'),
+			    </when>
+			    <otherwise>
+			    seq_uuid.nextval,
+			    </otherwise>
+			  </choose>
+	       		#{item.tblNM, jdbcType=VARCHAR},
+		    	<if test='item.tblComment != null or item.tblComment != ""'>
+					#{item.tblComment, jdbcType=VARCHAR},
+				</if>
+	        	#{item.colNM, jdbcType=VARCHAR},
+				#{item.colComment, jdbcType=VARCHAR},
+				#{item.dataType, jdbcType=VARCHAR},
+				#{item.dataSize, jdbcType=NUMERIC},
+				#{item.dataPrecision, jdbcType=NUMERIC},
+				<if test='item.dataDefault != null or item.dataDefault != ""'>
+					#{item.dataDefault, jdbcType=VARCHAR},
+				</if>
+				#{item.nullAble, jdbcType=NUMERIC},
+				#{item.oldColNM, jdbcType=VARCHAR}
+		    )
+	    </foreach>
+	</insert>
+	
+	<!-- 테이블별 테이블명이 존재하는지를 조회함. -->
+    <select id="chkTblTableActs" parameterType="hashmap" resultType="int">
+    	SELECT count(colNM) AS existCnt FROM tbl_tables 
+    	 WHERE tblNM = #{tblNM} AND colNM = #{colNM}
+    </select>
+    
+    <!-- TSY0024 : 테이블 업데이트 -->
+    <update id="updTblTable4One">
+		update tbl_tables set
+			<if test='tblComment != null or tblComment != ""'>
+				tblComment = #{tblComment},
+			</if>
+			updateDT  = tsys.getSysdate(),
+	   		updaterID = #{userUID}
+		 WHERE tblNM = #{tblNM}
+    </update>
+    
+    <!-- TSY0024 : 테이블 등록 -->
+    <insert id="insTblTableOne">	
+	    INSERT INTO tbl_tables (
+	    	tblUID,
+	    	tblNM,
+	    	<if test='tblComment != null or tblComment != ""'>
+				tblComment,
+			</if>
+			colNM,
+			colComment,
+			dataType,
+			dataSize,
+			dataPrecision,
+			<if test='dataDefault != null or dataDefault != ""'>
+				dataDefault,
+			</if>
+			nullAble,
+			oldColNM
+        ) VALUES (
+   		<choose>
+		    <when test='SQLMODE == "mariadb"'>
+		   	tsys.getUUID('tbl_tables'),
+		    </when>
+		    <otherwise>
+		    seq_uuid.nextval,
+		    </otherwise>
+		</choose>
+       		#{tblNM, jdbcType=VARCHAR},
+	    <if test='tblComment != null or tblComment != ""'>
+			#{tblComment, jdbcType=VARCHAR},
+		</if>
+        	#{colNM, jdbcType=VARCHAR},
+			#{colComment, jdbcType=VARCHAR},
+			#{dataType, jdbcType=VARCHAR},
+			#{dataSize, jdbcType=NUMERIC},
+			#{dataPrecision, jdbcType=NUMERIC},
+		<if test='dataDefault != null or dataDefault != ""'>
+			#{dataDefault, jdbcType=VARCHAR},
+		</if>
+			#{nullAble, jdbcType=NUMERIC},
+			#{oldColNM, jdbcType=VARCHAR}
+	    )
+	</insert>
+    
+    <!-- TSY0024 : 테이블 업데이트 -->
+    <update id="updTblTable4ActsOne" parameterType="hashmap">
+		update tbl_tables set
+				colComment = #{colComment},
+				dataType   = #{dataType},
+				dataSize   = #{dataSize},
+				dataPrecision = #{dataPrecision},
+		<if test='dataDefault != null or dataDefault != ""'>
+				dataDefault = #{dataDefault},
+		</if>
+				nullAble    = #{nullAble},
+				oldColNM  = #{oldColNM},
+   		<choose>
+		    <when test='SQLMODE == "mariadb"'>
+		   		updateDT  = now(),
+		    </when>
+		    <otherwise>
+		    	updateDT  = sysdate,
+		    </otherwise>
+		</choose>
+		   		updaterID = #{userUID}
+		 WHERE tblUID = #{tblUID}
+    </update>
+    
+    <!-- TSY0024 : 컬럼 삭제 -->
+    <delete id="delTblTableColumn">
+    	<foreach item="item" collection="list" separator=";">	
+			DELETE FROM tbl_tables WHERE tblUID = #{item.tblUID}
+		</foreach>
+    </delete> 
+	
+    <!-- TSY0029 : table을 삭제함. -->
+    <delete id="delTblTableList">
+    	<foreach item="item" collection="list" separator=";">	
+			DELETE FROM tbl_tables WHERE tblNM = #{item.tblNM}
+		</foreach>
+    </delete>
+    
+     <!-- =================================
+	     TABLE 서비스 쿼리 파트 끝
+	     ================================= 
+	-->
+	
+	<!-- =================================
+	    용어관리 시작
+	     ================================= 
+	-->	
+	<!--조회 -->
+	  <select id="getTblDicList" parameterType="hashmap" resultType="hashmap">
+	  	SELECT 
+		  d.dictID
+		, d.dictUID
+		, d.langKR
+		, d.langEN
+		, d.langCN
+		, d.dictRemk
+		, d.menuGB
+		, d.dbSTS
+		FROM tbl_dictionary d
+		WHERE d.agentID = #{agentID}
+		 <choose>
+		    <when test='dictUID != null and dictUID != ""'>
+		   		 d.dictUID = #{dictUID}
+		    </when>
+		    <otherwise>
+		    	<if test='srchText != null and srchText != ""'>
+	            AND CONCAT(IFNULL(d.dictID,''),IFNULL(d.langKR,''),IFNULL(d.langEN,''),IFNULL(d.langCN,''), IFNULL(d.dictRemk,''), IFNULL(d.menuGB,''), IFNULL(d.dbSTS,'')) REGEXP #{srchText}
+	        	</if>
+        		<if test='dictID != null and dictID != ""'>
+			  	 AND d.dictID LIKE CONCAT_WS('','%',#{dictID},'%')
+				</if>
+				<if test='langKR != null and langKR != ""'>
+  					<choose>
+					    <when test='SQLMODE == "mariadb"'>
+				 AND d.langKR LIKE CONCAT_WS('','%',#{langKR},'%')
+					    </when>
+					    <otherwise>
+				 AND d.langKR LIKE '%'|| #{langKR} ||'%'
+					    </otherwise>
+					</choose>
+				</if>
+				<if test='langEN != null and langEN != ""'>
+  					<choose>
+					    <when test='SQLMODE == "mariadb"'>
+				 AND d.langEN LIKE CONCAT_WS('','%',#{langEN},'%')
+					    </when>
+					    <otherwise>
+				 AND d.langEN LIKE '%'|| #{langEN} ||'%'
+					    </otherwise>
+					</choose>
+				</if>
+				<if test='langCN != null and langCN != ""'>
+  					<choose>
+					    <when test='SQLMODE == "mariadb"'>
+				 AND d.langCN LIKE CONCAT_WS('','%',#{langCN},'%')
+					    </when>
+					    <otherwise>
+				 AND d.langCN LIKE '%'|| #{langCN} ||'%'
+					    </otherwise>
+					</choose>
+				</if>
+				<if test='dictRemk != null and dictRemk != ""'>
+  					<choose>
+					    <when test='SQLMODE == "mariadb"'>
+				 AND d.dictRemk LIKE CONCAT_WS('','%',#{dictRemk},'%')
+					    </when>
+					    <otherwise>
+				 AND d.dictRemk LIKE '%'|| #{dictRemk} ||'%'
+					    </otherwise>
+					</choose>
+				</if>
+				<if test='dbSTS != null and dbSTS != ""'>
+			  	 AND d.dbSTS = #{dbSTS}
+				</if>
+	    </otherwise>
+		 </choose>
+		 	ORDER BY d.dictID
+	  </select>
+	<!-- 상세 조회 -->
+	 <select id="getTblDicDtl" parameterType="hashmap" resultType="hashmap">
+			SELECT dictUID 
+			,  dictID
+			,  langKR
+			,  langEN
+			,  langCN
+			,  langETC
+			,  dictRemk
+			,  menuGB
+			,  agentID
+			,  dbSTS
+			FROM tbl_dictionary d
+			WHERE d.dictUID = #{dictUID}
+	 </select>
+	
+	<!-- 등록 -->
+	<insert id="insTblDict" parameterType="hashmap">
+		insert into tbl_dictionary (
+		   dictUID 
+		,  dictID
+		,  langKR
+		,  langEN
+		,  langCN
+		,  langETC
+		,  dictRemk
+		,  menuGB
+		,  agentID
+		,  dbSTS)
+		values (
+  	<choose>
+	    <when test='SQLMODE == "mariadb"'>
+	  tsys.getUUID('tbl_dictionary')
+	    </when>
+	    <otherwise>
+	  seq_uuid.nextval
+	    </otherwise>
+	</choose>
+		,  #{dictID  }
+		,  #{langKR  }
+		,  #{langEN  }
+		,  #{langCN  }
+		,  #{langETC }
+		,  #{dictRemk}
+		,  #{menuGB  }
+		,  #{agentID }
+		,  #{dbSTS   }
+		)
+	</insert>
+	 <!-- 영역별 화면기능코드가 존재하는지를 조회함. -->
+    <select id="chkTblDict" parameterType="hashmap" resultType="int">
+    	SELECT count(dictID) AS existCnt FROM tbl_dictionary d
+    	 WHERE 1=1
+		<if test='dictID != null and dictID != ""'>
+		 	 AND d.dictID = #{dictID}
+		</if>
+		<if test='langKR != null and langKR != ""'>
+		 	 AND d.langKR = #{langKOlangKRR}
+		</if>
+	 	<if test='langEN != null and langEN != ""'>
+		 	 AND d.langEN  = #{langEN}
+		</if>
+		<if test='langCN != null and langCN != ""'>
+		 	 AND d.langCN = #{langCN}
+		</if>
+		<if test='langETC != null and langETC != ""'>
+		 	 AND d.langETC  = #{langETC}
+		</if>
+    </select>
+    <!-- 수정 -->
+    <update id="updTblDict" parameterType="hashmap">
+		update tbl_dictionary
+		    set dictID = #{dictID}
+			<if test='langKR != null and langKR != ""'>
+			  , langKR = #{langKR}
+			</if>
+			<if test='langEN != null and langEN != ""'>
+			  , langEN = #{langEN}
+			</if>
+			<if test='langETC != null and langETC != ""'>
+			  , langETC = #{langETC}
+			</if>
+			<if test='dictRemk != null and dictRemk != ""'>
+			  , dictRemk = #{dictRemk}
+			</if>
+			<if test='langCN != null and langCN != ""'>
+			  , langCN = #{langCN}
+			</if>
+			<if test='menuGB != null and menuGB != ""'>
+			  , menuGB = #{menuGB}
+			</if>
+			<if test='dbSTS != null and dbSTS != ""'>
+			  , dbSTS  = #{dbSTS}
+			</if>   
+			<if test='agentID != null and agentID != ""'>
+			  , agentID = #{agentID}
+			</if>  
+		where dictUID = #{dictUID} 
+	</update>
+	
+	<!--삭제 -->
+	<delete id="delTblDict">
+		<foreach item="item" collection="list" separator=";">	
+			DELETE FROM tbl_dictionary WHERE dictUID = #{item.dictUID}
+		</foreach>
+    </delete>
+	
+	<!-- =================================
+	    용어관리 끝
+	     ================================= 
+	-->	
+
+	<!-- =================================
+	          코드관리 파트 시작
+	     ================================= 
+	-->	
+
+	<select id="getTblCodesList" parameterType="hashmap" resultType="hashmap">
+		SELECT DISTINCT 
+				 codeType
+				,codeTypeNM
+				,nationCD
+				,flag
+		  FROM tbl_codes
+		 WHERE agentID = #{agentID}
+		<if test='srchText != null and srchText != ""'>
+   		  <choose>
+		    <when test='SQLMODE == "mariadb"'>
+		    AND CONCAT(codeType, codeTypeNM, nationCD ,flag) REGEXP #{srchText}
+		    </when>
+		    <otherwise>
+		    AND (codeType || NVL(codeTypeNM,'') || nationCD || flag) LIKE '%'|| #{srchText} ||'%'
+		    </otherwise>
+		  </choose>
+        </if> 
+		<if test='codeType != null and codeType != ""'>
+			<choose>
+		    <when test='SQLMODE == "mariadb"'>
+		    AND codeType LIKE CONCAT_WS('','%',#{codeType},'%')
+		    </when>
+		    <otherwise>
+		    AND codeType LIKE '%'|| #{codeType} ||'%'
+		    </otherwise>
+		  </choose>
+        </if>
+        <if test='codeTypeNM != null and codeTypeNM != ""'>
+   		  <choose>
+		    <when test='SQLMODE == "mariadb"'>
+		    AND codeTypeNM LIKE CONCAT_WS('','%',#{codeTypeNM},'%')
+		    </when>
+		    <otherwise>
+		    AND codeTypeNM LIKE '%'|| #{codeTypeNM} ||'%'
+		    </otherwise>
+		  </choose>
+		</if>		
+		<if test='codeID != null and codeID != ""'>
+   		  <choose>
+		    <when test='SQLMODE == "mariadb"'>
+		    AND codeID LIKE CONCAT_WS('','%',#{codeID},'%')
+		    </when>
+		    <otherwise>
+		    AND codeID LIKE '%'|| #{codeID} ||'%'
+		    </otherwise>
+		  </choose>
+		</if>		
+		<if test='nationCD != null and nationCD != ""'>
+   		  <choose>
+		    <when test='SQLMODE == "mariadb"'>
+		    AND nationCD LIKE CONCAT_WS('','%',#{nationCD},'%')
+		    </when>
+		    <otherwise>
+		    AND nationCD LIKE '%'|| #{nationCD} ||'%'
+		    </otherwise>
+		  </choose>
+		</if>
+		<if test='flag != null and flag != ""'>
+   		  <choose>
+		    <when test='SQLMODE == "mariadb"'>
+		    AND flag LIKE CONCAT_WS('','%',#{flag},'%')
+		    </when>
+		    <otherwise>
+		    AND flag LIKE '%'|| #{flag} ||'%'
+		    </otherwise>
+		  </choose>
+		</if>
+		<if test='val1 != null and val1 != ""'>
+   		  <choose>
+		    <when test='SQLMODE == "mariadb"'>
+		     AND CONCAT(IFNULL(val1,''),IFNULL(val2,''),IFNULL(val3,''),IFNULL(val4,''),IFNULL(val5,'')) REGEXP #{val1}
+		    </when>
+		    <otherwise>
+		    AND (NVL(val1,'') || NVL(val2,'') || NVL(val3,'') || NVL(val4,'') || NVL(val5,'')) LIKE '%'|| #{val1} ||'%'
+		    </otherwise>
+		  </choose>
+		</if>
+		<if test='codeRemk != null and codeRemk != ""'>
+   		  <choose>
+		    <when test='SQLMODE == "mariadb"'>
+		    AND codeRemk LIKE CONCAT_WS('','%',#{codeRemk},'%')
+		    </when>
+		    <otherwise>
+		    AND codeRemk LIKE '%'|| #{codeRemk} ||'%'
+		    </otherwise>
+		  </choose>
+		</if>
+		<if test='dbSTS != null and dbSTS != ""'>
+			AND dbSTS = #{dbSTS}
+		</if>
+		ORDER BY codeType, codeTypeNM, nationCD
+    </select>
+    
+	<select id="getTblCodesDtl" parameterType="hashmap" resultType="hashmap">
+		SELECT 	 codeType
+				,codeTypeNM
+				,codeID
+				,nationCD
+				,val1
+				,val2
+				,val3
+				,val4
+				,val5
+				,sortORD
+				,codeRemk
+				,dbSTS
+				,refCodeID
+		  FROM tbl_codes
+		 WHERE agentID  = #{agentID}
+		   AND codeType = #{codeType}
+		   AND nationCD = #{nationCD}
+		ORDER BY sortORD, codeType, codeID
+    </select>
+
+    
+    <select id="chkTblCodeType" parameterType="hashmap" resultType="int">
+    	SELECT count(codeType) AS cnt FROM tbl_codes WHERE codeType = #{codeType}
+    </select>
+
+
+	<insert id="insTblCodesList">
+		<foreach item="item" collection="list" separator=";">
+
+		INSERT INTO tbl_codes (
+					 agentID
+		    	<if test='item.codeType != null or item.codeType != ""'>	
+					,codeType
+				</if>
+		    	<if test='item.codeTypeNM != null or item.codeTypeNM != ""'>
+					,codeTypeNM
+				</if>
+		    	<if test='item.codeID != null or item.codeID != ""'>
+					,codeID
+				</if>
+		    	<if test='item.nationCD != null or item.nationCD != ""'>
+					,nationCD
+				</if>
+		    	<if test='item.flag != null or item.flag != ""'>
+					,flag
+				</if>
+		    	<if test='item.val1 != null or item.val1 != ""'>
+					,val1
+				</if>
+					,val2
+					,val3
+					,val4
+					,val5
+		    	<if test='item.sortORD != null or item.sortORD != ""'>
+					,sortORD
+				</if>
+				<if test='item.refCodeID != null or item.refCodeID != ""'>
+					,refCodeID
+				</if>
+					,codeRemk
+					,createDT
+					,createrID
+		    	<if test='item.dbSTS != null or item.dbSTS != ""'>		
+					,dbSTS
+				</if>
+		  ) VALUES (
+					 #{item.agentID}
+		    	<if test='item.codeType != null or item.codeType != ""'>	
+					,#{item.codeType}
+				</if>
+		    	<if test='item.codeTypeNM != null or item.codeTypeNM != ""'>
+					,#{item.codeTypeNM}
+				</if>
+		    	<if test='item.codeID != null or item.codeID != ""'>
+					,#{item.codeID}
+				</if>
+		    	<if test='item.nationCD != null or item.nationCD != ""'>
+					,#{item.nationCD}
+				</if>
+		    	<if test='item.flag != null or item.flag != ""'>
+					,#{item.flag}
+				</if>
+		    	<if test='item.val1 != null or item.val1 != ""'>
+					,#{item.val1}
+				</if>
+					,#{item.val2}
+					,#{item.val3}
+					,#{item.val4}
+					,#{item.val5}
+		    	<if test='item.sortORD != null or item.sortORD != ""'>
+					,#{item.sortORD}
+				</if>
+				<if test='item.refCodeID != null or item.refCodeID != ""'>
+					,#{item.refCodeID}
+				</if>
+					,#{item.codeRemk}
+		   		<choose>
+				    <when test='item.SQLMODE == "mariadb"'>
+				   	,now()
+				    </when>
+				    <otherwise>
+				   	,sysdate
+				    </otherwise>
+				</choose>
+					,#{item.userUID}
+		    	<if test='item.dbSTS != null or item.dbSTS != ""'>					
+					,#{item.dbSTS}
+				</if>
+		 )
+	    </foreach>
+	</insert>
+	
+	
+    <select id="chkTblCodeActs" parameterType="hashmap" resultType="int">
+    	SELECT count(codeID) AS existCnt FROM tbl_codes 
+    	 WHERE agentID  = #{agentID}
+    	   AND codeType = #{codeType}
+    	   AND nationCD = #{nationCD}
+    	   AND codeID   = #{codeID}
+    </select>
+    
+     <update id="updTblCodes4One" parameterType="hashmap" >
+		update tbl_codes set
+				 updaterID  = #{userUID}
+	   		<choose>
+			    <when test='SQLMODE == "mariadb"'>
+			   	,updateDT 	= now()
+			    </when>
+			    <otherwise>
+			   	,updateDT 	= sysdate
+			    </otherwise>
+			</choose>
+			<if test='codeTypeNM != null or codeTypeNM != ""'>
+				,codeTypeNM = #{codeTypeNM}
+			</if>
+			<if test='codeTypeNM != null or codeTypeNM != ""'>
+				,nationCD = #{nationCD}
+			</if>
+			<if test='flag != null or flag != ""'>
+				,flag = #{flag}
+			</if>
+		 WHERE agentID  = #{agentID}
+		   AND codeType	= #{codeType}
+		   AND nationCD = #{oldNationCD}
+    </update>
+ 
+
+    <update id="updTblCodesList" parameterType="hashmap">
+		update tbl_codes set
+				 updaterID 	= #{userUID}
+				 ,updateDT 	= 
+			<choose>
+			    <when test='SQLMODE == "mariadb"'>
+			   	now()
+			    </when>
+			    <otherwise>
+			   sysdate
+			    </otherwise>
+			</choose>
+			<if test='val1 != null and val1 != ""'>
+				,val1 		= #{val1}
+			</if>	
+			<if test='val2 != null and val2 != ""'>
+				,val2 		= #{val2}
+			</if>	
+			<if test='val3 != null and val3 != ""'>
+				,val3 		= #{val3}
+			</if>
+			<if test='val4 != null and val4 != ""'>
+				,val4 		= #{val4}
+			</if>		
+			<if test='val5 != null and val5 != ""'>
+				,val5 		= #{val5}
+			</if>
+				,sortORD 	= #{sortORD}
+			<if test='codeRemk != null and codeRemk != ""'>
+				,codeRemk 	= #{codeRemk}
+			</if>
+			<if test='refCodeID != null and refCodeID != ""'>
+				,refCodeID 	= #{refCodeID}
+			</if>
+				,dbSTS      = #{dbSTS}
+		 WHERE agentID  = #{agentID}
+		   AND codeType = #{codeType}
+		   AND codeID	= #{codeID}
+		   AND nationCD	= #{nationCD}
+    </update>
+
+    <insert id="insTblCodesOne">	
+		INSERT INTO tbl_codes (	
+					 agentID
+		    	<if test='codeType != null or codeType != ""'>	
+					,codeType
+				</if>
+		    	<if test='codeTypeNM != null or codeTypeNM != ""'>
+					,codeTypeNM
+				</if>
+		    	<if test='codeID != null or codeID != ""'>
+					,codeID
+				</if>
+		    	<if test='nationCD != null or nationCD != ""'>
+					,nationCD
+				</if>
+		    	<if test='flag != null or flag != ""'>
+					,flag
+				</if>
+		    	<if test='val1 != null or val1 != ""'>
+					,val1
+				</if>
+					,val2
+					,val3
+					,val4
+					,val5
+		    	<if test='sortORD != null or sortORD != ""'>
+					,sortORD
+				</if>
+				<if test='refCodeID != null or refCodeID != ""'>
+					,refCodeID
+				</if>
+					,codeRemk
+					,createDT
+					,createrID
+		    	<if test='dbSTS != null or dbSTS != ""'>					
+					,dbSTS
+				</if>
+		  ) VALUES (
+					 #{agentID}
+		    	<if test='codeType != null or codeType != ""'>	
+					,#{codeType}
+				</if>
+		    	<if test='codeTypeNM != null or codeTypeNM != ""'>
+					,#{codeTypeNM}
+				</if>
+		    	<if test='codeID != null or codeID != ""'>
+					,#{codeID}
+				</if>
+		    	<if test='nationCD != null or nationCD != ""'>
+					,#{nationCD}
+				</if>
+		    	<if test='flag != null or flag != ""'>
+					,#{flag}
+				</if>
+		    	<if test='val1 != null or val1 != ""'>
+					,#{val1}
+				</if>
+					,#{val2}
+					,#{val3}
+					,#{val4}
+					,#{val5}
+		    	<if test='sortORD != null or sortORD != ""'>
+					,#{sortORD}
+				</if>
+				<if test='refCodeID != null or refCodeID != ""'>
+					,#{refCodeID}
+				</if>
+					,#{codeRemk}
+		   		<choose>
+				    <when test='SQLMODE == "mariadb"'>
+				   	, now()
+				    </when>
+				    <otherwise>
+				   	,sysdate
+				    </otherwise>
+				</choose>
+					,#{userUID}
+		    	<if test='dbSTS != null or dbSTS != ""'>					
+					,#{dbSTS}
+				</if>
+		 )
+	</insert>
+    
+
+    <update id="delTblCodesList">
+    	<foreach item="item" collection="list" separator=";">	
+			UPDATE tbl_codes SET
+					 updaterID = #{item.userUID}
+				 	,dbSTS 	   = #{item.dbSTS}
+				 	
+		   		<choose>
+				    <when test='item.SQLMODE == "mariadb"'>
+				   	,updateDT  =  now()
+				    </when>
+				    <otherwise>
+				   	,updateDT  =  sysdate
+				    </otherwise>
+				</choose>
+				
+			 WHERE agentID 	= #{item.agentID}
+	    	   AND codeType = #{item.codeType}
+	    	   AND codeID 	= #{item.codeID}
+	    	   AND nationCD = #{item.nationCD}
+		</foreach>
+    </update> 
+
+ 
+ 	<update id="delTblCodeList">
+		<foreach item="item" collection="list" separator=";">	
+			UPDATE tbl_codes SET
+					,updaterID = #{item.userUID}
+					,dbSTS 	   = #{item.dbSTS}
+					 		 
+		   		<choose>
+				    <when test='item.SQLMODE == "mariadb"'>
+				   	,updateDT  =  now()
+				    </when>
+				    <otherwise>
+				   	,updateDT  =  sysdate
+				    </otherwise>
+				</choose>
+
+			 WHERE agentID 	= #{item.agentID}
+	    	   AND codeType = #{item.codeType}
+	    	   AND nationCD = #{item.nationCD}
+		</foreach>
+    </update>   
+    
+    
+     <!-- =================================
+	           코드관리 파트 끝
+	      ================================= 
+	 -->
+	
+	
+	
+	<!-- =================================
+	     PIDS 서비스 파트 시작
+	     ================================= 
+	-->
+	<select id="getTblServiceList" parameterType="hashmap" resultType="hashmap">
+		SELECT 
+			 a.stepUID
+			,a.procID
+			,a.pidsXml
+			,a.stepPID
+			,a.stepSVC
+			,a.stepSql
+			,a.stepMeth
+			,a.getKey
+			,a.chkKey
+			,a.getVar
+			,a.caseDoRun
+			,a.caseRET
+			,a.getParams
+			,a.procRemk
+			,a.sortORD
+			,a.dbSTS
+			,a.agentID
+		  FROM tbl_services a
+		 WHERE 
+		<choose>
+		    <when test='stepUID != null and stepUID != ""'>
+		   		a.stepUID = #{stepUID}
+		    </when>
+		    <otherwise>
+				a.agentID = #{agentID}
+				<if test='procID != null and procID != ""'>
+		          AND a.procID = #{procID}
+		        </if>
+				<if test='srchText != null and srchText != ""'>
+		   		  <choose>
+				    <when test='SQLMODE == "mariadb"'>
+				  AND CONCAT(a.stepPID, a.stepSVC, a.stepSql, a.procRemk, a.pidsXml) REGEXP #{srchText}
+				    </when>
+				    <otherwise>
+				  AND (a.stepPID || a.stepSVC || a.stepSql || NVL(a.procRemk,'') || a.pidsXml) LIKE '%'|| #{srchText} ||'%'
+				    </otherwise>
+				  </choose>
+		        </if>
+				<if test='dbSTS != null and dbSTS != ""'>
+				  AND a.dbSTS = #{dbSTS}
+				</if>
+				<if test='stepPID != null and stepPID != ""'>
+		   		  <choose>
+				    <when test='SQLMODE == "mariadb"'>
+				  AND a.stepPID LIKE CONCAT_WS('','%',#{stepPID},'%')
+				    </when>
+				    <otherwise>
+				  AND a.stepPID LIKE '%'|| #{stepPID} ||'%'
+				    </otherwise>
+				  </choose>
+				</if> 
+				<if test='stepSVC != null and stepSVC != ""'>
+		   		  <choose>
+				    <when test='SQLMODE == "mariadb"'>
+				  AND a.stepSVC LIKE CONCAT_WS('','%',#{stepSVC},'%')
+				    </when>
+				    <otherwise>
+				  AND a.stepSVC LIKE '%'|| #{stepSVC} ||'%'
+				    </otherwise>
+				  </choose>
+				</if>
+				<if test='stepSql != null and stepSql != ""'>
+		   		  <choose>
+				    <when test='SQLMODE == "mariadb"'>
+				  AND a.stepSql LIKE CONCAT_WS('','%',#{stepSql},'%')
+				    </when>
+				    <otherwise>
+				  AND a.stepSql LIKE '%'|| #{stepSql} ||'%'
+				    </otherwise>
+				  </choose>
+				</if>
+				<if test='procRemk != null and procRemk != ""'>
+		   		  <choose>
+				    <when test='SQLMODE == "mariadb"'>
+				  AND a.procRemk LIKE CONCAT_WS('','%',#{procRemk},'%')
+				    </when>
+				    <otherwise>
+				  AND a.procRemk LIKE '%'|| #{procRemk} ||'%'
+				    </otherwise>
+				  </choose>
+				</if>
+		    </otherwise>
+		 </choose>
+		ORDER BY a.procID, a.sortORD
+    </select>
+    
+	<select id="getTblServiceDtl" parameterType="hashmap" resultType="hashmap">
+		SELECT 
+			 a.stepUID
+			,a.procID
+			,a.pidsXml
+			,a.stepPID
+			,a.stepSVC
+			,a.prevQuery
+			,a.prevMethod
+			,a.stepSql
+			,a.stepMeth
+			,a.postQuery
+			,a.postMethod
+			,a.getKey
+			,a.chkKey
+			,a.getVar
+			,a.caseDoRun
+			,a.caseRET
+			,a.getParams
+			,a.procRemk
+			,a.sortORD
+			,a.dbSTS
+			,a.agentID
+			,b.caseUID
+			,b.stepSVC AS subSVC
+			,b.execMode
+			,b.subPrevQuery
+			,b.subPrevMethod
+			,b.subQuery1
+			,b.subQuery2
+			,b.subMethod
+			,b.subPostQuery
+			,b.subPostMethod
+			,b.caseIF
+			,b.throwMsg
+		  FROM tbl_services a
+		      LEFT OUTER JOIN tbl_casedo b ON a.stepUID = b.stepUID
+		 WHERE 
+		<choose>
+		    <when test='stepUID != null and stepUID != ""'>
+		   		a.stepUID = #{stepUID}
+		    </when>
+		    <otherwise>
+				a.agentID = #{agentID}
+				<if test='pidsXml != null and pidsXml != ""'>
+		          AND a.pidsXml = #{pidsXml}
+		        </if>
+		        <if test='procID != null and procID != ""'>
+		          AND a.procID = #{procID}
+		        </if>
+		    </otherwise>
+		 </choose>
+		ORDER BY a.procID, a.sortORD
+    </select>
+    
+    <!-- TSY0085 : 프로시져ID 및 스텝PID가 존재하는지를 조회함. -->
+    <select id="chkTblServices" parameterType="hashmap" resultType="int">
+    	SELECT count(stepUID) AS cnt FROM tbl_services 
+    	 WHERE agentID = #{agentID} 
+		<if test='stepPID != null and stepPID != ""'>
+		  AND stepPID = #{stepPID}
+		</if>
+    	<if test='procID != null and procID != ""'>
+		  AND procID = #{procID}
+		</if>    	 
+    </select>
+    
+    <insert id="insTblServices4One" parameterType="hashmap">
+	    <selectKey resultType="Long" keyProperty="stepUID" order="BEFORE">
+   		  <choose>
+		    <when test='SQLMODE == "mariadb"'>
+		    SELECT tsys.getUUID('tbl_services') AS stepUID
+		    </when>
+		    <otherwise>
+		    SELECT seq_uuid.nextval AS stepUID FROM dual
+		    </otherwise>
+		  </choose>
+	    </selectKey> 
+	    INSERT INTO tbl_services (
+			 stepUID
+			,procID
+			,stepPID
+			,stepSVC
+			<if test='prevQuery != null and prevQuery != ""'>
+			,prevQuery
+			,prevMethod
+			</if>			
+			,stepSql
+			,stepMeth
+			<if test='postQuery != null and postQuery != ""'>
+			,postQuery
+			,postMethod
+			</if>
+			<if test='getKey != null and getKey != ""'>
+			,getKey
+			</if>
+			<if test='chkKey != null and chkKey != ""'>
+			,chkKey
+			</if>
+			<if test='getVar != null and getVar != ""'>
+			,getVar
+			</if>
+			<if test='getParams != null and getParams != ""'>
+			,getParams
+			</if>
+			<if test='procRemk != null and procRemk != ""'>
+			,procRemk
+			</if>
+			<if test='caseDoRun != null and caseDoRun != ""'>
+			,caseDoRun
+			</if>
+			<if test='isSubQuery != null and isSubQuery != "0"'>
+				<if test='caseRET != null and caseRET != ""'>
+			,caseRET
+				</if>
+			</if>
+			,pidsXml
+			,sortORD
+			,dbSTS
+			,agentID
+			,createDT
+			,createrID
+        ) VALUES (
+        	#{stepUID,   jdbcType=NUMERIC},
+        	#{procID,   jdbcType=VARCHAR},
+        	#{stepPID,  jdbcType=VARCHAR},
+        	#{stepSVC,  jdbcType=VARCHAR},
+        	<if test='prevQuery != null and prevQuery != ""'>
+			#{prevQuery},
+			#{prevMethod},
+			</if>
+        	#{stepSql,  jdbcType=VARCHAR},
+        	#{stepMeth, jdbcType=VARCHAR},
+			<if test='postQuery != null and postQuery != ""'>
+			#{postQuery},
+			#{postMethod},
+			</if>
+			<if test='getKey != null and getKey != ""'>
+			#{getKey,   jdbcType=VARCHAR},
+			</if>
+			<if test='chkKey != null and chkKey != ""'>
+			#{chkKey,   jdbcType=VARCHAR},
+			</if>
+			<if test='getVar != null and getVar != ""'>
+			#{getVar,   jdbcType=VARCHAR},
+			</if>
+			<if test='getParams != null and getParams != ""'>
+			#{getParams,jdbcType=VARCHAR},
+			</if>
+			<if test='procRemk != null and procRemk != ""'>
+			#{procRemk, jdbcType=VARCHAR},
+			</if>
+			<if test='caseDoRun != null and caseDoRun != ""'>
+			#{caseDoRun, jdbcType=VARCHAR},
+			</if>
+			<if test='isSubQuery != null and isSubQuery != "0"'>
+				<if test='caseRET != null and caseRET != ""'>
+			#{caseRET, jdbcType=VARCHAR},
+				</if>
+			</if>
+			#{pidsXml,  jdbcType=VARCHAR},
+			#{sortORD,  jdbcType=NUMERIC},
+        	'Y',
+			#{agentID,  jdbcType=VARCHAR},
+		  <choose>
+		    <when test='SQLMODE == "mariadb"'>
+		    now(),
+		    </when>
+		    <otherwise>
+ 			sysdate
+		    </otherwise>
+		  </choose>
+			#{userUID, jdbcType=VARCHAR}
+	    )
+	</insert>	
+	
+	<insert id="insTblCaseDo4One" parameterType="hashmap">		
+	    <selectKey resultType="Long" keyProperty="caseUID" order="BEFORE">
+   		  <choose>
+		    <when test='SQLMODE == "mariadb"'>
+		    SELECT tsys.getUUID('tbl_caseDo') AS caseUID
+		    </when>
+		    <otherwise>
+		    SELECT seq_uuid.nextval AS caseUID FROM dual
+		    </otherwise>
+		  </choose>
+	    </selectKey> 
+	    INSERT INTO tbl_caseDo (
+			 caseUID
+			,stepUID
+			,stepSVC
+			<if test='execMode != null and execMode != ""'>
+			,execMode
+			</if>
+			<if test='subPrevQuery != null and subPrevQuery != ""'>
+			,subPrevQuery
+			,subPrevMethod
+			</if>
+			<if test='subQuery1 != null and subQuery1 != ""'>
+			,subQuery1
+			</if>
+			<if test='subQuery2 != null and subQuery2 != ""'>
+			,subQuery2
+			</if>
+			<if test='subMethod != null and subMethod != ""'>
+			,subMethod
+			</if>
+			<if test='subPostQuery != null and subPostQuery != ""'>
+			,subPostQuery
+			,subPostMethod
+			</if>
+			<if test='caseIF != null and caseIF != ""'>
+			,caseIF
+			</if>
+			<if test='throwMsg != null and throwMsg != ""'>
+			,throwMsg
+			</if>
+			,sortORD
+			,dbSTS
+			,agentID
+        ) VALUES (
+        	#{caseUID,   jdbcType=NUMERIC},
+        	#{stepUID,   jdbcType=NUMERIC},
+		<choose>
+		    <when test='stepSVC != null and stepSVC != ""'>
+		    #{stepSVC,  jdbcType=NUMERIC},
+		    </when>
+		    <otherwise>
+			'commonService'
+		    </otherwise>
+		 </choose>
+			<if test='execMode != null and execMode != ""'>
+			#{execMode,jdbcType=VARCHAR},
+			</if>
+			<if test='subPrevQuery != null and subPrevQuery != ""'>
+			#{subPrevQuery,jdbcType=VARCHAR},
+			#{subPrevMethod,jdbcType=VARCHAR},
+			</if>
+			<if test='subQuery1 != null and subQuery1 != ""'>
+			#{subQuery1,jdbcType=VARCHAR},
+			</if>
+			<if test='subQuery2 != null and subQuery2 != ""'>
+			#{subQuery2,jdbcType=VARCHAR},
+			</if>
+			<if test='subMethod != null and subMethod != ""'>
+			#{subMethod,jdbcType=VARCHAR},
+			</if>
+			<if test='subPostQuery != null and subPostQuery != ""'>
+			#{subPostQuery,jdbcType=VARCHAR},
+			#{subPostMethod,jdbcType=VARCHAR},
+			</if>
+			<if test='caseIF != null and caseIF != ""'>
+			#{caseIF,   jdbcType=VARCHAR},
+			</if>
+			<if test='throwMsg != null and throwMsg != ""'>
+			#{throwMsg, jdbcType=VARCHAR},
+			</if>
+			#{sortORD,  jdbcType=NUMERIC},
+        	'Y',
+			#{agentID,  jdbcType=VARCHAR}
+	    )
+	</insert>
+	
+	<update id="updTblServices4One" parameterType="hashmap">
+		update tbl_services
+		    set 
+   		  <choose>
+		    <when test='SQLMODE == "mariadb"'>
+		        updateDT  = now()
+		    </when>
+		    <otherwise>
+		        updateDT  = sysdate
+		    </otherwise>
+		  </choose>
+		      , updaterID = #{userUID}
+			<if test='stepSVC != null and stepSVC != ""'>
+			  , stepSVC = #{stepSVC}
+			</if>
+			<if test='prevQuery != null and prevQuery != ""'>
+			  , prevQuery = #{prevQuery}
+			</if>
+			<if test='prevMethod != null and prevMethod != ""'>
+			  , prevMethod = #{prevMethod}
+			</if>
+			<if test='stepSql != null and stepSql != ""'>
+			  , stepSql = #{stepSql}
+			</if>
+			<if test='stepMeth != null and stepMeth != ""'>
+			  , stepMeth = #{stepMeth}
+			</if>
+			<if test='postQuery != null and postQuery != ""'>
+			  , postQuery = #{postQuery}
+			</if>
+			<if test='postMethod != null and postMethod != ""'>
+			  , postMethod = #{postMethod}
+			</if>			
+			<if test='getKey != null and getKey != ""'>
+			  , getKey = #{getKey}
+			</if>
+			<if test='chkKey != null and chkKey != ""'>
+			  , chkKey = #{chkKey}
+			</if>
+			<if test='getVar != null and getVar != ""'>
+			  , getVar = #{getVar}
+			</if>
+			<if test='getParams != null and getParams != ""'>
+			  , getParams = #{getParams}
+			</if>
+			<if test='procRemk != null and procRemk != ""'>
+			  , procRemk = #{procRemk}
+			</if>
+			<if test='caseDoRun != null and caseDoRun != ""'>
+			  , caseDoRun = #{caseDoRun}
+			</if>
+			<if test='caseRET != null and caseRET != ""'>
+			  , caseRET = #{caseRET}
+			</if>
+			<if test='pidsXml != null and pidsXml != ""'>
+			  , pidsXml = #{pidsXml}
+			</if>
+			<if test='sortORD != null and sortORD != ""'>
+			  , sortORD  = #{sortORD}
+			</if>  
+			<if test='dbSTS != null and dbSTS != ""'>
+			  , dbSTS  = #{dbSTS}
+			</if>   
+		where stepUID = #{stepUID} 
+	</update>
+	
+	<update id="updTblCaseDo4One" parameterType="hashmap">
+		update tbl_caseDo
+		    set agentID  = #{agentID}
+			<if test='stepSVC != null and stepSVC != ""'>
+			  , stepSVC = #{stepSVC}
+			</if>
+			<if test='execMode != null and execMode != ""'>
+			  , execMode = #{execMode}
+			</if>	
+			<if test='subPrevQuery != null and subPrevQuery != ""'>
+			  , subPrevQuery = #{subPrevQuery}
+			</if>	
+			<if test='subPrevMethod != null and subPrevMethod != ""'>
+			  , subPrevMethod = #{subPrevMethod}
+			</if>		
+			<if test='subQuery1 != null and subQuery1 != ""'>
+			  , subQuery1 = #{subQuery1}
+			</if>
+			<if test='subQuery2 != null and subQuery2 != ""'>
+			  , subQuery2 = #{subQuery2}
+			</if>	
+			<if test='subMethod != null and subMethod != ""'>
+			  , subMethod = #{subMethod}
+			</if>
+			<if test='subPostQuery != null and subPostQuery != ""'>
+			  , subPostQuery = #{subPostQuery}
+			</if>	
+			<if test='subPostMethod != null and subPostMethod != ""'>
+			  , subPostMethod = #{subPostMethod}
+			</if>
+			<if test='caseIF != null and caseIF != ""'>
+			  , caseIF = #{caseIF}
+			</if>
+			<if test='throwMsg != null and throwMsg != ""'>
+			  , throwMsg = #{throwMsg}
+			</if>
+			<if test='sortORD != null and sortORD != ""'>
+			  , sortORD  = #{sortORD}
+			</if>  
+			<if test='dbSTS != null and dbSTS != ""'>
+			  , dbSTS  = #{dbSTS}
+			</if>   
+		where caseUID = #{caseUID} 
+	</update>
+	
+	<delete id="delTblServicesBystepUID" parameterType="hashmap">
+		delete from tbl_services where stepUID = #{stepUID}
+	</delete>
+	<delete id="delTblServicesByprocID" parameterType="hashmap">
+		DELETE FROM tbl_services WHERE procID = #{procID}
+	</delete>
+	
+	<delete id="delTblCaseDoBystepUID" parameterType="hashmap">
+		DELETE FROM tbl_casedo WHERE stepUID = #{stepUID}
+	</delete>
+    <!-- =================================
+	     PIDS 서비스 쿼리 파트 끝
+	     ================================= 
+	-->
+	
+	<!-- 마스터 싱크용 I/F 대상 정보 마킹 업데이트  -->
+<!-- 	<update id="updMstInfoList" parameterType="hashmap"> -->
+<!-- 		UPDATE tbl_infInfo SET ifKey = #{svcKey} -->
+<!-- 		 WHERE  tblName = #{tblName} -->
+<!-- 		    AND agentID = #{agentID} -->
+<!-- 		    AND ifKey IS NULL -->
+<!-- 	</update> -->
+	
+	<!-- 마스터 싱크용 I/F 정보 조회 -->
+<!-- 	<select id="getMstInfoList" parameterType="hashmap" resultType="hashmap"> -->
+<!-- 		SELECT aa.ifUID, aa.tblName, aa.keyCols, aa.keyVals, aa.keyTyps, aa.infCols -->
+<!-- 		  FROM tbl_infInfo aa -->
+<!-- 		 WHERE  aa.agentID = #{agentID} -->
+<!-- 		    AND aa.tblName = #{tblName} -->
+<!-- 		    AND aa.ifKey   = #{svcKey} -->
+<!--  
+		<choose>
+		  <when test='SQLMODE == "mariadb"'>
+		 	AND aa.createDT <![CDATA[>]]> DATE_SUB(NOW(), INTERVAL #{chkTime} MINUTE) 
+		  </when>
+		  <otherwise>
+			AND aa.createDT <![CDATA[>]]> SYSDATE - #{chkTime}/(24*60)
+		  </otherwise>
+		</choose>
+		<choose>
+		  <when test='SQLMODE == "mariadb"'>
+		 	AND aa.ifUID <![CDATA[>]]> IFNULL((SELECT max(ifUID) FROM tbl_infInfoHist WHERE tblName = aa.tblName AND svcKey = #{svcKey}),0) 
+		  </when>
+		  <otherwise>
+			AND aa.ifUID <![CDATA[>]]> NVL((SELECT max(ifUID) FROM tbl_infInfoHist WHERE tblName = aa.tblName AND svcKey = #{svcKey}),0) 
+		  </otherwise>
+		</choose>
+-->
+<!-- 		ORDER BY aa.ifUID -->
+<!-- 	</select> -->
+	
+	<!-- 마스터 테이블 싱크용 쿼리 -->
+<!-- 	<select id="getSyncMstData" parameterType="hashmap" resultType="hashmap"> -->
+<!-- 		${value} -->
+<!-- 	</select> -->
+	
+	<!--  마스터 테이블 싱크 히스토리 저장 -->
+<!-- 	<insert id="insInfInfoHist" parameterType="hashmap"> -->
+<!-- 		<choose> -->
+<!-- 		  <when test='SQLMODE == "mariadb"'> -->
+<!-- 		insert into tbl_infInfoHist ( -->
+<!-- 			 svcKey -->
+<!-- 			,tblName -->
+<!-- 			,ifUID -->
+<!-- 			,createDT -->
+<!-- 		) value ( -->
+<!-- 			 #{svcKey} -->
+<!-- 			,#{tblName} -->
+<!-- 			,#{ifUID} -->
+<!-- 			,now() -->
+<!-- 		) -->
+<!-- 		  </when> -->
+<!-- 		  <otherwise> -->
+<!-- 		insert into tbl_infInfoHist ( -->
+<!-- 		     histID -->
+<!-- 			,svcKey -->
+<!-- 			,tblName -->
+<!-- 			,ifUID -->
+<!-- 			,createDT -->
+<!-- 		) value ( -->
+<!-- 		     seq_uuid.nextval -->
+<!-- 			,#{svcKey} -->
+<!-- 			,#{tblName} -->
+<!-- 			,#{ifUID} -->
+<!-- 			,sysdate -->
+<!-- 		) -->
+<!-- 		  </otherwise> -->
+<!-- 		</choose> -->
+<!-- 	</insert> -->
+	
+	<!-- 첨부파일 정보 조회 -->
+	<select id="getTblAttachList" parameterType="hashmap" resultType="hashmap">
+		SELECT a.fileUID , a.attachID ,a.uploadPath , a.fileNM ,a.extNM ,a.fileSize, a.saveNM, a.uploadAsePath, a.docNO, a.mainYN
+		  FROM tsys.tbl_attach a
+		 WHERE  
+		<choose>
+		  <when test='attachID != null and @com.sci4s.grpc.utils.MybatisUtil@strToArray(attachID).size != 0'>
+			<trim prefix=" (" suffix=") " prefixOverrides="OR">		
+				<foreach collection="@com.sci4s.grpc.utils.MybatisUtil@strToArray(attachID)" item="type" index="inx">
+					<trim prefix="OR">
+			a.attachID = #{type}
+					</trim>
+				</foreach>
+			</trim>
+		  </when>
+		  <otherwise>
+			a.attachID = #{attachID}
+		  </otherwise>
+		</choose>
+		AND dbSTS = 'Y'
+		<if test='docNO != null and docNO != ""'>
+			  AND docNO = #{docNO}
+		</if>
+		 ORDER BY a.fileUID
+	</select>	
+
+	<!--   첨부파일 정보를 저장 -->
+	<insert id="insTblAttach" parameterType="hashmap">
+		<foreach item="item" collection="list" separator=";">
+			insert into tsys.tbl_attach (
+				 fileUID
+			<if test='item.docNo != null and item.docNo != ""'>
+		         ,docNo
+		         ,docGB
+			</if>
+				,attachID
+				,uploadPath
+				,uploadAsePath
+				,saveNM
+				,fileNM
+				,dbSTS
+				,extNM
+				,fileSize
+				,mainYN
+				,createrID
+				,createDT
+			) value (
+				 tsys.getUUID('tbl_attach')
+			<if test='item.docNo != null and item.docNo != ""'>
+	            , #{item.docNo}
+	            , #{item.docGB}
+			</if>
+				,#{item.attachID}
+				,REPLACE(#{item.uploadPath},'\\','')
+				,#{item.uploadAsePath}
+				,#{item.saveNM}
+				,#{item.fileNM}
+				,'Y'
+				,#{item.extNM}
+				,#{item.fileSize}
+				,#{item.mainYN}
+				,#{item.userUID}
+				<choose>
+				  <when test='item.SQLMODE == "oracle"'>
+			     , sysdate
+				  </when>
+				  <otherwise>
+			     , now()
+				  </otherwise>
+				</choose> 
+			)
+		</foreach>
+	</insert>
+	
+	
+	<!--  첨부파일 정보를 업데이트함. -->
+	<update id="updTblAttach4DocNO" parameterType="hashmap">
+		UPDATE tsys.tbl_attach A
+		   SET
+			<choose>
+			  <when test='SQLMODE == "oracle"'>
+		     A.updateDT = sysdate
+			  </when>
+			  <otherwise>
+		     A.updateDT = now()
+			  </otherwise>
+			</choose> 
+			<if test='docNO != null and docNO != ""'>
+            ,A.docNO = #{docNO}
+			</if>
+			<if test='mainYN != null and mainYN != ""'>
+            ,A.mainYN = #{mainYN}
+			</if>
+			<if test='docGB != null and docGB != ""'>
+            ,A.docGB = #{docGB}
+			</if>
+         WHERE attachID = #{attachID}
+	</update>
+	
+	<!--  첨부파일 정보를 업데이트함. -->
+	<update id="updTblAttach4MainYN" parameterType="hashmap">
+		UPDATE tsys.tbl_attach A
+		   SET
+			<choose>
+			  <when test='SQLMODE == "oracle"'>
+		     A.updateDT = sysdate
+			  </when>
+			  <otherwise>
+		     A.updateDT = now()
+			  </otherwise>
+			</choose> 
+            ,A.mainYN = 'Y'
+         WHERE fileUID = #{fileUID}
+	</update>
+	
+	<!--  첨부파일 정보를 업데이트함. -->
+	<update id="updTblAtt4MainYN" parameterType="hashmap">
+		UPDATE tsys.tbl_attach A
+		   SET
+			<choose>
+			  <when test='SQLMODE == "oracle"'>
+		     A.updateDT = sysdate
+			  </when>
+			  <otherwise>
+		     A.updateDT = now()
+			  </otherwise>
+			</choose> 
+            ,A.mainYN = 'Y'
+         WHERE fileUID = (SELECT 
+							case when (SELECT COUNT(*) FROM tbl_attach WHERE attachID = a.attachID AND mainYN = 'Y' AND dbSTS = 'Y') = 0
+							then MIN(a.fileUID) 
+							ELSE null end AS fileUID
+						FROM tbl_attach a
+						WHERE a.attachID = #{attachID}
+						 AND (a.extNM = 'jpg' OR a.extNM = 'png')
+						 AND a.dbSTS = 'Y')
+	</update>
+	
+	<!--  첨부파일 정보를 업데이트함. -->
+	<update id="delTblAttachList" parameterType="hashmap">
+		<foreach item="item" collection="list" separator=";">
+			UPDATE tsys.tbl_attach A
+			   SET
+				<choose>
+				  <when test='item.SQLMODE == "oracle"'>
+			     A.updateDT = sysdate
+				  </when>
+				  <otherwise>
+			     A.updateDT = now()
+				  </otherwise>
+				</choose> 
+	            ,A.dbSTS = 'N'
+	         WHERE fileUID = #{item.fileUID}
+         </foreach>
+	</update>
+	
+	<select id="getSyncConfig" parameterType="hashmap" resultType="hashmap">
+		SELECT
+			A.ifUID
+			, A.pID
+			, A.ifMSA
+			, A.ifParamIDs
+			, A.pNM
+			, A.tableNM
+			, A.targets
+			, A.fixedDelay
+			, A.initialDelay
+			, A.functionNM
+			, A.mapperPID
+			, A.methodNM
+			, A.`type`
+		FROM tbl_syncjob A
+		WHERE A.dbSTS = 'Y'
+		ORDER BY A.ifUID
+	</select>
+	
+	<!-- =================================
+	          사용자 권한 설정 연계  시작
+	     ================================= 
+	-->
+	<select id="getTblRoleScopesIFCnt" parameterType="hashmap" resultType="int">
+		SELECT COUNT(1) FROM tbl_rolescopesif A WHERE jobID IS NULL
+	</select>
+	<update id="updTblRoleScopesIF" parameterType="hashmap">
+		UPDATE tbl_rolescopesif A
+		   SET
+			<choose>
+			  <when test='SQLMODE == "oracle"'>
+		     A.ifDT = SYSDATE
+			  </when>
+			  <otherwise>
+		     A.ifDT = now()
+			  </otherwise>
+			</choose> 
+            ,A.jobID = #{uuID}
+            ,A.ifKey = #{svcKey}
+         WHERE A.jobID IS NULL
+	</update>
+		
+    <select id="getRoleScopesIFList" parameterType="hashmap" resultType="hashmap">
+		SELECT 
+			 bakUID
+			,roleUID
+			,scopeUID
+			,privID
+			,menuID
+			,roleID
+			,pageID
+			,pageUID
+			,privNM
+			,menuNM
+			,linkUri
+			,pageNM
+			,sortORD
+			,topMenuID
+			,parMenuID
+			,topMenuNM
+			,parMenuNM
+			,topSortORD
+			,parSortORD
+			,agentID
+			,activeImg
+			,ifSTS
+			,jobID
+		  FROM tbl_rolescopesif
+		 <choose>
+			  <when test='syncType == "sync"'>
+		      WHERE ifKey = #{svcKey}
+			  </when>
+			  <otherwise>
+		      WHERE jobID = #{uuID}
+			  </otherwise>
+		  </choose> 
+		ORDER BY bakUID
+    </select>
+	<!-- =================================
+	          사용자 권한 설정 연계  끝
+	     ================================= 
+	-->
+</mapper>

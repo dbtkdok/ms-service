@@ -1,0 +1,55 @@
+pipeline{
+	agent {
+	    dockerfile {
+	        filename 'Dockerfile'
+	        dir 'trueMsa/trueBase'
+	        label 'my-defined-label'
+	        registryUrl 'https://192.168.219.45'
+	    }
+	    
+def remote = [:]
+remote.name = 'truemsa'
+remote.host = '192.168.219.45'
+remote.user = 'truemsa'
+remote.password = 'qwer1234'
+remote.allowAnyHosts = true
+
+ node {
+     def app
+    
+     
+    stage('Remote SSH') {
+       
+       sshCommand remote: remote, command: "ls -a"
+       
+       sshCommand remote: remote, command: "docker ps -a"
+
+       docker.withRegistry('https://192.168.219.45', 'docker-hub') {
+			sh 'make test'
+	   }
+    }
+    
+
+    stage('Test image') {
+       /*  app.inside {
+             sh 'echo "Tests passed"'
+         }
+         */
+     }
+   
+
+     stage('Push image') {
+         /* Finally, we'll push the image with two tags:
+         * First, the incremental build number from Jenkins
+         * Second, the 'latest' tag.
+         * Pushing multiple tags is cheap, as all the layers are reused. */
+         /*docker.withRegistry('https://registry.hub.docker.com', 'docker-hub') {
+             app.push("${env.BUILD_NUMBER}")
+             app.push("latest")
+         }
+		*/
+     }
+ }
+
+
+}

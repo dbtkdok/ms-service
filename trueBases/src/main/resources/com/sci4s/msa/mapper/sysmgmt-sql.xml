@@ -1,0 +1,3400 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sci4s.msa.mapper.SysMgmtMapper">
+    <select id="getTopMenuList" parameterType="hashmap" resultType="hashmap">
+		<!-- SELECT DISTINCT AA.topMenuID, AA.topMenuNM AS menuNM, AA.parMenuID, AA.linkUri, AA.agentID, AA.userGB
+		  FROM tbl_userPrivs AA
+		 WHERE userUID = #{userUID} 
+		   AND AA.parSortORD = 1
+		<if test='roleID != null and roleID != ""'>
+		   AND AA.roleID = #{roleID}
+		</if>
+		<if test='borgUID != null and borgUID != ""'>
+		   AND AA.borgUID = #{borgUID}
+		</if>
+		<if test='menuID != null and menuID != ""'>
+		   AND AA.menuID = #{menuID}
+		</if>
+		<if test='custID != null and custID != ""'>
+		   AND AA.custID = #{custID}
+		</if>
+		<if test='menuID != null and menuID != ""'>
+		   AND AA.menuID = #{menuID}
+		</if>	
+		   AND AA.agentID = #{agentID}	
+		ORDER BY AA.topSortORD -->
+		
+		SELECT AA.topMenuID, AA.menuNM ,AA.parMenuID, BB.linkUri, BB.agentID, AA.menuID, 
+		CASE WHEN BB.linkUri IS NULL THEN ''
+		<choose>
+		  	<when test='SQLMODE == "mariadb"'>
+		  		ELSE SUBSTRING(SUBSTRING_INDEX(BB.linkUri,'/',2), 2)
+		  	</when>
+		  	<otherwise>
+		  		ELSE SUBSTR(INSTR(BB.linkUri,'/',2), 2)
+		  	</otherwise>
+	  	</choose>
+		END AS msa
+		FROM ( 
+		SELECT topMenuID, topMenuNM AS menuNM, parMenuID, MIN(menuID) AS menuID
+		  FROM tbl_userPrivs
+		 WHERE userUID = #{userUID} 
+		   AND agentID = #{agentID}	
+		 GROUP BY topMenuID
+		) AA
+		INNER JOIN tbl_menus BB ON AA.menuID = BB.menuID
+		ORDER BY AA.topMenuID
+	</select>
+	
+	<select id="getLeftMenuList" parameterType="hashmap" resultType="hashmap">
+		SELECT DISTINCT AA.parMenuID, AA.parMenuNM, AA.topMenuID, AA.linkUri, AA.agentID, AA.menuID, AA.menuNM
+		FROM tbl_userPrivs AA
+		WHERE AA.userUID = #{userUID}
+	</select>
+	
+	<select id="getLeftMenusByTopMenuID" parameterType="hashmap" resultType="hashmap">
+		select DISTINCT topMenuID AS topNode, menuID AS node, parMenuID AS parent, menuNM AS title, linkUri AS value 
+		  from tbl_userPrivs 
+		 where userUID = #{userUID} 
+		 <if test='roleID != null and roleID != ""'>
+		  and roleID  = #{roleID}
+		</if>
+		  and topMenuID= #{topMenuID} and dbSTS = 'Y' and agentID = #{agentID}
+		order by topSortORD, parSortORD, sortORD
+	</select>	
+
+    <select id="getEnableJob" parameterType="hashmap" resultType="com.sci4s.msa.tsys.dto.UserPrivDto">
+    	SELECT DISTINCT AA.privID, AA.privNM, AA.activeImg
+		  FROM tbl_userprivs AA
+		 WHERE AA.userUID = #{userUID}
+		<if test='roleID != null and roleID != ""'>
+		   AND AA.roleID  = #{roleID}
+		</if>
+		<if test='pMenuID != null and pMenuID != ""'>
+		   AND AA.menuID  = #{pMenuID}
+		</if>
+		<if test='pageID != null and pageID != ""'>
+		   AND AA.pageID  = #{pageID}
+		</if>
+		<if test='privIDs != null and privIDs != ""'>
+		  AND AA.privID IN
+			<foreach collection="privIDs" item="cd" open="(" close=")" separator=",">
+            #{cd}
+        	</foreach>
+		</if>
+		   AND AA.borgUID = #{borgUID}
+		   AND AA.agentID = #{agentID}
+		   AND AA.dbSTS   = 'Y'
+    </select> 
+    
+    <select id="getCodesByTypeCode" parameterType="hashmap" resultType="hashmap">
+    	SELECT 
+	    	  AA.codeID as code, 
+	    	  AA.val1   as text,
+	    	  AA.val2   as text2,
+	    	  AA.val3   as text3
+	     FROM tbl_codes AA
+	    WHERE AA.agentID = #{agentID}
+	      AND AA.nationCD = #{clang}
+			<if test='codeType != null and codeType != ""'>
+			  AND AA.codeType = #{codeType}
+			</if>
+			<if test='dbSTS != null and dbSTS != ""'>
+			  AND AA.dbSTS = #{dbSTS}
+			</if>
+   		  <choose>
+		    <when test='codeType == "ORIGINGB"'>
+		ORDER BY AA.val1
+		    </when>
+		    <otherwise>
+		ORDER BY AA.sortORD
+		    </otherwise>
+		  </choose>
+    </select>
+    
+    <select id="getSearchBoxList" parameterType="hashmap" resultType="hashmap">
+    	SELECT 
+			A.mainPlaceholder
+			,A.searchType
+			,A.tableCnt
+			,B.inputType
+			,B.inputID
+			,B.inputNM
+			,B.inputCls
+			,B.tagYN
+			,B.tag
+			,B.placeholder
+			,B.icon
+			,B.reqYN
+			,B.sortORD
+			,B.codeNM
+			,B.optionVal
+			,B.optionTxt
+			,B.tagParam
+			,B.defaultVal
+		FROM tbl_pages A
+		INNER JOIN tbl_pagesearch B ON A.pageUID = B.pageUID AND B.dbSTS = 'Y'
+		 WHERE A.agentID = #{agentID}
+		   AND A.pageID  = #{pID}
+		   AND A.dbSTS   = 'Y'
+		 ORDER BY B.sortORD, B.inputNM
+    </select> 
+    
+    <!-- =================================
+	           화면버튼 권한 쿼리 파트 시작
+	     ================================= 
+	-->
+    <select id="getTblActivitiesList" parameterType="hashmap" resultType="hashmap">
+		SELECT 
+			a.privUID,
+			a.privID,
+			a.privNM,
+			a.isRead,
+			a.dbSTS,
+			a.agentID,
+			a.activeImg,
+			a.noActiveImg
+		  FROM tbl_activities a
+		 WHERE 
+		<choose>
+		    <when test='privUID != null and privUID != ""'>
+		   		a.privUID = #{privUID}
+		    </when>
+		    <otherwise>
+				a.agentID = #{agentID}
+				<if test='srchText != null and srchText != ""'>
+		   		  <choose>
+				    <when test='SQLMODE == "mariadb"'>
+				  AND CONCAT(a.privID, a.privNM) REGEXP #{srchText}
+				    </when>
+				    <otherwise>
+				  AND (a.privID || a.privNM) LIKE '%'|| #{srchText} ||'%'
+				    </otherwise>
+				  </choose>
+		        </if>
+				<if test='dbSTS != null and dbSTS != ""'>
+				  AND a.dbSTS = #{dbSTS}
+				</if>
+				<if test='isRead != null and isRead != ""'>
+				  AND a.isRead = #{isRead}
+				</if> 
+				<if test='privID != null and privID != ""'>
+		   		  <choose>
+				    <when test='SQLMODE == "mariadb"'>
+				  AND a.privID LIKE CONCAT_WS('','%',#{privID},'%')
+				    </when>
+				    <otherwise>
+				  AND a.privID LIKE '%'|| #{privID} ||'%'
+				    </otherwise>
+				  </choose>
+				</if> 
+				<if test='privNM != null and privNM != ""'>
+		   		  <choose>
+				    <when test='SQLMODE == "mariadb"'>
+				  AND a.privNM LIKE CONCAT_WS('','%',#{privNM},'%')
+				    </when>
+				    <otherwise>
+				  AND a.privNM LIKE '%'|| #{privNM} ||'%'
+				    </otherwise>
+				  </choose>
+				</if>
+				<if test='activeImg != null and activeImg != ""'>
+		   		  <choose>
+				    <when test='SQLMODE == "mariadb"'>
+				  AND a.activeImg LIKE CONCAT_WS('','%',#{activeImg},'%')
+				    </when>
+				    <otherwise>
+				  AND a.activeImg LIKE '%'|| #{activeImg} ||'%'
+				    </otherwise>
+				  </choose>
+				</if>
+				<if test='noActiveImg != null and noActiveImg != ""'>
+		   		  <choose>
+				    <when test='SQLMODE == "mariadb"'>
+				  AND a.noActiveImg LIKE CONCAT_WS('','%',#{noActiveImg},'%')
+				    </when>
+				    <otherwise>
+				  AND a.noActiveImg LIKE '%'|| #{noActiveImg} ||'%'
+				    </otherwise>
+				  </choose>
+				</if>
+		    </otherwise>
+		 </choose>
+		ORDER BY a.privNM
+    </select>
+    
+    <select id="chkTblActivities" parameterType="hashmap" resultType="int">
+    	SELECT count(privUID) AS cnt FROM tbl_activities WHERE privID = #{privID}
+    </select>
+    
+    <insert id="insTblActivities4One" parameterType="hashmap">
+        insert into tbl_activities (
+	          privUID
+	        , privID
+			, privNM
+			<if test='activeImg != null and activeImg != ""'>
+			  , activeImg
+			</if>
+			<if test='noActiveImg != null and noActiveImg != ""'>
+			  , noActiveImg
+			</if>
+			, agentID
+			, isRead
+			, dbSTS
+		) values (
+   		  <choose>
+		    <when test='SQLMODE == "mariadb"'>
+			tsys.getUUID('tbl_activities')
+		    </when>
+		    <otherwise>
+			seq_uuid.nextval
+		    </otherwise>
+		  </choose>
+	        , #{privID, jdbcType=VARCHAR} 
+			, #{privNM, jdbcType=VARCHAR} 
+			<if test='activeImg != null and activeImg != ""'>
+			, #{activeImg, jdbcType=VARCHAR} 
+			</if>
+			<if test='noActiveImg != null and noActiveImg != ""'>
+			, #{noActiveImg, jdbcType=VARCHAR} 
+			</if>
+			, #{agentID, jdbcType=VARCHAR} 
+			, #{isRead,  jdbcType=VARCHAR} 
+			, #{dbSTS,   jdbcType=VARCHAR} 
+		)
+	</insert>
+	
+	<update id="updTblActivities" parameterType="hashmap">
+		<foreach item="item" collection="list" separator=";">	
+		update tbl_activities
+		   set privID = #{item.privID}
+		      ,privNM = #{item.privNM}
+			<if test='item.activeImg != null and item.activeImg != ""'>
+			  , activeImg = #{item.activeImg}
+			</if>
+			<if test='item.noActiveImg != null and item.noActiveImg != ""'>
+			  , noActiveImg = #{item.noActiveImg}
+			</if>
+			<if test='item.isRead != null and item.isRead != ""'>
+			  , isRead = #{item.isRead}
+			</if>
+			<if test='item.dbSTS != null and item.dbSTS != ""'>
+			  , dbSTS  = #{item.dbSTS}
+			</if>   
+			<if test='item.agentID != null and item.agentID != ""'>
+			  , agentID = #{item.agentID}
+			</if>  
+		where privUID = #{item.privUID} 
+        </foreach>
+	</update>	
+	
+	<update id="updTblActivities4One" parameterType="hashmap">
+		update tbl_activities
+		   set privID = #{privID}
+		      ,privNM = #{privNM}
+			<if test='activeImg != null and activeImg != ""'>
+			  , activeImg = #{activeImg}
+			</if>
+			<if test='noActiveImg != null and noActiveImg != ""'>
+			  , noActiveImg = #{noActiveImg}
+			</if>
+			<if test='isRead != null and isRead != ""'>
+			  , isRead = #{isRead}
+			</if>
+			<if test='dbSTS != null and dbSTS != ""'>
+			  , dbSTS  = #{dbSTS}
+			</if>   
+			<if test='agentID != null and agentID != ""'>
+			  , agentID = #{agentID}
+			</if>  
+		where privUID = #{privUID} 
+	</update>
+	
+	<update id="delTblActivities" parameterType="hashmap">
+		<foreach item="item" collection="list" separator=";">	
+		delete from tbl_activities where privUID = #{item.privUID}
+        </foreach>
+	</update>	
+    <!-- =================================
+	           화면버튼 권한 쿼리 파트 끝
+	     ================================= 
+	-->
+	
+	<!-- =================================
+	           메뉴관리 쿼리 파트 시작 
+	     ================================= 
+	-->
+	<select id="getTblMenuList" parameterType="hashmap" resultType="hashmap">
+		<!-- 계층 구조 쿼리
+		WITH RECURSIVE C AS (
+		    SELECT menuID, parMenuID, menuNM AS path
+		    FROM tbl_menus FORCE INDEX FOR JOIN (`IDX_tbl_menus01`)
+		    WHERE parMenuID IS NULL
+		      AND dbsts = 'Y'
+		    UNION ALL
+		    SELECT E.menuID, E.parMenuID, CONCAT_WS('>', C.path, E.menuNM)
+		    FROM C
+		        STRAIGHT_JOIN tbl_menus E FORCE INDEX FOR JOIN (`IDX_tbl_menus01`) ON E.parMenuID = C.menuID
+		    WHERE E.dbsts = 'Y'
+		)
+		SELECT C.menuID, C.parMenuID, C.path, D.svcTypeID, D.svcTypeNM, D.topMenuID
+		     , D.menuLVL, D.dbSTS, D.menuCD, D.sortORD, D.isDisplay, D.linkUri
+		FROM C JOIN tbl_menus D ON C.menuID = D.menuID
+		ORDER BY path;
+		-->
+		      SELECT
+                   a.menuUID
+		         , a.menuID
+		         , a.topMenuID
+		         , a.parMenuID
+		         , case when a.menuLVL = 3 then
+		                     (select parMenuID from tbl_menus where menuUID = a.parMenuID)
+		                when a.menuLVL = 2 then topMenuID
+		                else 0 
+		                end as pprMenuID
+		         , a.menuNM
+		         , a.svcTypeID 
+		         , a.svcTypeNM  
+		         , a.dbSTS
+		         , a.sortORD
+		         , a.menuLVL
+		         , a.menuPath
+		         , a.linkUri
+		         , a.activeImg
+		         , a.noActiveImg
+   		  <choose>
+		    <when test='SQLMODE == "mariadb"'>
+		         , (SELECT CONCAT(IFNULL(langKR,'*'),'||',IFNULL(langEN,'*')) 
+		         	FROM tbl_dictionary 
+		         	WHERE a.dictUID = dictUID
+		         	) AS dictDesc
+		    </when>
+		    <otherwise>
+		         , (SELECT NVL(langKR,'*') || NVL(langEN,'*') FROM tbl_dictionary 
+		         	WHERE a.dictUID = dictUID
+		         	) AS dictDesc
+		    </otherwise>
+		  </choose>
+		      FROM tbl_menus a
+		     WHERE 
+		<choose>
+		    <when test='menuUID != null and menuUID != ""'>
+		   		a.menuUID = #{menuUID}
+		    </when>
+		    <otherwise>
+				a.agentID = #{agentID}
+				<if test='srchText != null and srchText != ""'>
+   		  <choose>
+		    <when test='SQLMODE == "mariadb"'>
+		        AND CONCAT(a.menuID, a.menuNM) REGEXP #{srchText}
+		    </when>
+		    <otherwise>
+		        AND (a.menuID || a.menuNM) LIKE '%'|| #{srchText} ||'%'
+		    </otherwise>
+		  </choose>
+		        </if> 
+				<if test='menuLVL != null and menuLVL != ""'>
+				  AND a.menuLVL = #{menuLVL}
+				</if>
+				<if test='dbSTS != null and dbSTS != ""'>
+				  AND a.dbSTS = #{dbSTS}
+				</if>
+				<if test='svcTypeID != null and svcTypeID != ""'>
+				  AND a.svcTypeID = #{svcTypeID}
+				</if> 
+				<if test='menuID != null and menuID != ""'>
+   		  <choose>
+		    <when test='SQLMODE == "mariadb"'>
+		        AND a.menuID LIKE CONCAT_WS('','%',#{menuID},'%')
+		    </when>
+		    <otherwise>
+		        AND a.menuID LIKE '%'|| #{menuID} ||'%'
+		    </otherwise>
+		  </choose>
+				</if> 
+				<if test='menuNM != null and menuNM != ""'>
+   		  <choose>
+		    <when test='SQLMODE == "mariadb"'>
+		        AND a.menuNM LIKE CONCAT_WS('','%',#{menuNM},'%')
+		    </when>
+		    <otherwise>
+		        AND a.menuNM LIKE '%'|| #{menuNM} ||'%'
+		    </otherwise>
+		  </choose>
+				</if>
+		    </otherwise>
+		 </choose>
+		 	ORDER BY a.menuUID
+	</select>
+	
+	<!-- SYS0022 : 메뉴코드가 존재하는지를 조회함. -->
+	<select id="chkTblMenus" parameterType="hashmap" resultType="int">
+    	SELECT count(menuUID) AS cnt FROM tbl_menus WHERE menuID = #{menuID}
+    </select>
+    
+    <!-- SYS0023 : 메뉴구분과 메뉴레벨에 해당하는 메뉴정보를 조회함. -->
+    <select id="getMenuByLevel" parameterType="hashmap" resultType="hashmap">
+    	SELECT A.menuUID, A.menuID, A.menuLVL
+    	<choose>
+		    <when test='lang == "en"'>
+		        , B.langEN AS menuNM
+		    </when>
+		    <when test='lang == "cn"'>
+		        , B.langCN AS menuNM
+		    </when>
+		    <otherwise>
+		        , A.menuNM
+		    </otherwise>
+		</choose>
+    	  FROM tbl_menus A
+    	  LEFT JOIN tbl_dictionary B ON A.dictUID = B.dictUID
+    	 WHERE A.agentID   = #{agentID}
+    	   AND A.svcTypeID = #{svcTypeID}
+		<if test='parMenuID != null and parMenuID != ""'>
+		   AND A.parMenuID = #{parMenuID}
+		</if>
+		<if test='refMenuID != null and refMenuID != ""'>
+		   AND A.menuUID = #{refMenuID}
+		</if>
+    	   AND A.menuLVL   = #{menuLVL}
+    	 ORDER BY A.sortORD
+    </select>
+	
+    <!-- SYS0024 : 상위메뉴ID의 하위메뉴들의 출력순서를 조회함. -->
+    <select id="getMenuSortORD" parameterType="hashmap" resultType="hashmap">
+    	SELECT A.menuUID
+    	<choose>
+		    <when test='lang == "en"'>
+		        , CONCAT(B.langEN,'(',A.sortORD,')') AS menuDesc
+		    </when>
+		    <when test='lang == "cn"'>
+		        , CONCAT(B.langCN,'(',A.sortORD,')') AS menuDesc
+		    </when>
+		    <otherwise>
+		        , CONCAT(A.menuNM,'(',A.sortORD,')') AS menuDesc
+		    </otherwise>
+		</choose>
+    	
+    	  FROM tbl_menus A
+    	  LEFT JOIN tbl_dictionary B ON A.dictUID = B.dictUID
+    	 WHERE A.agentID   = #{agentID}
+    	   AND A.svcTypeID = #{svcTypeID}
+		<if test='parMenuID != null and parMenuID != ""'>
+		   AND A.parMenuID = #{parMenuID}
+		</if>
+		<if test='menuLVL != null'>
+		   AND A.menuLVL = #{menuLVL}
+		</if>
+    	 ORDER BY A.sortORD
+    </select>
+    
+    <!-- SYS0025 : 용어사전을 조회함. -->
+    <select id="getSrchDict" parameterType="hashmap" resultType="hashmap">
+		SELECT dictUID, CONCAT(IFNULL(langKR,'*'),'||',IFNULL(langEN,'*')) AS dictDesc 
+		  FROM tbl_dictionary 
+		 WHERE agentID = #{agentID} 
+   		  <choose>
+		    <when test='SQLMODE == "mariadb"'>
+		  AND CONCAT(IFNULL(langKR,''), IFNULL(langEN,''), IFNULL(langCN,''), IFNULL(langETC,''), IFNULL(langCN,'')) LIKE CONCAT_WS('','%',#{srchDict},'%')
+		    </when>
+		    <otherwise>
+		  AND (NVL(langKR,'') || NVL(langEN,'') || NVL(langCN,'') || NVL(langETC,'') || NVL(langCN,'')) LIKE '%'|| #{srchDict} ||'%'
+		    </otherwise>
+		  </choose>
+    	 ORDER BY langKR
+    </select>
+    
+	<insert id="insTblMenus4One" parameterType="hashmap">
+	    <selectKey resultType="Long" keyProperty="menuUID" order="BEFORE">
+   		  <choose>
+		    <when test='SQLMODE == "mariadb"'>
+		    SELECT tsys.getUUID('tbl_menus') AS menuUID
+		    </when>
+		    <otherwise>
+		    SELECT seq_uuid.nextval AS menuUID FROM dual
+		    </otherwise>
+		  </choose>
+	    </selectKey> 	
+	    INSERT INTO tbl_menus (
+			menuUID,
+			menuID,
+			topMenuID,
+			<if test='parMenuID != null'>
+			parMenuID,
+			</if>
+			menuLVL,
+			menuNM,
+			<if test='menuNM_EN != null and menuNM_EN != ""'>
+			menuNM_EN, 
+			</if>
+			<if test='menuNM_CN != null and menuNM_CN != ""'>
+			menuNM_CN, 
+			</if>
+			<if test='menuNM_ETC != null and menuNM_ETC != ""'>
+			menuNM_ETC, 
+			</if>
+			svcTypeID,
+			svcTypeNM,
+			dbSTS,
+			<if test='sortORD != null and sortORD != ""'>
+			sortORD,
+			</if> 
+			<if test='activeImg != null and activeImg != ""'>
+			activeImg,
+			</if>
+			<if test='noActiveImg != null and noActiveImg != ""'>
+			noActiveImg, 
+			</if>
+			<if test='menuTitleImg != null and menuTitleImg != ""'>
+			menuTitleImg, 
+			</if>
+			isDisplay,
+			<if test='linkUri != null and linkUri != ""'>
+			linkUri, 
+			</if>
+			menuPath,
+			<if test='dictUID != null and dictUID != ""'>
+			dictUID,
+			</if>
+			agentID
+        ) VALUES (
+        	#{menuUID},  	
+        	#{menuID, jdbcType=VARCHAR},    
+		 <choose>
+		    <when test='topMenuID != null and topMenuID == 0'>
+		    #{menuUID},
+		    </when>
+		    <otherwise>
+			#{topMenuID, jdbcType=NUMERIC},
+		    </otherwise>
+		 </choose>
+		 <choose>
+		    <when test='parMenuID != null and parMenuID == 0'>
+		    null,
+		    </when>
+		    <otherwise>
+				<if test='parMenuID != null'>
+			#{parMenuID, jdbcType=NUMERIC},
+				</if>
+		    </otherwise>
+		 </choose>
+        	#{menuLVL, jdbcType=NUMERIC},        	
+        	#{menuNM, jdbcType=VARCHAR},
+			<if test='menuNM_EN != null and menuNM_EN != ""'>
+			#{menuNM_EN, jdbcType=VARCHAR},
+			</if>
+			<if test='menuNM_CN != null and menuNM_CN != ""'>
+			#{menuNM_CN, jdbcType=VARCHAR},
+			</if>
+			<if test='menuNM_ETC != null and menuNM_ETC != ""'>
+			#{menuNM_ETC, jdbcType=VARCHAR},
+			</if>  	
+        	#{svcTypeID, jdbcType=VARCHAR},
+        	#{svcTypeNM, jdbcType=VARCHAR},
+        	#{dbSTS, jdbcType=VARCHAR},
+			<if test='sortORD != null and sortORD != ""'>
+			 <choose>
+			    <when test='sortORD == 0'>
+			    1,
+			    </when>
+			    <otherwise>
+			    #{sortORD, jdbcType=NUMERIC},
+			    </otherwise>
+			 </choose>
+			</if>  
+			<if test='activeImg != null and activeImg != ""'>
+			#{activeImg, jdbcType=VARCHAR},
+			</if>
+			<if test='noActiveImg != null and noActiveImg != ""'>
+			#{noActiveImg, jdbcType=VARCHAR},
+			</if>
+			<if test='menuTitleImg != null and menuTitleImg != ""'>
+			#{menuTitleImg, jdbcType=VARCHAR},
+			</if>
+        	#{isDisplay, jdbcType=VARCHAR},
+			<if test='linkUri != null and linkUri != ""'>
+			#{linkUri, jdbcType=VARCHAR},
+			</if>
+        	REPLACE(#{menuPath, jdbcType=VARCHAR},'&gt;','>'),
+			<if test='dictUID != null and dictUID != ""'>
+			#{dictUID, jdbcType=VARCHAR},
+			</if>
+			#{agentID, jdbcType=VARCHAR} 
+	    )
+	</insert>
+	
+	<update id="updSortORDTblMenus4Ins" parameterType="hashmap">
+		<foreach item="item" collection="list" separator=";">	
+			update tbl_menus set sortORD = sortORD + 1
+			 where agentID   = #{item.agentID}
+			   and svcTypeID = #{item.svcTypeID}
+			 <choose>
+			    <when test='item.menuUID != null and item.menuUID == 0'>
+			   and menuUID <![CDATA[ <> ]]> tsys.getCurUUID('tbl_menus') 
+			    </when>
+			    <otherwise>
+			   and menuUID <![CDATA[ <> ]]> #{item.menuUID}
+			    </otherwise>
+			 </choose>
+			 <choose>
+			    <when test='item.topMenuID != null and item.topMenuID == 0'>
+			   and parMenuID is null
+			    </when>
+			    <otherwise>
+					<if test='item.parMenuID  != null'>
+			   and parMenuID = #{item.parMenuID}
+					</if>
+			    </otherwise>
+			 </choose>
+			   and menuLVL   = #{item.menuLVL}
+			   and sortORD <![CDATA[ >= ]]> #{item.sortORD} 
+			   and dbSTS     = #{item.dbSTS}
+		</foreach>
+    </update>
+
+    <update id="updTblMenu4One" parameterType="hashmap">
+		UPDATE tbl_menus SET dbSTS = #{dbSTS}
+		<if test='menuPath != null and menuPath != ""'>
+		  , menuPath = #{menuPath}
+		</if>
+		<if test='menuNM != null and menuNM != ""'>
+		  , menuNM = #{menuNM}
+		</if>
+		<if test='svcTypeID != null and svcTypeID != ""'>
+		  , svcTypeID = #{svcTypeID}
+		</if>
+		<if test='menuTitleImg != null and menuTitleImg != ""'>
+		  , menuTitleImg = #{menuTitleImg}
+		</if>
+		<if test='isDisplay != null and isDisplay != ""'>
+		  , isDisplay = #{isDisplay}
+		</if>
+		  , linkUri = #{linkUri}
+		  , activeImg = #{activeImg}
+		  , noActiveImg = #{noActiveImg}
+		<if test='dictUID != null and dictUID != ""'>
+		  , dictUID = #{dictUID}
+		</if>
+		WHERE menuUID = #{menuUID}
+	</update>
+    
+    <update id="upDownSortORDTblMenus" parameterType="hashmap">
+    	<foreach item="item" collection="list" separator=";">	
+			update tbl_menus set 
+			 <choose>
+			    <when test='item.sortMode != null and item.sortMode == "up"'>
+				sortORD = sortORD + 1
+			    </when>
+			    <otherwise>
+				sortORD = sortORD - 1
+			    </otherwise>
+			 </choose>
+			 where agentID   = #{item.agentID}
+			   and svcTypeID = #{item.svcTypeID}
+			 <if test='item.menuUID  != null'>
+			   and menuUID <![CDATA[ <> ]]> #{item.menuUID}
+			 </if>
+			 <choose>
+			    <when test='item.topMenuID != null and item.topMenuID == 0'>
+			   and parMenuID is null
+			    </when>
+			    <otherwise>
+					<if test='item.parMenuID  != null'>
+			   and parMenuID = #{item.parMenuID}
+					</if>
+			    </otherwise>
+			 </choose>
+			   and menuLVL   = #{item.menuLVL}
+			 <choose>
+			    <when test='item.sortMode != null and item.sortMode == "up"'>
+			   		<if test='item.sortORD  != null'>
+			   and sortORD <![CDATA[ >= ]]> #{item.sortORD}
+					</if>
+					<if test='item.oldSortORD  != null'>
+			   and sortORD <![CDATA[ < ]]>  #{item.oldSortORD}
+					</if>
+			    </when>
+			    <otherwise>
+					<if test='item.oldSortORD  != null'>
+			   and sortORD <![CDATA[ > ]]>  #{item.oldSortORD}
+					</if>
+					<if test='item.sortORD  != null'>
+			   and sortORD <![CDATA[ <= ]]> #{item.sortORD}
+					</if>		    
+			    </otherwise>
+			 </choose>
+			   and dbSTS     = #{item.dbSTS}
+		</foreach>
+    </update>
+    
+    <!-- SYS0028 : 메뉴를 조회함. -->
+    <select id="getSrchMenu" parameterType="hashmap" resultType="hashmap">
+		SELECT 
+   		  <choose>
+		    <when test='SQLMODE == "mariadb"'>
+		       CONCAT(IFNULL(svcTypeID,''), '|', IFNULL(menuUID,'')) as menuKey
+		     , CONCAT('(', IFNULL(svcTypeNM,''), ')', IFNULL(menuPath,'')) as menuDesc
+		    </when>
+		    <otherwise>
+		       NVL(svcTypeID,''), '|', NVL(menuUID,'') as menuKey
+		     , '('|| NVL(svcTypeNM,'') ||')'|| NVL(menuPath,'') as menuDesc
+		    </otherwise>
+		  </choose>
+		  FROM tbl_menus 
+		 WHERE agentID = #{agentID} 
+   		  <choose>
+		    <when test='SQLMODE == "mariadb"'>
+		       AND CONCAT(IFNULL(menuID,''), IFNULL(menuNM,'')) REGEXP #{srchMenu}
+		    </when>
+		    <otherwise>
+		       AND (NVL(menuID,'') || NVL(menuNM,'')) LIKE '%'|| #{srchMenu} ||'%'
+		    </otherwise>
+		  </choose>
+    	 ORDER BY svcTypeID, menuLVL, sortORD, menuPath
+    </select>
+	
+	<update id="updSortORDTblMenu4One" parameterType="hashmap">
+		<foreach item="item" collection="list" separator=";">	
+			UPDATE tbl_menus SET sortORD = #{item.sortORD} WHERE menuUID = #{item.menuUID}
+		</foreach>
+	</update>
+    
+    <delete id="delTblMenu4One" parameterType="hashmap">
+		DELETE FROM tbl_menus WHERE menuUID = #{menuUID}
+    </delete>
+    <!-- =================================
+	           메뉴관리 쿼리 파트 끝 
+	     ================================= 
+	-->
+	<!-- =================================
+	           화면관리 쿼리 파트 시작
+	     ================================= 
+	-->
+	<!-- SYS0030 : 화면 목록 조회 -->
+    <select id="getTblPageList" parameterType="hashmap" resultType="hashmap">
+		SELECT 
+		  p.pageUID
+		, p.pageID
+		, p.menuUID
+		, p.pageNM
+		, m.svcTypeID
+		, m.svcTypeNM
+		, m.menuPath
+		, p.pageRemk
+		, p.isComm
+		, p.dbSTS
+		, p.searchType
+		, p.tableCnt
+		, p.mainPlaceholder
+		FROM tbl_pages p
+		  INNER JOIN tbl_menus m on p.menuUID = m.menuUID
+	   WHERE
+	 <choose>
+	    <when test='pageUID != null and pageUID != ""'>
+	   		p.pageUID = #{pageUID}
+	    </when>
+	    <otherwise>
+			p.agentID = #{agentID}
+			<if test='srchText != null and srchText != ""'>
+   		  <choose>
+		    <when test='SQLMODE == "mariadb"'>
+		       AND CONCAT(p.pageID, p.pageNM, m.menuID, m.menuNM) REGEXP #{srchText}
+		    </when>
+		    <otherwise>
+		       AND (p.pageID || p.pageNM || m.menuID || m.menuNM) LIKE '%'|| #{srchText} ||'%'
+		    </otherwise>
+		  </choose>
+        	</if>
+        	<if test='menuID != null and menuID != ""'>
+		   AND m.menuID = #{menuID}
+			</if> 
+        	<if test='pageID != null and pageID != ""'>
+   		  <choose>
+		    <when test='SQLMODE == "mariadb"'>
+		        AND p.pageID LIKE CONCAT_WS('','%',#{pageID},'%')
+		    </when>
+		    <otherwise>
+		        AND p.pageID LIKE '%'|| #{pageID} ||'%'
+		    </otherwise>
+		  </choose>
+			</if>
+			<if test='pageNM != null and pageNM != ""'>
+   		  <choose>
+		    <when test='SQLMODE == "mariadb"'>
+		        AND p.pageNM LIKE CONCAT_WS('','%',#{pageNM},'%')
+		    </when>
+		    <otherwise>
+		        AND p.pageNM LIKE '%'|| #{pageNM} ||'%'
+		    </otherwise>
+		  </choose>
+			</if>
+			<if test='svcTypeID != null and svcTypeID != ""'>
+            AND m.svcTypeID = #{svcTypeID}
+        	</if>
+			<if test='pageRemk != null and pageRemk != ""'>
+   		  <choose>
+		    <when test='SQLMODE == "mariadb"'>
+		        AND p.pageRemk LIKE CONCAT_WS('','%',#{pageRemk},'%')
+		    </when>
+		    <otherwise>
+		        AND p.pageRemk LIKE '%'|| #{pageRemk} ||'%'
+		    </otherwise>
+		  </choose>
+			</if>
+			<if test='dbSTS != null and dbSTS != ""'>
+		   AND p.dbSTS = #{dbSTS} 
+			</if>  
+			<if test='isComm != null and isComm != ""'>
+		   AND p.isComm = #{isComm} 
+			</if>
+	    </otherwise>
+	 </choose>
+		ORDER BY p.pageUID
+    </select>
+    
+   <!-- SYS0031 : 화면기능 목록 조회 -->
+    <select id="getTblPageActList" parameterType="hashmap" resultType="hashmap">
+		SELECT 
+		  p.pageUID
+		, b.pageNM
+		, p.privUID
+		, a.privID
+		, a.privNM
+		, a.activeImg
+		, a.isRead
+		, m.menuID
+		, m.menuUID
+		, m.menuPath
+		, m.svcTypeNM
+		, p.sortORD
+		, p.dbSTS
+		, p.agentID
+		 FROM tbl_pageActs p
+		   INNER JOIN tbl_activities a on p.privUID = a.privUID
+		   INNER JOIN tbl_pages b on p.pageUID = b.pageUID
+		   INNER JOIN tbl_menus m on p.menuUID = m.menuUID
+	    WHERE 1=1
+	 <if test='pageUID != null and pageUID != ""'>
+	    AND p.pageUID = #{pageUID}
+	</if> 
+    <if test='pageNM != null and pageNM != ""'>
+	    <choose>
+		    <when test='SQLMODE == "mariadb"'>
+		         AND CONCAT(b.pageNM) REGEXP #{pageNM}
+		    </when>
+		    <otherwise>
+		        ANDb.pageNM LIKE '%'|| #{pageRemk} ||'%'
+		    </otherwise>
+		</choose>
+	</if>
+	<if test='privID != null and privID != ""'>
+	    <choose>
+		    <when test='SQLMODE == "mariadb"'>
+		         AND CONCAT(a.privID) REGEXP #{privID}
+		    </when>
+		    <otherwise>
+		        AND a.privID LIKE '%'|| #{privID} ||'%'
+		    </otherwise>
+		</choose>
+	</if>
+	<if test='privNM != null and privNM != ""'>
+	    <choose>
+		    <when test='SQLMODE == "mariadb"'>
+		         AND CONCAT(a.privNM) REGEXP #{privNM}
+		    </when>
+		    <otherwise>
+		        AND a.privNM LIKE '%'|| #{privNM} ||'%'
+		    </otherwise>
+		</choose>
+	</if>
+	<if test='svcTypeID != null and svcTypeID != ""'>
+		AND m.svcTypeID = #{svcTypeID}
+	</if>
+	<if test='topMenuID != null and topMenuID != ""'>
+		AND m.topMenuID = #{topMenuID}
+	</if>
+	<if test='parMenuID != null and parMenuID != ""'>
+		AND m.parMenuID = #{parMenuID}
+	</if>
+	<if test='menuUID != null and menuUID != ""'>
+		AND m.menuUID = #{menuUID}
+	</if>
+	   ORDER BY p.sortORD
+    </select>
+    
+    <!-- SYS0035 : 화면코드가 존재하는지를 조회함. -->
+    <select id="chkTblPages" parameterType="hashmap" resultType="int">
+    	SELECT count(pageUID) AS cnt FROM tbl_pages WHERE agentID = #{agentID} AND pageID = #{pageID}
+    </select>
+    
+    <insert id="insTblPages4One" parameterType="hashmap">
+	    INSERT INTO tbl_pages (
+			pageUID,
+			pageID,
+			menuUID,
+			pageNM,			
+			<if test='pageRemk  != null'>
+			pageRemk,
+			</if>
+			isProgram,
+			isComm,
+		<if test='searchType != null and searchType != ""'>
+			searchType,
+		</if>	
+		<if test='tableCnt != null and tableCnt != ""'>
+			tableCnt,
+		</if>	
+		<if test='mainPlaceholder != null and mainPlaceholder != ""'>
+			mainPlaceholder,
+		</if>	
+			dbSTS,
+			agentID
+        ) VALUES (
+        	#{uuID},
+        	#{pageID, jdbcType=VARCHAR},
+        	#{menuUID, jdbcType=NUMERIC},
+        	#{pageNM, jdbcType=VARCHAR},
+		<if test='pageRemk  != null'>
+			#{pageRemk,jdbcType=VARCHAR},
+		</if>
+        	1,
+            #{isComm, jdbcType=VARCHAR},
+        <if test='searchType != null and searchType != ""'>
+			#{searchType, jdbcType=VARCHAR},
+		</if>	
+		<if test='tableCnt != null and tableCnt != ""'>
+			#{tableCnt, jdbcType=VARCHAR},
+		</if>	
+		<if test='mainPlaceholder != null and mainPlaceholder != ""'>
+			#{mainPlaceholder, jdbcType=VARCHAR},
+		</if>	
+            'Y', 
+			#{agentID,jdbcType=VARCHAR} 
+	    )
+	</insert>
+
+	<update id="updTblPages4List" parameterType="hashmap">
+		<foreach item="item" collection="list" separator=";">	
+		update tbl_pages set 
+   		  <choose>
+		    <when test='SQLMODE == "mariadb"'>
+		     updateDT  = now()
+		    </when>
+		    <otherwise>
+		     updateDT  = sysdate
+		    </otherwise>
+		  </choose>
+		   , updaterID = #{item.userUID} 
+			<if test='item.dbSTS != null and item.dbSTS != ""'>
+		   , dbSTS = #{item.dbSTS} 
+			</if>
+			<if test='item.isComm != null and item.isComm != ""'>
+		   , isComm = #{item.isComm} 
+			</if>
+			<if test='item.pageNM != null and item.pageNM != ""'>
+		   , pageNM = #{item.pageNM} 
+			</if>
+		   , pageRemk = #{item.pageRemk} 
+		 where pageUID = #{item.pageUID}
+		 </foreach>
+    </update>
+    
+    <update id="updTblPages4One" parameterType="hashmap">
+		update tbl_pages set 
+   		  <choose>
+		    <when test='SQLMODE == "mariadb"'>
+		     updateDT  = now()
+		    </when>
+		    <otherwise>
+		     updateDT  = sysdate
+		    </otherwise>
+		  </choose>
+		   , updaterID = #{userUID}
+			<if test='dbSTS != null and dbSTS != ""'>
+		   , dbSTS = #{dbSTS} 
+			</if>
+			<if test='isComm != null and isComm != ""'>
+		   , isComm = #{isComm} 
+			</if>
+			<if test='pageNM != null and pageNM != ""'>
+		   , pageNM = #{pageNM} 
+			</if>
+			<if test='pageRemk != null and pageRemk != ""'>
+		   , pageRemk = #{pageRemk} 
+			</if>
+			<if test='menuUID != null and menuUID != ""'>
+		   , menuUID = #{menuUID} 
+			</if>
+			<if test='searchType != null and searchType != ""'>
+		   , searchType = #{searchType} 
+			</if>
+			<if test='tableCnt != null and tableCnt != ""'>
+		   , tableCnt = #{tableCnt} 
+			</if>
+			<if test='mainPlaceholder != null and mainPlaceholder != ""'>
+		   , mainPlaceholder = #{mainPlaceholder} 
+			</if>
+		 where pageUID = #{pageUID}
+    </update>
+    
+    <delete id="delTblPageActs" parameterType="hashmap">
+		DELETE FROM tbl_pageacts WHERE pageUID = #{pageUID}
+    </delete>
+    
+    <insert id="insTblPageActs" parameterType="hashmap">
+		<foreach item="item" collection="list" separator=";">	
+	    INSERT INTO tbl_pageacts (
+			  pageUID
+			, privUID
+			<if test='item.menuUID != null or item.menuUID != ""'>
+			, menuUID
+			</if>
+			, displayArea
+			<if test='item.dictUID != null or item.dictUID != ""'>
+			, dictUID
+			</if>
+			, sortORD
+			, dbSTS
+			, agentID
+        ) VALUES (
+			<choose> 
+				<when test='item.pageUID == "0" '>
+					 #{item.uuID},
+				</when> 
+				<otherwise> 
+					 #{item.pageUID , jdbcType=NUMERIC},
+				</otherwise> 
+			</choose>
+			#{item.privUID, jdbcType=NUMERIC},        	
+        	<if test='item.menuUID != null or item.menuUID != ""'>
+			#{item.menuUID,  jdbcType=NUMERIC},
+			</if>
+        	#{item.displayArea, jdbcType=VARCHAR},
+        	<if test='item.dictUID != null or item.dictUID != ""'>
+			#{item.dictUID, jdbcType=VARCHAR},
+			</if>
+            #{item.sortORD, jdbcType=NUMERIC},
+            'Y', 
+			#{item.agentID, jdbcType=VARCHAR} 
+	    )
+	    </foreach>
+	</insert>
+	<!--SYS0033_02 prevQuery updTblPageSearchTemp  -->
+	<update id="updTblPageSearchTemp" parameterType="hashmap">
+		UPDATE tbl_pagesearchtemp 
+		SET
+	<choose>
+	    <when test='SQLMODE == "mariadb"'>
+          updateDT  = now()
+	    </when>
+	    <otherwise>
+	      updateDT  = SYSDATE
+	    </otherwise>
+	</choose>
+		,pageUID = #{uuID} 
+		,jobID   = #{uuID}
+		WHERE pageID =  #{pageID}
+		AND dbSTS = 'Y'
+	</update>
+	<!--SYS0033_02 query insNewTblPageSearch  -->
+     <insert id="insNewTblPageSearch" parameterType="hashmap">
+		INSERT INTO tbl_pagesearch (
+		    pagesrhUID 			,pageUID			,pageID
+			,inputType			,inputID			,inputNM
+			,codeNM			    ,optionVal			,optionTxt
+			,tagYN			    ,tag			    ,placeholder
+			,icon			    ,inputCls			,reqYN
+			,sortORD			,createDT			,createrID
+			,dbSTS			    ,agentID
+			)
+		SELECT 
+		    pagesrhUID		    ,#{uuID}		    ,pageID
+			,inputType			,inputID			,inputNM
+			,codeNM			    ,optionVal			,optionTxt
+			,tagYN			    ,tag			    ,placeholder
+			,icon			    ,inputCls			,reqYN
+			,sortORD	
+	<choose>
+	    <when test='SQLMODE == "mariadb"'>
+           ,now()
+	    </when>
+	    <otherwise>
+	       ,SYSDATE
+	    </otherwise>
+	</choose>		
+			,createrID			,dbSTS			,agentID
+		 FROM tbl_pagesearchtemp pp
+		 WHERE pp.pageID = #{pageID}
+		 AND pp.jobID = #{uuID} 
+	</insert>
+	<!--SYS0033_02 postQuery delTblPageSearchTemp  -->	
+	<delete id="delTblPageSearchTemp" parameterType="hashmap">
+		DELETE FROM tbl_pagesearchtemp WHERE pageID = #{pageID} AND jobID = #{uuID}
+    </delete>
+	
+    <delete id="delTblPage4One" parameterType="hashmap">
+		DELETE FROM tbl_pages WHERE pageUID = #{pageUID}
+    </delete>
+    
+    <!-- SYS0060  화면 검색 조회  pageSearch 조회  -->
+    <select id="getTblPageSearch" parameterType="hashmap" resultType="hashmap">
+		SELECT  
+			 PS.pagesrhUID    ,PS.pageUID   	,PS.pageID
+			,PS.inputType     ,PS.inputID		,PS.inputNM
+			,PS.codeNM  	  ,PS.optionVal		,PS.optionTxt
+			,PS.tagYN		  ,PS.tag			,PS.placeholder
+			,PS.icon		  ,PS.inputCls		,PS.reqYN
+			,PS.sortORD  	  ,PS.defaultVal 	,PS.dateStr
+			,PS.dateEnd		  ,PS.dbSTS 
+			,PS.dateStr		  ,PS.dateEnd       ,PS.defaultVal
+		<choose>
+			<when test='SQLMODE == "mariadb"'>
+			,DATE_FORMAT(PS.createDT,'%Y-%m-%d %H:%i') as createDT
+			,DATE_FORMAT(PS.updateDT,'%Y-%m-%d %H:%i') as updateDT
+			</when>
+			<otherwise>
+			,to_date(PS.createDT, 'YYYY-MM-DD HH24:MI') as createDT
+			,to_date(PS.updateDT, 'YYYY-MM-DD HH24:MI') as updateDT
+			</otherwise>
+		</choose>
+			FROM tbl_pagesearch PS  
+			WHERE PS.pageUID = #{pageUID} 
+		<if test='pagesrhUIDNY == "Y"'>
+			AND PS.pagesrhUID = #{pagesrhUID} 
+		</if>
+    </select>
+    <!-- SYS0061  화면 검색 조회  pageSearch temp 조회  -->
+    <select id="getTblPageSearchTemp" parameterType="hashmap" resultType="hashmap">
+		SELECT  
+			 PS.pagesrhUID    ,PS.pageID
+			,PS.inputType     ,PS.inputID		,PS.inputNM
+			,PS.codeNM  	  ,PS.optionVal		,PS.optionTxt
+			,PS.tagYN		  ,PS.tag			,PS.placeholder
+			,PS.icon		  ,PS.inputCls		,PS.reqYN
+			,PS.sortORD  	  ,PS.defaultVal    ,PS.dateStr
+			,PS.dateEnd  	  ,PS.dbSTS 
+			,PS.dateStr		  ,PS.dateEnd       ,PS.defaultVal
+		<choose> 
+			<when test='SQLMODE == "mariadb"'>
+			,DATE_FORMAT(PS.createDT,'%Y-%m-%d %H:%i') as createDT
+			,DATE_FORMAT(PS.updateDT,'%Y-%m-%d %H:%i') as updateDT
+			</when>
+			<otherwise>
+			,to_date(PS.createDT, 'YYYY-MM-DD HH24:MI') as createDT
+			,to_date(PS.updateDT, 'YYYY-MM-DD HH24:MI') as updateDT
+			</otherwise>
+		</choose>
+			FROM tbl_pagesearchTemp PS  
+			WHERE PS.pageID = #{pageID}
+		<if test='pagesrhUIDNY == "NY"'>
+			AND PS.pagesrhUID = #{pagesrhUID} 
+		</if>	
+    </select>
+    <!-- SYS0062 화면검색조회  수정 -->
+	<update id="updTblPageSearch" parameterType="hashmap">
+	  UPDATE tbl_pagesearch 
+		SET 
+	<choose>
+	    <when test='SQLMODE == "mariadb"'>
+	     updateDT     = NOW()
+	    </when>
+	    <otherwise>
+	     updateDT  = sysdate
+	    </otherwise>
+	  </choose>
+		   ,inputType    =  #{inputType} 
+		   ,inputID      =  #{inputID} 
+		   ,inputNM      =  #{inputNM} 
+		   ,codeNM       =  #{codeNM} 
+		   ,optionVal    =  #{optionVal} 
+		   ,optionTxt    =  #{optionTxt} 
+		   ,tagYN        =  #{tagYN} 
+		   ,tag          =  #{tag} 
+		   ,placeholder  =  #{placeholder} 
+		   ,icon         =  #{icon} 
+		   ,inputCls     =  #{inputCls} 
+		   ,reqYN        =  #{reqYN} 
+		   ,sortORD      =  #{sortORD} 
+		   ,defaultVal   =  #{defaultVal}
+		   ,dateStr      =  #{dateStr}
+		   ,dateEnd      =  #{dateEnd}
+		WHERE 
+		pagesrhUID  = #{pagesrhUID} 
+		AND pageUID = #{pageUID} 
+    </update>
+    <!-- SYS0063 -->
+    <insert id="insTblPageSearch" parameterType="hashmap">
+	    INSERT INTO tbl_pagesearch (
+				pagesrhUID
+				,pageUID
+				,pageID
+			<if test='inputType != null and inputType != ""'>
+				,inputType
+			</if>
+			<if test='inputID != null and inputID != ""'>
+				,inputID
+			</if>
+			<if test='inputNM != null and inputNM != ""'>
+				,inputNM
+			</if>
+			<if test='codeNM != null and codeNM != ""'>
+				,codeNM
+			</if>
+			<if test='optionVal != null and optionVal != ""'>
+				,optionVal
+			</if>
+			<if test='optionTxt != null and optionTxt != ""'>
+				,optionTxt
+			</if>
+			<if test='tagYN != null and tagYN != ""'>
+				,tagYN
+			</if>
+			<if test='tag != null and tag != ""'>
+				,tag
+			</if>
+			<if test='placeholder != null and placeholder != ""'>
+				,placeholder
+			</if>
+			<if test='icon != null and icon != ""'>
+				,icon
+			</if>
+			<if test='inputCls != null and inputCls != ""'>
+				,inputCls
+			</if>
+			<if test='reqYN != null and reqYN != ""'>
+				,reqYN
+			</if>
+			<if test='sortORD != null and sortORD != ""'>
+				,sortORD
+			</if>
+			<if test='defaultVal != null and defaultVal != ""'>
+				,defaultVal
+			</if>				
+			<if test='dateStr != null and dateStr != ""'>
+				,dateStr
+			</if>				
+			<if test='dateEnd != null and dateEnd != ""'>
+				,dateEnd
+			</if>					
+				,createDT
+				,createrID
+				,agentID
+				,dbSTS
+			) VALUES(
+			    getUUID('UUID')
+				,#{pageUID}
+				,#{pageID}
+			<if test='inputType != null and inputType != ""'>
+				,#{inputType}
+			</if>
+			<if test='inputID != null and inputID != ""'>
+				,#{inputID}
+			</if>
+			<if test='inputNM != null and inputNM != ""'>
+				,#{inputNM}
+			</if>
+			<if test='codeNM != null and codeNM != ""'>
+				,#{codeNM}
+			</if>
+			<if test='optionVal != null and optionVal != ""'>
+				,#{optionVal}
+			</if>
+			<if test='optionTxt != null and optionTxt != ""'>
+				,#{optionTxt}
+			</if>
+			<if test='tagYN != null and tagYN != ""'>
+				,#{tagYN}
+			</if>
+			<if test='tag != null and tag != ""'>
+				,#{tag}
+			</if>
+			<if test='placeholder != null and placeholder != ""'>
+				,#{placeholder}
+			</if>
+			<if test='icon != null and icon != ""'>
+				,#{icon}
+			</if>
+			<if test='inputCls != null and inputCls != ""'>
+				,#{inputCls}
+			</if>
+			<if test='reqYN != null and reqYN != ""'>
+				,#{reqYN}
+			</if>
+			<if test='sortORD != null and sortORD != ""'>
+				,#{sortORD}
+			</if>
+			<if test='defaultVal != null and defaultVal != ""'>
+				,#{defaultVal}
+			</if>		
+			<if test='dateStr != null and dateStr != ""'>
+				,#{dateStr}
+			</if>				
+			<if test='dateEnd != null and dateEnd != ""'>
+				,#{dateEnd}
+			</if>
+			<choose>
+			    <when test='SQLMODE == "mariadb"'>
+			    , NOW()
+			    </when>
+			    <otherwise>
+			    ,sysdate
+			    </otherwise>
+			</choose>
+				,#{userUID}
+				,#{agentID}
+				,#{dbSTS}
+		)
+	</insert>
+    <!-- SYS0064 -->
+    <insert id="insTblPageSearchTemp" parameterType="hashmap">
+	    INSERT INTO tbl_pagesearchtemp (
+				pagesrhUID
+				,jobID
+				,pageID
+			<if test='inputType != null and inputType != ""'>
+				,inputType
+			</if>
+			<if test='inputID != null and inputID != ""'>
+				,inputID
+			</if>
+			<if test='inputNM != null and inputNM != ""'>
+				,inputNM
+			</if>
+			<if test='codeNM != null and codeNM != ""'>
+				,codeNM
+			</if>
+			<if test='optionVal != null and optionVal != ""'>
+				,optionVal
+			</if>
+			<if test='optionTxt != null and optionTxt != ""'>
+				,optionTxt
+			</if>
+			<if test='tagYN != null and tagYN != ""'>
+				,tagYN
+			</if>
+			<if test='tag != null and tag != ""'>
+				,tag
+			</if>
+			<if test='placeholder != null and placeholder != ""'>
+				,placeholder
+			</if>
+			<if test='icon != null and icon != ""'>
+				,icon
+			</if>
+			<if test='inputCls != null and inputCls != ""'>
+				,inputCls
+			</if>
+			<if test='reqYN != null and reqYN != ""'>
+				,reqYN
+			</if>
+			<if test='sortORD != null and sortORD != ""'>
+				,sortORD
+			</if>				
+			<if test='defaultVal != null and defaultVal != ""'>
+				,defaultVal
+			</if>				
+			<if test='dateStr != null and dateStr != ""'>
+				,dateStr
+			</if>				
+			<if test='dateEnd != null and dateEnd != ""'>
+				,dateEnd
+			</if>				
+				,createDT
+				,createrID
+				,agentID
+				,dbSTS
+			) VALUES(
+			    #{uuID}
+				,#{uuID}
+				,#{pageID}
+			<if test='inputType != null and inputType != ""'>
+				,#{inputType}
+			</if>
+			<if test='inputID != null and inputID != ""'>
+				,#{inputID}
+			</if>
+			<if test='inputNM != null and inputNM != ""'>
+				,#{inputNM}
+			</if>
+			<if test='codeNM != null and codeNM != ""'>
+				,#{codeNM}
+			</if>
+			<if test='optionVal != null and optionVal != ""'>
+				,#{optionVal}
+			</if>
+			<if test='optionTxt != null and optionTxt != ""'>
+				,#{optionTxt}
+			</if>
+			<if test='tagYN != null and tagYN != ""'>
+				,#{tagYN}
+			</if>
+			<if test='tag != null and tag != ""'>
+				,#{tag}
+			</if>
+			<if test='placeholder != null and placeholder != ""'>
+				,#{placeholder}
+			</if>
+			<if test='icon != null and icon != ""'>
+				,#{icon}
+			</if>
+			<if test='inputCls != null and inputCls != ""'>
+				,#{inputCls}
+			</if>
+			<if test='reqYN != null and reqYN != ""'>
+				,#{reqYN}
+			</if>
+			<if test='sortORD != null and sortORD != ""'>
+				,#{sortORD}
+			</if>
+			<if test='defaultVal != null and defaultVal != ""'>
+				,#{defaultVal}
+			</if>				
+			<if test='dateStr != null and dateStr != ""'>
+				,#{dateStr}
+			</if>				
+			<if test='dateEnd != null and dateEnd != ""'>
+				,#{dateEnd}
+			</if>	
+			<choose>
+			    <when test='SQLMODE == "mariadb"'>
+			    , NOW()
+			    </when>
+			    <otherwise>
+			    ,sysdate
+			    </otherwise>
+			</choose>
+				,#{userUID}
+				,#{agentID}
+				,#{dbSTS}
+		)
+	</insert>
+    <!--SYS0065  delTblPageSearch -->
+    <delete id="delTblPageSearch" parameterType="hashmap">
+		<foreach item="item" collection="list" separator=";">
+		DELETE FROM tbl_pagesearch 
+		WHERE pagesrhUID  = #{item.pagesrhUID} 
+    	</foreach>
+    </delete> 
+    <!-- SYS0065_01 -->
+	<update id="updTblPageContents" parameterType="hashmap">
+		UPDATE tbl_pages
+		SET searchType = ''
+		, tableCnt = ''
+		, mainPlaceholder = ''
+		WHERE pageUID = #{pageUID}
+	</update>
+	
+	
+    
+    <!-- =================================
+	           화면관리 쿼리 파트 끝
+	     ================================= 
+	-->
+	<!-- =================================
+	           영역관리 쿼리 파트 시작
+	     ================================= 
+	-->
+	<!-- SYS0040 : 영역 목록 조회 -->
+    <select id="getTblScopeList" parameterType="hashmap" resultType="hashmap">
+		SELECT 
+			p.scopeUID, 
+			p.scopeID, 
+			p.scopeNM,
+			p.scopeRemk,
+			p.svcTypeID,
+			p.svcTypeNM,
+			p.dbSTS
+		  FROM tbl_scopes p
+	   WHERE
+	 <choose>
+	    <when test='scopeUID != null and scopeUID != ""'>
+	   		p.scopeUID = #{scopeUID}
+	    </when>
+	    <otherwise>
+			p.agentID = #{agentID}
+			<if test='menuID != null and menuID != ""'>
+		   AND EXISTS(SELECT 1 FROM tbl_scopeActs WHERE menuUID = #{menuUID} AND scopeUID = p.scopeUID)
+			</if>
+			<if test='pageUID != null and pageUID != ""'>
+		   AND EXISTS(SELECT 1 FROM tbl_scopeActs WHERE pageUID = #{pageUID} AND scopeUID = p.scopeUID)
+			</if>
+			<if test='privNM != null and privNM != ""'>
+   		  <choose>
+		    <when test='SQLMODE == "mariadb"'>
+		   AND EXISTS(SELECT 1 FROM tbl_scopeActs WHERE CONCAT(privID, privNM) REGEXP #{privNM} AND scopeUID = p.scopeUID)
+		    </when>
+		    <otherwise>
+		   AND EXISTS(SELECT 1 FROM tbl_scopeActs WHERE (privID || privNM) LIKE '%'|| #{privNM} ||'%' AND scopeUID = p.scopeUID)
+		    </otherwise>
+		  </choose>
+			</if>			
+			<if test='srchText != null and srchText != ""'>
+   		  <choose>
+		    <when test='SQLMODE == "mariadb"'>
+		   AND (CONCAT(p.scopeID, p.scopeNM) REGEXP #{srchText}
+             OR EXISTS(SELECT scopeUID 
+                         FROM tbl_scopeActs A 
+                             inner join tbl_menus B ON A.menuUID = B.menuUID
+                             inner join tbl_pages C ON A.pageUID = C.pageUID
+                        WHERE CONCAT(B.menuID, B.menuNM, C.pageID, C.pageNM) REGEXP #{srchText}
+                          AND A.scopeUID = p.scopeUID
+                      )
+                )
+		    </when>
+		    <otherwise>
+		   AND ((p.scopeID || p.scopeNM) LIKE '%'|| #{srchText} ||'%'
+             OR EXISTS(SELECT scopeUID 
+                         FROM tbl_scopeActs A 
+                             inner join tbl_menus B ON A.menuUID = B.menuUID
+                             inner join tbl_pages C ON A.pageUID = C.pageUID
+                        WHERE (B.menuID || B.menuNM || C.pageID || C.pageNM) LIKE '%'|| #{srchText} ||'%'
+                          AND A.scopeUID = p.scopeUID
+                      )
+                )
+		    </otherwise>
+		  </choose>            
+        	</if>
+        	<if test='scopeID != null and scopeID != ""'>
+   		  <choose>
+		    <when test='SQLMODE == "mariadb"'>
+		   AND p.scopeID LIKE CONCAT_WS('','%',#{scopeID},'%')
+		    </when>
+		    <otherwise>
+		   AND p.scopeID LIKE '%'|| #{scopeID} ||'%'
+		    </otherwise>
+		  </choose>      
+			</if>
+			<if test='scopeNM != null and scopeNM != ""'>
+   		  <choose>
+		    <when test='SQLMODE == "mariadb"'>
+		   AND p.scopeNM LIKE CONCAT_WS('','%',#{scopeNM},'%')
+		    </when>
+		    <otherwise>
+		   AND p.scopeNM LIKE '%'|| #{scopeNM} ||'%'
+		    </otherwise>
+		  </choose>      
+			</if>
+			<if test='svcTypeID != null and svcTypeID != ""'>
+            AND p.svcTypeID = #{svcTypeID}
+        	</if>
+			<if test='scopeRemk != null and scopeRemk != ""'>
+   		  <choose>
+		    <when test='SQLMODE == "mariadb"'>
+		   AND p.scopeRemk LIKE CONCAT_WS('','%',#{scopeRemk},'%')
+		    </when>
+		    <otherwise>
+		   AND p.scopeRemk LIKE '%'|| #{scopeRemk} ||'%'
+		    </otherwise>
+		  </choose>      
+			</if>
+			<if test='dbSTS != null and dbSTS != ""'>
+		   AND p.dbSTS = #{dbSTS} 
+			</if>  
+	    </otherwise>
+	 </choose>
+		ORDER BY p.scopeID
+    </select>
+    
+    <!-- SYS0041 : 화면기능 목록 조회 -->
+    <select id="getTblScopeActList" parameterType="hashmap" resultType="hashmap">
+		SELECT 
+			s.scopeUID,
+			s.menuUID,
+			m.menuID,
+			s.activeImg,
+			m.menuPath,
+			s.pageUID,
+			p.pageNM,
+			s.privUID,
+			s.privID,
+			s.privNM
+		  FROM tbl_scopeActs s
+		    inner join tbl_menus m ON s.menuUID = m.menuUID
+            inner join tbl_pages p ON s.pageUID = p.pageUID
+	   WHERE 1=1
+		<choose>
+		    <when test='scopeUID != null and scopeUID != ""'>
+		   		AND s.scopeUID = #{scopeUID}
+		    </when>
+		    <otherwise>
+<!-- 				s.agentID = #{agentID} -->
+				<if test='menuUID != null and menuUID != ""'>
+			   AND s.menuUID = #{menuUID}
+				</if>
+				<if test='pageUID != null and pageUID != ""'>
+			   AND s.pageUID = #{pageUID}
+				</if>
+				<if test='privNM != null and privNM != ""'>
+   		  <choose>
+		    <when test='SQLMODE == "mariadb"'>
+		   	   AND CONCAT(s.privID, s.privNM) REGEXP #{privNM}
+		    </when>
+		    <otherwise>
+		       AND (s.privID || s.privNM) LIKE '%'|| #{privNM} ||'%'
+		    </otherwise>
+		  </choose>  
+				</if>	
+				<if test='dbSTS != null and dbSTS != ""'>
+			   AND s.dbSTS = #{dbSTS} 
+				</if>  
+		    </otherwise>
+		</choose>
+		ORDER BY s.scopeUID
+	</select>
+	
+	<!-- SYS0042 : 영역코드가 존재하는지를 조회함. -->
+    <select id="chkTblScopes" parameterType="hashmap" resultType="int">
+    	SELECT count(scopeUID) AS cnt FROM tbl_scopes WHERE agentID = #{agentID} AND scopeID = #{scopeID}
+    </select>
+    
+    <select id="chkTblScopesRole" parameterType="hashmap" resultType="int">
+    	SELECT COUNT(1) AS roleCnt FROM tbl_scopes aa
+		INNER JOIN tbl_rolescopes bb ON bb.scopeUID = aa.scopeUID
+		WHERE aa.jobID = #{uuID}
+    </select>
+    
+    <select id="chkTblScopesIF" parameterType="hashmap" resultType="int">
+    	SELECT COUNT(1) AS existCnt  FROM tbl_scopeacts aa
+		INNER JOIN tbl_rolescopes bb ON bb.scopeUID = aa.scopeUID
+		WHERE aa.scopeUID = #{scopeUID}
+    </select>
+	
+	<!-- SYS0043 : 영역코드가 저장함. -->
+	<insert id="insTblScopes4One" parameterType="hashmap">
+	    <selectKey resultType="Long" keyProperty="scopeUID" order="BEFORE">
+   		  <choose>
+		    <when test='SQLMODE == "mariadb"'>
+		   	   SELECT tsys.getUUID('tbl_scopes') AS scopeUID
+		    </when>
+		    <otherwise>
+		       SELECT seq_uuid.nextval AS scopeUID FROM dual
+		    </otherwise>
+		  </choose>  
+	    </selectKey> 
+	    INSERT INTO tbl_scopes (
+			scopeUID,
+			scopeID,
+			scopeNM,
+			svcTypeID,	
+			svcTypeNM,
+			<if test='scopeRemk != null or scopeRemk != ""'>
+			scopeRemk,
+			</if>
+			dbSTS,
+			agentID,
+			createDT,
+			createrID
+        ) VALUES (
+        	#{scopeUID,   jdbcType=NUMERIC},
+        	#{scopeID,   jdbcType=VARCHAR},
+        	#{scopeNM,   jdbcType=VARCHAR},
+        	#{svcTypeID, jdbcType=VARCHAR},
+        	#{svcTypeNM, jdbcType=VARCHAR},
+			<if test='scopeRemk != null or scopeRemk != ""'>
+			#{scopeRemk, jdbcType=VARCHAR},
+			</if>
+            'Y', 
+			#{agentID,jdbcType=VARCHAR},
+			<choose>
+		    <when test='SQLMODE == "mariadb"'>
+		   	now(),
+		    </when>
+		    <otherwise>
+		    sysdate,
+		    </otherwise>
+		  </choose>  
+			#{userUID}
+	    )
+	</insert>
+	
+	<insert id="insTblScopeActs" parameterType="hashmap">
+		<foreach item="item" collection="list" separator=";">	
+	    INSERT INTO tbl_scopeActs (
+			 scopeUID
+			,menuUID
+			,menuID
+			,activeImg
+			,pageUID
+			,pageNM
+			,privUID
+			,privID
+			,privNM
+			,updateDT
+			,updaterID
+        ) VALUES (
+            #{item.scopeUID, jdbcType=NUMERIC},
+			#{item.menuUID,  jdbcType=NUMERIC},
+			#{item.menuID,   jdbcType=VARCHAR},  
+			#{item.activeImg,  jdbcType=VARCHAR}, 	
+        	#{item.pageUID,  jdbcType=NUMERIC},
+        	#{item.pageNM,  jdbcType=VARCHAR},
+			#{item.privUID, jdbcType=NUMERIC},
+            #{item.privID,  jdbcType=VARCHAR},
+			#{item.privNM,  jdbcType=VARCHAR},
+   		  <choose>
+		    <when test='item.SQLMODE == "mariadb"'>
+		   	now(),
+		    </when>
+		    <otherwise>
+		    sysdate,
+		    </otherwise>
+		  </choose>  
+			#{item.userUID}
+	    )
+	    </foreach>
+	</insert>
+	
+	<insert id="insTblScopeActs4One" parameterType="hashmap">
+		<selectKey resultType="Long" keyProperty="roleCnt" order="BEFORE">
+			SELECT COUNT(1) AS roleCnt FROM tbl_scopeacts aa
+			INNER JOIN tbl_rolescopes bb ON bb.scopeUID = aa.scopeUID
+			WHERE aa.scopeUID = #{scopeUID}
+		</selectKey>
+	    INSERT INTO tbl_scopeActs (
+			 scopeUID
+			,menuUID
+			,menuID
+			,activeImg
+			,pageUID
+			,pageNM
+			,privUID
+			,privID
+			,privNM
+			<if test='roleCnt != 0 and roleCnt != "" and roleCnt != null'>
+				<if test='jobSTS != null and jobSTS != ""'>
+			    , jobID
+				</if>
+				<if test='jobSTS != null and jobSTS != ""'>
+			    , jobSTS
+				</if>
+			</if>
+			,updateDT
+			,updaterID
+        ) VALUES (
+            #{scopeUID, jdbcType=NUMERIC},
+			#{menuUID,  jdbcType=NUMERIC},  
+			#{menuID,   jdbcType=VARCHAR},  
+			#{activeImg,  jdbcType=VARCHAR},       	
+        	#{pageUID,  jdbcType=NUMERIC},
+        	#{pageNM,  jdbcType=VARCHAR}, 
+			#{privUID, jdbcType=NUMERIC},
+            #{privID,  jdbcType=VARCHAR},
+			#{privNM,  jdbcType=VARCHAR},
+			<if test='roleCnt != 0 and roleCnt != "" and roleCnt != null'>
+				<if test='jobSTS != null and jobSTS != ""'>
+			    #{uuID, jdbcType=NUMERIC},
+				</if>
+				<if test='jobSTS != null and jobSTS != ""'>
+			     'C',
+				</if>
+			</if>
+   		  <choose>
+		    <when test='SQLMODE == "mariadb"'>
+		   	now(),
+		    </when>
+		    <otherwise>
+		    sysdate,
+		    </otherwise>
+		  </choose>  
+			#{userUID}
+	    )
+	</insert>
+	
+	<update id="updTblScopes4One" parameterType="hashmap">
+		update tbl_scopes set 
+   		  <choose>
+		    <when test='SQLMODE == "mariadb"'>
+		   	updateDT = now()
+		    </when>
+		    <otherwise>
+		    updateDT = sysdate
+		    </otherwise>
+		  </choose>  
+		   , updaterID = #{userUID}
+			<if test='dbSTS != null and dbSTS != ""'>
+		   , dbSTS = #{dbSTS} 
+			</if>
+			<if test='scopeNM != null and scopeNM != ""'>
+		   , scopeNM = #{scopeNM} 
+			</if>
+			<if test='scopeRemk != null and scopeRemk != ""'>
+		   , scopeRemk = #{scopeRemk} 
+			</if>
+		 where scopeUID = #{scopeUID}
+    </update>
+    
+    <update id="updTblScopes4Batch" parameterType="hashmap">
+    	<foreach item="item" collection="list" separator=";">
+		update tbl_scopes set 
+   		  <choose>
+		    <when test='item.SQLMODE == "mariadb"'>
+		   	updateDT = now()
+		    </when>
+		    <otherwise>
+		    updateDT = sysdate
+		    </otherwise>
+		  </choose>  
+		   , updaterID = #{item.userUID}
+			<if test='item.dbSTS != null and item.dbSTS != ""'>
+		   , dbSTS = #{item.dbSTS} 
+			</if>
+			<if test='item.scopeNM != null and item.scopeNM != ""'>
+		   , scopeNM = #{item.scopeNM} 
+			</if>
+			<if test='item.scopeRemk != null and item.scopeRemk != ""'>
+		   , scopeRemk = #{item.scopeRemk} 
+			</if>
+			<if test='item.uuID != null and item.uuID != ""'>
+		   , jobID = #{item.uuID} 
+			</if>
+		 where scopeUID = #{item.scopeUID}
+		 </foreach>
+    </update>
+    
+    <update id="updTblScopeActs4One" parameterType="hashmap">
+    	<selectKey resultType="Long" keyProperty="roleCnt" order="BEFORE">
+			SELECT COUNT(1) AS roleCnt FROM tbl_scopeacts aa
+			INNER JOIN tbl_rolescopes bb ON bb.scopeUID = aa.scopeUID
+			WHERE aa.scopeUID = #{scopeUID}
+		</selectKey>
+		update tbl_scopeActs set 
+   		  <choose>
+		    <when test='SQLMODE == "mariadb"'>
+		   	 updateDT = now()
+		    </when>
+		    <otherwise>
+		     updateDT = sysdate
+		    </otherwise>
+		  </choose>  
+		   , updaterID = #{userUID}
+		   <if test='roleCnt != 0 and roleCnt != "" and roleCnt != null'>
+			   <if test='uuID != null and uuID != ""'>
+			   , jobID = #{uuID} 
+				</if>
+				 <if test='jobSTS != null and jobSTS != ""'>
+			   , jobSTS = #{jobSTS}
+				</if>
+			</if>
+			<if test='activeImg != null and activeImg != ""'>
+		   , activeImg = #{activeImg} 
+			</if>
+			<if test='privCD != null and privCD != ""'>
+		   , privCD = #{privCD} 
+			</if>
+		 WHERE scopeUID = #{scopeUID} AND menuUID  = #{menuUID} 
+		   AND pageUID  = #{pageUID}  AND privUID = #{privUID}
+    </update>
+    
+    <update id="updTblScopeActs4Batch" parameterType="hashmap">
+    	<selectKey resultType="Long" keyProperty="roleCnt" order="BEFORE">
+			SELECT COUNT(1) AS roleCnt FROM tbl_scopeacts aa
+			INNER JOIN tbl_rolescopes bb ON bb.scopeUID = aa.scopeUID
+			WHERE aa.scopeUID = #{scopeUID}
+		</selectKey>
+		update tbl_scopeActs set 
+   		  <choose>
+		    <when test='SQLMODE == "mariadb"'>
+		   	 updateDT = now()
+		    </when>
+		    <otherwise>
+		     updateDT = sysdate
+		    </otherwise>
+		  </choose>  
+		   , updaterID = #{userUID}
+		<if test='roleCnt != 0 and roleCnt != "" and roleCnt != null'>
+		   , jobID = #{uuID} 
+		   , jobSTS = #{jobSTS}
+		</if>
+		 WHERE scopeUID = #{scopeUID}
+    </update>
+    
+    <insert id="insRolsScopeIF4Batch" parameterType="hashmap">
+	     INSERT INTO tbl_rolescopesif (
+			bakDT
+			,bakUID
+			,roleUID
+			,scopeUID
+			,privID
+			,menuID
+			,linkUri
+			,roleID
+			,pageUID
+			,pageID
+     		,pageNM
+			,privNM
+			,menuNM
+			,sortORD
+			,topMenuID
+			,parMenuID
+			,topMenuNM
+			,parMenuNM
+			,topSortORD
+			,parSortORD
+			,agentID
+			,activeImg
+			,ifSTS
+		)
+		SELECT 
+			  <choose>
+			    <when test='SQLMODE == "mariadb"'>
+			   	now() AS bakDT
+			   	, tsys.getUUID('tbl_rolescopesif') AS bakUID
+			    </when>
+			    <otherwise>
+			    sysdate AS bakDT
+			    ,seq_uuid.nextval AS bakUID FROM dual
+			    </otherwise>
+			  </choose>
+			  , aa.roleUID
+			  , bb.scopeUID
+			  , cc.privID
+			  , cc.menuID
+			  , dd.linkUri
+		      , aa.roleID
+		      , cc.pageUID
+		      , gg.pageID
+     		  , cc.pageNM
+			  , cc.privNM
+			  , dd.menuNM
+			  , dd.sortORD
+			  , ee.menuID  AS topMenuID
+			  , ff.menuID  AS parMenuID
+			  , ee.menuNM  as topMenuNM
+			  , ff.menuNM  as parMenuNM
+			  , ee.sortORD as topSortORD
+		      , ff.sortORD as parSortORD
+			  , #{agentID} as agentID
+			  , cc.activeImg
+			  , cc.jobSTS AS ifSTS
+		  FROM tbl_rolescopes bb
+		       INNER JOIN tbl_roles      aa ON aa.roleUID  = bb.roleUID
+		       INNER JOIN tbl_scopeacts  cc ON bb.scopeUID = cc.scopeUID
+		       INNER JOIN tbl_menus      dd ON dd.menuID   = cc.menuID
+		       INNER JOIN tbl_menus      ee ON ee.menuUID  = dd.topMenuID
+		       INNER JOIN tbl_menus      ff ON ff.menuUID  = dd.parMenuID
+		       INNER JOIN tbl_pages     gg ON gg.pageUID  = cc.pageUID
+		  WHERE cc.jobID = #{uuID}
+	</insert>
+	
+	<insert id="insRolsScopeMenuIF4Batch" parameterType="hashmap">
+	     INSERT INTO tbl_rolemenuif (
+			bakDT
+			,bakUID
+			,roleUID
+			,roleID
+			,ifSTS
+		)
+		SELECT 
+			  <choose>
+			    <when test='SQLMODE == "mariadb"'>
+			   	now() AS bakDT
+			   	, tsys.getUUID('tbl_rolescopesif') AS bakUID
+			    </when>
+			    <otherwise>
+			    sysdate AS bakDT
+			    ,seq_uuid.nextval AS bakUID FROM dual
+			    </otherwise>
+			  </choose>
+			  , aa.roleUID
+		      , aa.roleID
+			  , cc.jobSTS AS ifSTS
+		  FROM tbl_rolescopes bb
+		       INNER JOIN tbl_roles      aa ON aa.roleUID  = bb.roleUID
+		       INNER JOIN tbl_scopeacts  cc ON bb.scopeUID = cc.scopeUID
+		       INNER JOIN tbl_menus      dd ON dd.menuID   = cc.menuID
+		       INNER JOIN tbl_menus      ee ON ee.menuUID  = dd.topMenuID
+		       INNER JOIN tbl_menus      ff ON ff.menuUID  = dd.parMenuID
+		       INNER JOIN tbl_pages     gg ON gg.pageUID  = cc.pageUID
+		  WHERE cc.jobID = #{uuID}
+	</insert>
+    
+    
+    <delete id="delTblScopeActs" parameterType="hashmap">
+		DELETE FROM tbl_scopeActs WHERE scopeUID = #{scopeUID}
+    </delete> 
+    <delete id="delTblScopeActs4JobID" parameterType="hashmap">
+		DELETE FROM tbl_scopeActs 
+		 WHERE scopeUID IN (SELECT scopeUID FROM tbl_scopes WHERE jobID = #{uuID})
+    </delete> 
+        
+    <!-- 영역별 화면기능코드들을 삭제함. -->
+    <select id="delTblScopeActsList" parameterType="hashmap">
+    	<foreach item="item" collection="list" separator=";">
+    	DELETE FROM tbl_scopeActs 
+    	 WHERE scopeUID = #{item.scopeUID} AND menuUID  = #{item.menuUID} 
+    	   AND pageUID  = #{item.pageUID}  AND privUID = #{item.privUID}
+    	</foreach>
+    </select>
+    
+    <!-- 영역별 화면기능코드가 존재하는지를 조회함. -->
+    <select id="chkTblScopeActs" parameterType="hashmap" resultType="int">
+    	SELECT count(scopeUID) AS existCnt FROM tbl_scopeacts 
+    	 WHERE scopeUID = #{scopeUID} AND menuUID = #{menuUID} AND pageUID = #{pageUID} AND privUID = #{privUID}
+    </select>
+    
+     <!-- SYS0036 영역추가시 서비스 구분 선택이후 대,중,소 메뉴를 세팅함 getMenues -->
+    <select id="getMenues" parameterType="hashmap" resultType="hashmap">
+    SELECT menuUID,menuID, menuNM,menuLVL FROM tbl_menus 
+    WHERE 1=1
+    <if test='menuLVL != "" and menuLVL != null'>
+	   AND menuLVL = #{menuLVL}
+	</if>
+	<if test='svcTypeID != "" and svcTypeID != null'>
+	   AND svcTypeID = #{svcTypeID}
+	</if>
+	<if test='topMenuID != "" and topMenuID != null'>
+	   AND topMenuID = #{topMenuID}
+	</if>
+	<if test='parMenuID != "" and parMenuID != null'>
+	   AND parMenuID = #{parMenuID}
+	</if>
+    </select>
+	<!-- =================================
+	           영역관리 쿼리 파트 끝
+	     ================================= 
+	-->
+	
+
+	<update id="updEbdUsermenus2Dbsts" parameterType="hashmap">
+        update b2b.EBDUSERMENUS
+           set 
+        <if test='SQLMODE == "MARIA"'>
+		       UPDATEDATE   = tsys.getSysdate()
+		</if>
+        <if test='SQLMODE == "ORACLE"'>
+		       UPDATEDATE   = SYSDATE
+		</if>
+            ,  UPDATEUSERID = #{userUID}
+		<if test='borgUID != null and borgUID != ""'>
+		    , UPDATEBORGID  = #{borgUID}
+		</if>   
+		<if test='DBSTS != null and DBSTS != ""'>
+		    , DBSTS         = #{DBSTS}
+		</if> 
+         where PRIVILEGECD  = #{PRIVILEGECD} 
+           and AGENTID      = #{AGENTID}
+	</update>
+	
+	<select id="spMenuTree" parameterType="hashmap" resultType="hashmap">
+    	/* sys-Sql.spMenuTree 트리구조로 조회가 되어야 하나, Maria가 CONNECT BY 지원이 안됨. */
+    	SELECT
+			AA.MENUID,
+			AA.TopMenuID    AS TOPMENUID,
+			AA.ParentMenuID AS PARMENUID,
+			AA.MENULEVEL,
+			AA.MenuName_Eng AS MENUNMENG,
+			AA.MenuName_Etc AS MENUNMETC,
+			AA.ActionCode   AS ACTIONCD,
+	        AA.SERVICETYPE,
+			AA.DBSTS,
+			AA.DISPLAYORDER
+		FROM EBDMENUS AA
+	   WHERE AA.AGENTID = #{AGENTID}
+		<if test='TOPMNUID != null and TOPMNUID != ""'>
+		  AND AA.TopMenuID  = #{TOPMNUID}
+		</if>
+		<if test='MNULEVEL != null and MNULEVEL != ""'>
+		  AND AA.MENULEVEL  = #{MNULEVEL}
+		</if>
+		<if test='SVCTYPE != null and SVCTYPE != ""'>
+		  AND AA.SERVICETYPE  = #{SVCTYPE}
+		</if>
+		<if test='DBSTS != null and DBSTS != ""'>
+		  AND AA.DBSTS  = #{DBSTS}
+		</if>
+		<if test='MNUNMENG != null and MNUNMENG != ""'>
+		  AND AA.MenuName_Eng LIKE '%'+ #{MNUNMENG} +'%'
+		</if>
+		<if test='MNUNMETC != null and MNUNMETC != ""'>
+		  AND AA.MenuName_Etc LIKE '%'+ #{MNUNMETC} +'%'
+		</if>
+		<if test='MNUACTCD != null and MNUACTCD != ""'>
+		  AND AA.ActionCode  LIKE '%'+ #{MNUACTCD} +'%'
+		</if>
+    </select>
+    
+    
+    
+    <select id="spFindCodeList" parameterType="hashmap" resultType="hashmap">
+	    SELECT 
+		    AA.CODEID
+		  , AA.CODETYPE
+		  , AA.CODETYPENM
+		  , AA.CODE1
+		  , AA.CODE2
+		  , AA.TEXT1
+		  , AA.TEXT2
+		  , AA.CODEDESC
+		  , AA.DISPLAYORDER
+		  , AA.DBSTS
+	 	FROM EBDCODEALL AA 
+	   WHERE AA.AGENTID = #{AGENTID}
+		<if test='CODETYPE != null and CODETYPE != ""'>
+		  AND AA.CODETYPE  = #{CODETYPE}
+		</if>
+		<if test='CODETYPENM != null and CODETYPENM != ""'>
+		  AND AA.CODETYPENM LIKE '%'+ #{CODETYPENM} +'%'
+		</if>
+		<if test='CODE1 != null and CODE1 != ""'>
+		  AND AA.CODE1 LIKE '%'+ #{CODE1} +'%'
+		</if>
+		<if test='CODE2 != null and CODE2 != ""'>
+		  AND AA.CODE2 LIKE '%'+ #{CODE2} +'%'
+		</if>
+		<if test='TEXT1 != null and TEXT1 != ""'>
+		  AND AA.TEXT1 LIKE '%'+ #{TEXT1} +'%'
+		</if>
+		<if test='TEXT2 != null and MNUACTCD != ""'>
+		  AND AA.TEXT2 LIKE '%'+ #{TEXT2} +'%'
+		</if>
+		<if test='CODEDESC != null and CODEDESC != ""'>
+		  AND AA.CODEDESC LIKE '%'+ #{CODEDESC} +'%'
+		</if>
+		<if test='DBSTS != null and DBSTS != ""'>
+		  AND AA.DBSTS  = #{DBSTS}
+		</if>
+	  ORDER BY AA.CODETYPE, AA.DISPLAYORDER
+    </select>
+    
+	<insert id="insEBDCodeAll" parameterType="hashmap">
+	    insert into EBDCODEALL (
+			CODEID,        CODETYPE,        CODETYPENM,
+			CODE1,         TEXT1,           CODE2,
+			TEXT2,         CODEDESC,        DISPLAYORDER,
+			DBSTS,         AGENTID,         CREATEDATE,
+			CREATEUSERID,  CREATEBORGID,    REMOTEIP
+		) values (
+			#{CODEID,   jdbcType=NUMERIC}
+		  , #{CODETYPE, jdbcType=VARCHAR}
+		  , #{CODETYPENM,jdbcType=VARCHAR}
+		  , #{CODE1,   jdbcType=VARCHAR}
+		  , #{TEXT1,   jdbcType=VARCHAR}
+		<if test='CODE2 != null and CODE2 != ""'>
+		  , #{CODE2,   jdbcType=VARCHAR}
+		</if>
+		<if test='TEXT2 != null and TEXT2 != ""'>
+		  , #{TEXT2,   jdbcType=VARCHAR}
+		</if>
+		<if test='CODEDESC != null and CODEDESC != ""'>
+		  , #{CODEDESC,jdbcType=VARCHAR}
+		</if>
+		  , #{DISPLAYORDER,jdbcType=NUMERIC}
+		  , #{DBSTS,   jdbcType=VARCHAR}
+		  , #{AGENTID, jdbcType=VARCHAR}
+		  , SYSDATE
+		  , #{userUID, jdbcType=BIGINT}
+		  , #{borgUID, jdbcType=BIGINT}
+		  , #{userIP,  jdbcType=BIGINT}
+		)
+	</insert>
+	
+	<update id="updEBDCodeAll" parameterType="hashmap">
+        update EBDCODEALL set
+        	UPDATEDATE   = tsys.getSysdate()
+          , UPDATEUSERID = #{userUID}
+          , UPDATEBORGID = #{borgUID}
+        <if test='CODETYPENM != null and CODETYPENM != ""'>
+		  , CODETYPENM = #{CODETYPENM}
+		</if>
+		<if test='TEXT1 != null and TEXT1 != ""'>
+		  , TEXT1 = #{TEXT1}
+		</if>		
+		<if test='TEXT2 != null and TEXT2 != ""'>
+		  , TEXT2 = #{TEXT2}
+		</if>
+		<if test='CODEDESC != null and CODEDESC != ""'>
+		  , CODEDESC = #{CODEDESC}
+		</if>
+		<if test='DISPLAYORDER != null and DISPLAYORDER != ""'>
+		  , DISPLAYORDER = #{DISPLAYORDER}
+		</if>
+		<if test='DBSTS != null and DBSTS != ""'>
+		  , DBSTS = #{DBSTS}
+		</if>
+		where CODEID  = #{CODEID}
+		  and AGENTID = #{AGENTID}
+	</update>
+	
+	<select id="spFindScopeList" parameterType="hashmap" resultType="hashmap">	
+		SELECT AA.SCOPEID
+		     , AA.SCOPECD
+		     , AA.SCOPENM
+		     , AA.PRIVILEGEID
+		     , AA.PRIVILEGECD
+		     , AA.PRIVILEGENM
+		     , AA.DBSTS
+		     , AA.MENUID
+		     , AA.MENUCD
+		     , AA.MENUNM
+		 FROM EBDSCOPES4ACTS AA
+		WHERE AA.AGENTID = #{AGENTID}
+		<if test='SCOPECD != null and SCOPECD != ""'>
+		  AND AA.SCOPECD  LIKE '%'+ #{SCOPECD} +'%'
+		</if>
+		<if test='SCOPENM != null and SCOPENM != ""'>
+		  AND AA.SCOPENM  LIKE '%'+ #{SCOPENM} +'%'
+		</if>
+		<if test='PRIVCD != null and PRIVCD != ""'>
+		  AND AA.PRIVILEGECD LIKE '%'+ #{PRIVCD} +'%'
+		</if>
+		<if test='PRIVNM != null and PRIVNM != ""'>
+		  AND AA.PRIVILEGENM LIKE '%'+ #{PRIVNM} +'%'
+		</if>
+		<if test='MENUCD != null and MENUCD != ""'>
+		  AND AA.MENUCD LIKE '%'+ #{MENUCD} +'%'
+		</if>
+		<if test='MENUNM != null and MENUNM != ""'>
+		  AND AA.MENUNM LIKE '%'+ #{MENUNM} +'%'
+		</if>
+		<if test='DBSTS != null and DBSTS != ""'>
+		  AND AA.DBSTS  = #{DBSTS}
+		</if>
+    </select>
+
+    <select id="spFindRoleList" parameterType="hashmap" resultType="hashmap">	
+	    SELECT AA.ROLEID
+	     , AA.ROLECD
+	     , AA.ROLENM
+	     , AA.SCOPEID
+	     , AA.SCOPECD
+	     , AA.SCOPENM
+	     , AA.SERVICEYPE
+	     , AA.ROLEDESC
+	     , AA.DBSTS
+		 FROM EBDROLESALL AA
+		WHERE AA.AGENTID = #{AGENTID}
+		<if test='SCOPECD != null and SCOPECD != ""'>
+		  AND AA.SCOPECD  LIKE '%'+ #{SCOPECD} +'%'
+		</if>
+		<if test='SCOPENM != null and SCOPENM != ""'>
+		  AND AA.SCOPENM  LIKE '%'+ #{SCOPENM} +'%'
+		</if>
+		<if test='ROLECD != null and ROLECD != ""'>
+		  AND AA.ROLECD LIKE '%'+ #{ROLECD} +'%'
+		</if>
+		<if test='ROLENM != null and ROLENM != ""'>
+		  AND AA.ROLENM LIKE '%'+ #{ROLENM} +'%'
+		</if>
+		<if test='SVCTYPE != null and SVCTYPE != ""'>
+		  AND AA.SERVICEYPE = #{SVCTYPE}
+		</if>
+		<if test='DBSTS != null and DBSTS != ""'>
+		  AND AA.DBSTS  = #{DBSTS}
+		</if>
+	    ORDER BY AA.ROLEID, AA.SCOPEID
+    </select>
+    
+	<!-- =================================
+	         권한관리 서비스 파트 시작
+	     ================================= 
+	-->
+    <select id="getTblRolesList" parameterType="hashmap" resultType="hashmap">
+		SELECT 
+			roleUID
+			,roleID
+			,roleNM
+			,roleRemk
+			,dbSTS
+			,borgScopeID
+			,svcTypeID
+			,roleType
+			,agentID
+		  FROM tbl_roles
+		 WHERE agentID = #{agentID}
+ 		<choose>
+		    <when test='roleUID != null and roleUID != ""'>
+		   		AND roleUID = #{roleUID}
+		    </when>
+			<otherwise>
+		        <if test='srchText != null and srchText != ""'>
+		   		  <choose>
+				    <when test='SQLMODE == "mariadb"'>
+				    AND CONCAT(roleID, IFNULL(roleNM,'')) REGEXP #{srchText}
+				    </when>
+				    <otherwise>
+				    AND (roleID || roleNM) like '%'|| #{srchText} ||'%'
+				    </otherwise>
+				  </choose>
+		        </if> 
+		        <if test='svcTypeID != null and svcTypeID != ""'>
+				   AND svcTypeID = #{svcTypeID}
+				</if>
+				<if test='proleID != null and proleID != ""'>
+				  <choose>
+				    <when test='SQLMODE == "mariadb"'>
+				    AND roleID LIKE CONCAT_WS('','%',#{proleID},'%')
+				    </when>
+				    <otherwise>
+				    AND roleID like '%'|| #{proleID} ||'%'
+				    </otherwise>
+				  </choose>
+				</if>
+				<if test='roleNM != null and roleNM != ""'>
+		   		  <choose>
+				    <when test='SQLMODE == "mariadb"'>
+				    AND roleNM LIKE CONCAT_WS('','%',#{roleNM},'%')
+				    </when>
+				    <otherwise>
+				    AND roleNM like '%'|| #{roleNM} ||'%'
+				    </otherwise>
+				  </choose>
+				</if>
+				<if test='dbSTS != null and dbSTS != ""'>
+				   AND dbSTS = #{dbSTS}
+				</if>
+			</otherwise>
+		</choose>
+		ORDER BY roleID
+    </select>
+    
+    <select id="getTblRolesDtl" parameterType="hashmap" resultType="hashmap">
+		SELECT
+			 rs.roleUID 
+			,rs.scopeUID
+			,s.scopeID
+			,s.scopeNM
+			,s.scopeRemk
+		from tbl_rolescopes rs
+		INNER JOIN tbl_scopes s ON rs.scopeUID = s.scopeUID
+		WHERE rs.roleUID = #{roleUID}
+		ORDER BY s.scopeID
+    </select>
+    
+	<select id="chkTblRoles" parameterType="hashmap" resultType="int">
+		select count(1) as cnt
+		  from tsys.tbl_roles
+		 where
+			<if test='proleID != null and proleID != ""'>
+			   roleID = #{proleID} 
+			</if>
+	</select>
+	
+	<select id="chkTblRolesScopes" parameterType="hashmap" resultType="int">
+		select count(1) as existCnt
+		  from tsys.tbl_rolescopes
+		 where roleUID  = #{roleUID}
+		  and scopeUID = #{scopeUID}
+	</select>
+
+	<insert id="insTblRoles4One" parameterType="hashmap">
+	    <selectKey resultType="Long" keyProperty="roleUID" order="BEFORE">
+   		  <choose>
+		    <when test='SQLMODE == "mariadb"'>
+		    SELECT tsys.getUUID('tbl_roles') AS roleUID
+		    </when>
+		    <otherwise>
+		    SELECT seq_uuid.nextval AS roleUID FROM dual
+		    </otherwise>
+		  </choose>
+	    </selectKey> 
+	    insert into tbl_roles (
+	    	  roleUID
+	    	, roleID
+	    	, roleNM
+   	  		<if test='roleRemk != null and roleRemk != ""'>
+	    	, roleRemk
+	    	</if>
+	    	, dbSTS
+	    	<if test='borgScopeID != null and borgScopeID != ""'>
+	    	, borgScopeID
+	    	</if>
+	    	, svcTypeID
+	    	<if test='roleType != null and roleType != ""'>
+	    	, roleType
+	    	</if>
+	    	, agentID
+		) values (
+		    #{roleUID}
+		  , #{proleID}
+		  , #{roleNM}
+  			<if test='roleRemk != null and roleRemk != ""'>
+		  , #{roleRemk}
+			</if>
+		  , #{dbSTS}
+  			<if test='borgScopeID != null and borgScopeID != ""'>
+		  , #{borgScopeID}
+			</if>
+		  , #{svcTypeID}
+  			<if test='roleType != null and roleType != ""'>
+		  , #{roleType}
+			</if>
+		  , #{agentID}
+		)
+	</insert>
+	
+	<insert id="insTblRolescopes" parameterType="hashmap">
+		<foreach item="item" collection="list" separator=";">
+		    insert into tbl_rolescopes (
+				roleUID
+				, scopeUID
+				, roleID
+				, agentID
+			) values (
+			    #{item.roleUID}
+			  , #{item.scopeUID}
+			  , #{item.proleID}
+	  		  , #{item.agentID}
+			)
+		</foreach>
+	</insert>
+	
+	<update id="updTblRoles4one" parameterType="hashmap">
+        update tbl_roles set
+       	 	  roleNM = #{roleNM}
+	    	, borgScopeID = #{borgScopeID}
+	    	, roleRemk = #{roleRemk}
+	    	, roleType = #{roleType}
+	    	, dbSTS = #{dbSTS}
+		where roleUID  = #{roleUID}
+		  and agentID = #{agentID}
+	</update>
+	
+	<insert id="insTblRolescopes4One" parameterType="hashmap">
+		    insert into tbl_rolescopes (
+				roleUID
+				, scopeUID
+				, roleID
+				, agentID
+				, jobID
+				, jobSTS
+			) values (
+			    #{roleUID}
+			  , #{scopeUID}
+			  , #{proleID}
+	  		  , #{agentID}
+	  		  , #{uuID}
+	  		  , #{jobSTS}
+			)
+	</insert>
+	
+	<update id="updTblRolesScope4one" parameterType="hashmap">
+        update tbl_rolescopes set
+       	 	  jobSTS = #{jobSTS}
+       	 	  ,jobID = #{uuID}
+		where roleUID  = #{roleUID}
+		  and scopeUID = #{scopeUID}
+	</update>
+	
+	<update id="updTblRoles4dbSTS" parameterType="hashmap">
+		<foreach item="item" collection="list" separator=";">	
+	        update tbl_roles a
+			INNER JOIN tbl_rolescopes b ON a.roleUID = b.roleUID SET
+				 a.dbSTS = 'N'
+				,b.jobID = #{item.uuID}
+				,b.jobSTS = 'D'
+			where a.roleUID = #{item.roleUID}
+			  and a.agentID = #{item.agentID}
+		</foreach>
+	</update>
+	
+	<update id="delTblRolescopes" parameterType="hashmap">
+		<foreach item="item" collection="list" separator=";">	
+			delete from tbl_rolescopes 
+			where roleUID = #{item.roleUID}
+				and scopeUID = #{item.scopeUID}
+       </foreach>
+	</update>
+	
+	<insert id="insRolsIF4Batch" parameterType="hashmap">
+	     INSERT INTO tbl_rolescopesif (
+			bakDT
+			,bakUID
+			,roleUID
+			,scopeUID
+			,privID
+			,menuID
+			,linkUri
+			,roleID
+			,pageUID
+			,pageID
+     		,pageNM
+			,privNM
+			,menuNM
+			,sortORD
+			,topMenuID
+			,parMenuID
+			,topMenuNM
+			,parMenuNM
+			,topSortORD
+			,parSortORD
+			,agentID
+			,activeImg
+			,ifSTS
+		)
+		SELECT 
+			  <choose>
+			    <when test='SQLMODE == "mariadb"'>
+			   	now() AS bakDT
+			   	, tsys.getUUID('tbl_rolescopesif') AS bakUID
+			    </when>
+			    <otherwise>
+			    sysdate AS bakDT
+			    ,seq_uuid.nextval AS bakUID FROM dual
+			    </otherwise>
+			  </choose>
+			  , aa.roleUID
+			  , bb.scopeUID
+			  , cc.privID
+			  , cc.menuID
+			  , dd.linkUri
+		      , aa.roleID
+		      , cc.pageUID
+		      , gg.pageID
+     		  , cc.pageNM
+			  , cc.privNM
+			  , dd.menuNM
+			  , dd.sortORD
+			  , ee.menuID  AS topMenuID
+			  , ff.menuID  AS parMenuID
+			  , ee.menuNM  as topMenuNM
+			  , ff.menuNM  as parMenuNM
+			  , ee.sortORD as topSortORD
+		     , ff.sortORD as parSortORD
+			  , #{agentID} as agentID
+			  , cc.activeImg
+			  , bb.jobSTS AS ifSTS
+		  FROM tbl_roles aa 
+	       INNER JOIN tbl_rolescopes bb ON aa.roleUID  = bb.roleUID
+	       INNER JOIN tbl_scopeacts  cc ON bb.scopeUID = cc.scopeUID
+	       LEFT JOIN tbl_menus      dd ON dd.menuID   = cc.menuID
+	       LEFT JOIN tbl_menus      ee ON ee.menuUID  = dd.topMenuID
+	       LEFT JOIN tbl_menus      ff ON ff.menuUID  = dd.parMenuID
+	       INNER JOIN tbl_pages     gg ON gg.pageUID  = cc.pageUID
+		  WHERE bb.jobID = #{uuID}
+	</insert>
+	
+	<insert id="insRolsMenuIF4Batch" parameterType="hashmap">
+	    INSERT INTO tbl_rolemenuif (
+			bakDT
+			,bakUID
+			,roleUID
+			,roleID
+			,ifSTS
+		)
+		SELECT 
+			  <choose>
+			    <when test='SQLMODE == "mariadb"'>
+			   	now() AS bakDT
+			   	, tsys.getUUID('tbl_rolescopesif') AS bakUID
+			    </when>
+			    <otherwise>
+			    sysdate AS bakDT
+			    ,seq_uuid.nextval AS bakUID FROM dual
+			    </otherwise>
+			  </choose>
+			  , aa.roleUID
+		      , aa.roleID
+			  , bb.jobSTS AS ifSTS
+		  FROM tbl_roles aa 
+	       INNER JOIN tbl_rolescopes bb ON aa.roleUID  = bb.roleUID
+	       INNER JOIN tbl_scopeacts  cc ON bb.scopeUID = cc.scopeUID
+	       LEFT JOIN tbl_menus      dd ON dd.menuID   = cc.menuID
+	       LEFT JOIN tbl_menus      ee ON ee.menuUID  = dd.topMenuID
+	       LEFT JOIN tbl_menus      ff ON ff.menuUID  = dd.parMenuID
+	       INNER JOIN tbl_pages     gg ON gg.pageUID  = cc.pageUID
+		  WHERE bb.jobID = #{uuID}
+	</insert>
+	
+	<insert id="insRoleMenuIFC4Batch" parameterType="hashmap">
+	    INSERT INTO tbl_rolemenuif (
+			bakDT
+			,bakUID
+			,roleUID
+			,roleID
+			,ifSTS
+		)
+		SELECT 
+			  <choose>
+			    <when test='SQLMODE == "mariadb"'>
+			   	now() AS bakDT
+			   	, tsys.getUUID('tbl_rolescopesif') AS bakUID
+			    </when>
+			    <otherwise>
+			    sysdate AS bakDT
+			    ,seq_uuid.nextval AS bakUID FROM dual
+			    </otherwise>
+			  </choose>
+			  , aa.roleUID
+		      , aa.roleID
+			  , 'C' AS ifSTS
+		  FROM tbl_roles aa 
+	       INNER JOIN tbl_rolescopes bb ON aa.roleUID  = bb.roleUID
+	       INNER JOIN tbl_scopeacts  cc ON bb.scopeUID = cc.scopeUID
+	       LEFT JOIN tbl_menus      dd ON dd.menuID   = cc.menuID
+	       LEFT JOIN tbl_menus      ee ON ee.menuUID  = dd.topMenuID
+	       LEFT JOIN tbl_menus      ff ON ff.menuUID  = dd.parMenuID
+	       INNER JOIN tbl_pages     gg ON gg.pageUID  = cc.pageUID
+		  WHERE aa.roleUID = #{roleUID}
+	</insert>
+
+    <!-- =================================
+	     	권한관리 서비스 쿼리 파트 끝
+	     ================================= 
+	-->
+	<!-- 콤보용 ROLEID SYS0059 -->
+	    <select id="getTblRoles4combo" parameterType="hashmap" resultType="hashmap">
+		SELECT 
+			roleID
+			,roleNM
+		  FROM tbl_roles
+		 WHERE agentID = #{agentID}
+		<choose>
+		  <when test='userType == "S"'>
+			AND (svcTypeID = #{userType} or svcTypeID = 'A') 
+		  </when>
+		  <when test='userType == "F"'>
+		  </when>
+		  <otherwise>
+			AND svcTypeID = #{userType}
+		  </otherwise>
+		</choose>
+ 		 AND dbSTS = 'Y'
+		</select>
+		
+	<!-- 메뉴작업 목록 조회  -->
+	<select id="getTblSyncMenu" parameterType="hashmap" resultType="hashmap">
+		SELECT 
+			roleUID
+			, bakUID
+			, roleID
+		FROM tbl_rolemenuif A
+		WHERE A.ifDT IS NULL
+		GROUP BY roleUID
+	</select>
+	
+	<select id="getTblTopMenuList" parameterType="hashmap" resultType="hashmap">
+		SELECT 
+			cc.menuID
+			, dd.linkUri
+			, ee.menuNM
+			, ee.menuID  AS topMenuID
+			, ff.menuID  AS parMenuID
+			, 'ko' AS lang
+			, hh.langEN
+			, hh.langCN
+		FROM tbl_roles aa 
+		INNER JOIN tbl_rolescopes bb ON aa.roleUID  = bb.roleUID
+		INNER JOIN tbl_scopeacts  cc ON bb.scopeUID = cc.scopeUID
+		LEFT JOIN tbl_menus      dd ON dd.menuID   = cc.menuID
+		LEFT JOIN tbl_menus      ee ON ee.menuUID  = dd.topMenuID
+		LEFT JOIN tbl_menus      ff ON ff.menuUID  = dd.parMenuID
+		INNER JOIN tbl_pages     gg ON gg.pageUID  = cc.pageUID
+		LEFT JOIN tbl_dictionary hh ON ee.dictUID  = hh.dictUID
+		<choose>
+			<when test="menu != null and menu != ''">
+				WHERE aa.roleID = #{roleID} 
+			</when>
+			<otherwise>
+				WHERE aa.roleUID = #{roleUID} 
+			</otherwise>
+		</choose>
+		  AND aa.agentID    = #{agentID}
+		  AND dd.linkUri IS NOT null	
+		GROUP BY ee.topMenuID
+		ORDER BY ee.sortORD
+	</select>
+	
+	<!-- 사용자  마스터 싱크 -->
+	<update id="updTblSyncMenu" parameterType="hashmap">
+		update tbl_rolemenuif set
+			 jobID      = #{uuID}
+		<choose>
+		    <when test='SQLMODE == "mariadb"'>
+		         ,ifDT    = now()
+		    </when>
+		    <otherwise>
+			     ,ifDT    = SYSDATE
+		    </otherwise>
+		</choose>
+		 where jobID IS NULL
+	</update>
+		
+	<select id="getTblLeftMenuList" parameterType="hashmap" resultType="hashmap">
+		SELECT 
+			cc.menuID
+			, dd.linkUri
+			, dd.menuNM
+			, ee.menuID  AS topMenuID
+			, ff.menuID  AS parMenuID
+			, ff.menuNM  as parMenuNM
+			, ii.langEN  AS parLangEN
+			, ii.langCN  AS parLangCN
+			, 'ko' AS parLang
+			, ee.sortORD as topSortORD
+			, ff.sortORD as parSortORD
+			, 'ko' AS lang
+			, hh.langEN
+			, hh.langCN
+		FROM tbl_roles aa 
+		INNER JOIN tbl_rolescopes bb ON aa.roleUID  = bb.roleUID
+		INNER JOIN tbl_scopeacts  cc ON bb.scopeUID = cc.scopeUID
+		LEFT JOIN tbl_menus      dd ON dd.menuID   = cc.menuID
+		LEFT JOIN tbl_menus      ee ON ee.menuUID  = dd.topMenuID
+		LEFT JOIN tbl_menus      ff ON ff.menuUID  = dd.parMenuID
+		LEFT JOIN tbl_dictionary ii ON ff.dictUID  = ii.dictUID
+		INNER JOIN tbl_pages     gg ON gg.pageUID  = cc.pageUID
+		LEFT JOIN tbl_dictionary hh ON dd.dictUID  = hh.dictUID
+		<choose>
+			<when test="menu != null and menu != ''">
+				WHERE aa.roleID = #{roleID} 
+			</when>
+			<otherwise>
+				WHERE aa.roleUID = #{roleUID} 
+			</otherwise>
+		</choose>
+		  AND aa.agentID    = #{agentID}
+		  AND dd.linkUri IS NOT null
+		GROUP BY cc.menuID
+		ORDER BY ff.menuID, dd.sortORD, cc.menuID
+	</select>	
+		
+	<select id="getTblSyncDictionary" parameterType="hashmap" resultType="hashmap">
+		SELECT 
+			bakUID
+			,dictUID
+			,langKR
+			,langEN
+			,langCN
+		FROM tbl_dictionaryif A
+		WHERE A.ifDT IS NULL
+	</select>
+	
+	<update id="updTblSyncDictionary" parameterType="hashmap">
+		UPDATE tbl_dictionaryif SET
+			 jobID      = #{uuID}
+		<choose>
+		    <when test='SQLMODE == "mariadb"'>
+		         ,ifDT    = NOW()
+		    </when>
+		    <otherwise>
+			     ,ifDT    = SYSDATE
+		    </otherwise>
+		</choose>
+		 WHERE jobID IS NULL
+	</update>	
+		
+		
+	<select id="getTblSyncRequest4List" parameterType="hashmap" resultType="hashmap">
+		SELECT
+			A.reqUID
+			,A.ifUID
+			,A.pID
+			,A.ifMSA
+			,A.pNM
+			,A.tableNM
+			,A.jsonFileNM
+			,A.ifPSTS
+			,A.results AS result
+			,A.jobID
+			<choose>
+			  <when test='SQLMODE == "mariadb"'>
+			,DATE_FORMAT(A.createDT,'%Y-%m-%d %H:%i') as createDT
+			,DATE_FORMAT(A.reprocDT,'%Y-%m-%d %H:%i') as reprocDT
+			  </when>
+			  <otherwise>
+			,to_date(A.createDT, 'YYYY-MM-DD HH24:MI') as createDT
+			,to_date(A.reprocDT, 'YYYY-MM-DD HH24:MI') as reprocDT
+			  </otherwise>
+			</choose>
+			,A.createDT
+			,A.createrID
+			,A.reprocGB
+			,A.reprocID
+		    ,A.targets
+		FROM tbl_syncjobrequest A
+		WHERE A.ifPSTS = 'E'
+		<choose>
+		    <when test='reqUID != null and reqUID != ""'>
+		   		AND A.reqUID = #{reqUID}
+		    </when>
+		    <otherwise>
+				AND A.agentID = #{agentID}
+				<if test='pID != null and pID != ""'>
+		   		  <choose>
+				    <when test='SQLMODE == "mariadb"'>
+				  AND A.pID LIKE CONCAT_WS('','%',#{pID},'%')
+				    </when>
+				    <otherwise>
+				  AND A.pID LIKE '%'|| #{pID} ||'%'
+				    </otherwise>
+				  </choose>
+				</if> 
+				<if test='pNM != null and pNM != ""'>
+		   		  <choose>
+				    <when test='SQLMODE == "mariadb"'>
+				  AND A.pNM LIKE CONCAT_WS('','%',#{pNM},'%')
+				    </when>
+				    <otherwise>
+				  AND A.pNM LIKE '%'|| #{pNM} ||'%'
+				    </otherwise>
+				  </choose>
+				</if>
+				<if test='createDT1 != null and createDT1 != "" and createDT2 != null and createDT2 != ""'>
+					<choose>
+					  <when test='SQLMODE == "mariadb"'>
+				  AND DATE_FORMAT(A.createDT, '%Y%m%d') BETWEEN REPLACE(#{createDT1},'-','') AND REPLACE(#{createDT2},'-','')
+					  </when>
+					  <otherwise>
+				   AND TO_DATE(A.createDT, 'YYYYMMDD') BETWEEN REPLACE(#{createDT1},'-','') AND REPLACE(#{createDT1},'-','')
+					  </otherwise>
+					</choose>
+				</if>
+		    </otherwise>
+		 </choose>
+		
+		ORDER BY A.ifUID
+	</select>
+	
+	<update id="updTblSyncRequest" parameterType="hashmap">
+		<foreach item="item" collection="list" separator=";">
+			update tbl_syncjobrequest set
+				 jobID      = #{item.uuID}
+				 ,reprocGB  = 'Y'
+				 ,reprocID  = #{item.userUID}
+			<choose>
+			    <when test='item.SQLMODE == "mariadb"'>
+			         ,updateDT    = now()
+			         ,reprocDT    = now()
+			    </when>
+			    <otherwise>
+				     ,updateDT    = SYSDATE
+				     ,reprocDT    = SYSDATE
+			    </otherwise>
+			</choose>
+			 WHERE reqUID = #{item.reqUID}
+		 </foreach>
+	</update>
+	
+	<insert id="insSyncRequestBak4Batch" parameterType="hashmap">
+		   INSERT INTO tbl_syncjobrequestbak (
+			bakDT
+			,reqUID
+			,ifUID
+			,agentID
+			,pID
+			,ifMSA
+			,ifParamVals
+			,ifParamIDs
+			,pNM
+			,tableNM
+			,jsonFileNM
+			,ifPSTS
+			,results
+			,jobID
+			,createDT
+			,createrID
+			,updateDT
+			,updaterID
+			,procStartDT
+			,procEndDT
+			,reprocGB
+			,reprocID
+			,reprocDT
+			,targets
+			)
+			SELECT 
+			  <choose>
+			    <when test='SQLMODE == "mariadb"'>
+			   	now() AS bakDT
+			    </when>
+			    <otherwise>
+			    sysdate AS bakDT
+			    </otherwise>
+			  </choose>
+			    ,reqUID
+			  	,ifUID
+				,agentID
+				,pID
+				,ifMSA
+				,ifParamVals
+				,ifParamIDs
+				,pNM
+				,tableNM
+				,jsonFileNM
+				,ifPSTS
+				,results
+				,#{uuID} AS jobID
+				,createDT
+				,createrID
+				,updateDT
+				,updaterID
+				,procStartDT
+				,procEndDT
+				,reprocGB
+				,reprocID
+				,reprocDT
+				,targets
+			  FROM tbl_syncjobrequest
+		     WHERE jobID = #{uuID}
+	</insert>
+	
+	<insert id="insSyncHist4Batch" parameterType="hashmap">
+		   INSERT INTO tbl_syncjobrequest (
+			createDT
+			,reqUID
+			,ifUID
+			,agentID
+			,pID
+			,ifMSA
+			,ifParamVals
+			,ifParamIDs
+			,pNM
+			,tableNM
+			,jsonFileNM
+			,ifPSTS
+			,results
+			,createrID
+			,targets
+			)
+			SELECT 
+		<choose>
+		    <when test='SQLMODE == "mariadb"'>
+		   		now() AS createDT
+		   		, tsys.getUUID('tbl_syncjobhist') AS reqUID
+		    </when>
+		    <otherwise>
+		    	sysdate() AS createDT
+		    	,seq_uuid.nextval AS reqUID FROM dual
+		    </otherwise>
+		</choose>
+				,ifUID
+				,agentID
+				,pID
+				,ifMSA
+				,ifParamVals
+				,ifParamIDs
+				,pNM
+				,tableNM
+				,jsonFileNM
+				,'T' AS ifPSTS
+				,null AS results
+				,#{userUID} AS createrID
+				,targets
+			  FROM tbl_syncjobrequest
+		     WHERE jobID = #{uuID}
+	</insert>
+	
+	<update id="delTblSyncRequest" parameterType="hashmap">
+			DELETE FROM tbl_syncjobrequest
+			WHERE jobID = #{uuID}
+	</update>
+	
+	<select id="getQuery4Test" parameterType="hashmap" resultType="hashmap">
+		${queryText}
+	</select>
+	
+	<insert id="insQuery4Test" parameterType="hashmap">
+		${queryText}
+	</insert>
+	
+	<update id="updQuery4Test" parameterType="hashmap">
+		${queryText}
+	</update>
+	
+	<delete id="delQuery4Test" parameterType="hashmap">
+		${queryText}
+    </delete>
+   
+    <!-- roleMap이 구성되었는지 확인함  -->
+    <select id="chkUserRoleMap" parameterType="hashmap" resultType="hashmap">
+	    SELECT uuID 
+	    ,#{SQLMODE} as SQLMODE
+	    FROM tbl_userrolemap
+		WHERE ifDT IS NOT NULL 
+		AND chkDT IS NULL
+    </select>
+    <!-- updUserRoleMap -->
+    <update id="updUserRoleMap">
+    	<foreach item="item" collection="list" separator=";">
+		UPDATE tbl_userrolemap 
+		SET 
+		<choose>
+		    <when test='item.SQLMODE == "mariadb"'>
+		   	chkDT = NOW()
+		    </when>
+		    <otherwise>
+		    chkDT = sysdate
+		    </otherwise>
+		</choose>
+		WHERE uuID = ${item.uuID}
+		</foreach>
+	</update>
+	
+	<select id="getEnableJobCache" parameterType="hashmap" resultType="hashmap">
+    	SELECT distinct concat(roleID,'|',menuID,'|',privID) AS keyID
+             , concat(privID,'|',activeImg,'|',privNM) AS valText
+		  FROM tbl_userprivs
+		WHERE agentID = #{agentID}
+		   AND dbSTS   = 'Y'
+    </select>
+	
+	<!-- =================================
+	          스케줄러관리  시작 
+	     ================================= 
+	-->
+	<select id="getSyncJob" parameterType="hashmap" resultType="hashmap">
+    	SELECT 
+			ifUID	 		,agentID		  ,pID
+			,ifMSA	 		,ifParamIDs	  	  ,pNM
+			,tableNM 		,targets   	  	  ,fixedDelay
+			,initialDelay   ,functionNM 	  ,mapperPID
+			,type  			,methodNM    	  ,dbSTS
+	  FROM tbl_syncjob
+	  WHERE agentID = #{agentID}
+        <if test='srchText != null and srchText != ""'>
+   		  <choose>
+		    <when test='SQLMODE == "mariadb"'>
+		  AND CONCAT(pID, ifMSA, pNM, type) REGEXP #{srchText}
+		    </when>
+		    <otherwise>
+		  AND (pID || ifMSA || pNM || type ) LIKE '%'|| #{srchText} ||'%'
+		    </otherwise>
+		  </choose>
+        </if> 
+        <if test='schPID != null and schPID != ""'>
+        <choose>
+		   <when test='SQLMODE == "mariadb"'>
+		    AND pID LIKE CONCAT_WS('','%',#{schPID},'%')
+		   </when>
+		   <otherwise>
+		   AND pID like '%'|| #{schPID} ||'%'
+		   </otherwise>
+	    </choose>
+		</if>
+		<if test='schIfMSA != null and schIfMSA != ""'>
+		  <choose>
+		   <when test='SQLMODE == "mariadb"'>
+		    AND ifMSA LIKE CONCAT_WS('','%',#{schIfMSA},'%')
+		   </when>
+		   <otherwise>
+		   AND ifMSA like '%'|| #{schIfMSA} ||'%'
+		   </otherwise>
+	    </choose>
+		</if>
+		<if test='schPnm != null and schPnm != ""'>
+		  <choose>
+		   <when test='SQLMODE == "mariadb"'>
+		    AND pNM LIKE CONCAT_WS('','%',#{schPnm},'%')
+		   </when>
+		   <otherwise>
+		   AND pNM like '%'|| #{schPnm} ||'%'
+		   </otherwise>
+	    </choose>
+		</if>
+		<if test='schType != null and schType != ""'>
+		  <choose>
+		   <when test='SQLMODE == "mariadb"'>
+		    AND type LIKE CONCAT_WS('','%',#{schType},'%')
+		   </when>
+		   <otherwise>
+		   AND type like '%'|| #{schType} ||'%'
+		   </otherwise>
+	    </choose>
+		</if>
+		<if test='dbSTS != null and dbSTS != ""'>
+		   AND dbSTS = #{dbSTS}
+		</if>
+		<if test='ifUID != null and ifUID != ""'>
+		   AND ifUID = #{ifUID}
+		</if>
+    </select>
+    
+    <insert id="insSyncJob" parameterType="hashmap">
+     INSERT INTO tbl_syncjob(
+		    agentID
+			,pID
+			,ifMSA
+			,mapperPID
+			,ifParamIDs
+			,type
+			,pNM
+			,tableNM
+			,targets
+			,fixedDelay
+			,initialDelay
+			,methodNM
+			,functionNM
+			,createDT
+			,createrID
+			,dbSTS
+		)VALUES(
+		    #{agentID}
+			,#{pID}
+			,#{ifMSA}
+			,#{mapperPID}
+			,#{ifParamIDs}
+			,#{type}
+			,#{pNM}
+			,#{tableNM}
+			,#{targets}
+			,#{fixedDelay}
+			,#{initialDelay}
+			,#{methodNM}
+			,#{functionNM}
+			<choose>
+				<when test='SQLMODE == "mariadb"'>
+			,now()
+			 </when>
+		   	 <otherwise>
+		    ,sysdate
+		    	</otherwise>
+		    </choose>
+			,#{userUID}
+			,#{dbSTS}
+		)
+    </insert>
+    
+    <update id="updSyncJob">
+		UPDATE tbl_syncjob SET 
+		agentID = #{agentID}
+	<choose>
+	    <when test='SQLMODE == "mariadb"'>
+	   	,updateDT = NOW()
+	    </when>
+	    <otherwise>
+	    ,updateDT = sysdate
+	    </otherwise>
+	</choose>
+		,updaterID  = #{userUID}
+	<if test='pID != null and pID != ""'>
+	    ,pID = #{pID}
+	</if>
+	<if test='ifMSA != null and ifMSA != ""'>
+		,ifMSA = #{ifMSA}
+	</if>
+	<if test='mapperPID != null and mapperPID != ""'>
+		,mapperPID = #{mapperPID}
+	</if>
+	<if test='ifParamIDs != null and ifParamIDs != ""'>
+		,ifParamIDs = #{ifParamIDs}
+	</if>
+	<if test='type != null and type != ""'>
+		,type = #{type}
+	</if>
+	<if test='pNM != null and pNM != ""'>
+		,pNM = #{pNM}
+	</if>
+	<if test='tableNM != null and tableNM != ""'>
+		,tableNM = #{tableNM}
+	</if>
+	<if test='targets != null and targets != ""'>
+		,targets = #{targets}
+	</if>
+	<if test='fixedDelay != null and fixedDelay != ""'>
+		,fixedDelay = #{fixedDelay}
+	</if>
+	<if test='initialDelay != null and initialDelay != ""'>
+		,initialDelay = #{initialDelay}
+	</if>
+	<if test='methodNM != null and methodNM != ""'>
+		,methodNM = #{methodNM}
+	</if>
+	<if test='functionNM != null and functionNM != ""'>
+		,functionNM = #{functionNM}
+	</if>
+	<if test='dbSTS != null and dbSTS != ""'>
+		,dbSTS = #{dbSTS}
+	</if>
+		WHERE ifUID = ${ifUID}
+	</update>
+	
+	<select id="getTblSyncJobHist" parameterType="hashmap" resultType="hashmap">
+    	SELECT 
+				agentID	  		,pID		,msaID
+				,ifPID	        ,ifMSA		,type
+				,ifParamVals	,ifParamIDs	,pNM
+				,tableNM		,jsonFileNM	,ifRSTS
+				,methodNM		,ifPSTS		,results
+				,targets		,jobID		,ifUID
+				<choose>
+				  <when test='SQLMODE == "mariadb"'>
+				,DATE_FORMAT(createDT,'%Y-%m-%d %H:%i') as createDT
+				,DATE_FORMAT(updateDT,'%Y-%m-%d %H:%i') as updateDT
+				,DATE_FORMAT(procStartDT,'%Y-%m-%d %H:%i') as procStartDT
+				,DATE_FORMAT(procEndDT,'%Y-%m-%d %H:%i') as procEndDT
+				  </when>
+				  <otherwise>
+				,to_date(createDT, 'YYYY-MM-DD HH24:MI') as createDT
+				,to_date(updateDT, 'YYYY-MM-DD HH24:MI') as updateDT
+				,to_date(procStartDT, 'YYYY-MM-DD HH24:MI') as procStartDT
+				,to_date(procEndDT, 'YYYY-MM-DD HH24:MI') as procEndDT
+				  </otherwise>
+				</choose>
+				,createrID	   ,updaterID   ,reprocGB
+				,reprocDT	   ,reprocID
+			FROM tbl_syncjobhist 
+			WHERE agentID = #{agentID}
+			AND ifRSTS = 'E'
+			AND ifParamVals IS NOT NULL
+			<if test='pNM != null and pNM != ""'>
+	   		  <choose>
+			    <when test='SQLMODE == "mariadb"'>
+			  AND pNM LIKE CONCAT_WS('','%',#{pNM},'%')
+			    </when>
+			    <otherwise>
+			  AND pNM LIKE '%'|| #{pNM} ||'%'
+			    </otherwise>
+			  </choose>
+			</if>
+			<if test='pID != null and pID != ""'>
+	   		  <choose>
+			    <when test='SQLMODE == "mariadb"'>
+			  AND pID LIKE CONCAT_WS('','%',#{pID},'%')
+			    </when>
+			    <otherwise>
+			  AND pID LIKE '%'|| #{pID} ||'%'
+			    </otherwise>
+			  </choose>
+			</if> 
+			<if test='createDT1 != null and createDT1 != "" and createDT2 != null and createDT2 != ""'>
+				<choose>
+				  <when test='SQLMODE == "mariadb"'>
+			  AND DATE_FORMAT(createDT, '%Y%m%d') BETWEEN REPLACE(#{createDT1},'-','') AND REPLACE(#{createDT2},'-','')
+				  </when>
+				  <otherwise>
+			   AND TO_DATE(createDT, 'YYYYMMDD') BETWEEN REPLACE(#{createDT1},'-','') AND REPLACE(#{createDT1},'-','')
+				  </otherwise>
+				</choose>
+			</if>
+			ORDER BY ifUID
+    </select>
+    <update id="updTblSyncJobHist" parameterType="hashmap">
+		<foreach item="item" collection="list" separator=";">
+			update tbl_syncjobhist set
+				 jobID      = #{item.uuID}
+				 ,reprocGB  = 'Y'
+				 ,reprocID  = #{item.userUID}
+			<choose>
+			    <when test='item.SQLMODE == "mariadb"'>
+		         ,updateDT    = now()
+		         ,reprocDT    = now()
+			    </when>
+			    <otherwise>
+			     ,updateDT    = SYSDATE
+			     ,reprocDT    = SYSDATE
+			    </otherwise>
+			</choose>
+			 WHERE ifUID = #{item.ifUID}
+		 </foreach>
+	</update>
+	<insert id="insSyncJob4Batch" parameterType="hashmap">
+		   INSERT INTO  tbl_syncjobhist (
+			    ifUID
+				,agentID
+				,pID
+				,msaID
+				,ifPID
+				,ifMSA
+				,type
+				,ifParamVals
+				,ifParamIDs
+				,pNM
+				,tableNM
+				,jsonFileNM
+				,ifRSTS
+				,methodNM
+				,ifPSTS
+				,results
+				,targets
+				,createDT
+				,createrID
+				,reprocGB
+				,reprocDT
+			)
+			SELECT 
+			    #{uuID} AS ifUID
+				,agentID
+				,pID
+				,msaID
+				,ifPID
+				,ifMSA
+				,type
+				,ifParamVals
+				,ifParamIDs
+				,pNM
+				,tableNM
+				,jsonFileNM
+				,'T' AS ifRSTS
+				,methodNM
+				,ifPSTS
+				,results
+				,targets
+			<choose>
+			    <when test='SQLMODE == "mariadb"'>
+		         ,now() AS createDT
+			    </when>
+			    <otherwise>
+			     ,SYSDATE AS createDT
+			    </otherwise>
+			</choose>
+				,#{userUID} AS createrID
+				,reprocGB
+				,reprocDT
+			FROM tbl_syncjobhist
+		    WHERE jobID = #{uuID}
+	</insert>
+	
+	<insert id="insSyncJobHistBak4Batch" parameterType="hashmap">
+		   INSERT INTO tbl_syncjobhistbak (
+			bakDT
+			,ifUID
+			,agentID
+			,pID
+			,ifMSA
+			,ifParamVals
+			,ifParamIDs
+			,pNM
+			,tableNM
+			,jsonFileNM
+			,ifRSTS
+			,ifPSTS
+			,results
+			,jobID
+			,createDT
+			,createrID
+			,updateDT
+			,updaterID
+			,procStartDT
+			,procEndDT
+			)
+			SELECT 
+			  <choose>
+			    <when test='SQLMODE == "mariadb"'>
+			   	now() AS bakDT
+			    </when>
+			    <otherwise>
+			    sysdate AS bakDT
+			    </otherwise>
+			  </choose>
+			  	,ifUID
+				,agentID
+				,pID
+				,ifMSA
+				,ifParamVals
+				,ifParamIDs
+				,pNM
+				,tableNM
+				,jsonFileNM
+				,ifRSTS
+				,ifPSTS
+				,results
+				,#{uuID} AS jobID
+				,createDT
+				,createrID
+				,updateDT
+				,updaterID
+				,procStartDT
+				,procEndDT
+			  FROM tbl_syncjobhist
+		     WHERE jobID = #{uuID}
+	</insert>
+	<update id="delTblSyncJobHist" parameterType="hashmap">
+			DELETE FROM tbl_syncjobhist
+			WHERE jobID = #{uuID}
+	</update>
+	
+	<!-- =================================
+	          스케줄러관리  끝
+	     ================================= 
+	-->
+</mapper>
