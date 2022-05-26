@@ -1,0 +1,1983 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sci4s.msa.mapper.TO2oOrderMapper">
+	<select id="getUUID" parameterType="java.lang.String" resultType="java.lang.String">
+		SELECT to2o.getUUID(#{uuid}) AS uuID
+	</select>
+	
+	<select id="getBorgUUID"  parameterType="hashmap" resultType="hashmap">
+		SELECT to2o.getUUID(#{uuid}) AS uuID
+	</select>
+	
+	<!-- 주문관리 -->
+	<select id="getOrdCnt" resultType="hashmap">
+    SELECT 
+   	 COUNT(A.orderUid) AS totalCnt  <!-- 총 주문접수건수 --> 
+   	,COUNT(case when A.`status` = 'ACCEPTED' then 1 end) AS acceptedCnt <!-- 접수 --> 
+   	,COUNT(case when A.`status` = 'CLOSED' then 1 end) AS closedCnt     <!-- 완료 -->
+	,COUNT(case when A.`status` = 'CANCLLED' then 1 end) AS canclledCnt  <!-- 취소 -->
+<!--    	,COUNT(case when A.deliveryStatus = '1' then 1 end) AS pickupCnt    포장픽업 완료 -->
+<!--    	,COUNT(case when A.deliveryStatus = '2' then 1 end) AS doneCnt      배달완료 --> 
+    ,SUM(A.payAmount) AS totalAmount  <!-- 총 주문금액 -->
+	FROM o2o_orderlist A
+   	WHERE A.dbSTS = 'Y'
+   	 AND A.borgUID = #{custBorgUID}
+  		<choose>
+    		<when test='SQLMODE == "mariadb"'>
+	AND DATE_FORMAT(A.createDT, "%Y-%m-%d") = CURDATE()
+		    </when>
+		    <otherwise>
+    AND TO_CHAR(A.createDT,'YYYYMMDD') = TO_CHAR(SYSDATE,'YYYYMMDD')
+		    </otherwise>
+   	 	</choose>
+	</select>
+	
+	<select id="getOrderList" resultType="hashmap">
+		SELECT 
+			A.orderUid
+			, A.channel AS channelCode
+			, CH.channelName
+			, A.orderNumber
+			, A.printNo
+			, A.takeoutNo
+			, A.status
+			, CASE WHEN A.status = 'CANCELLED' THEN 'C'
+			  ELSE A.deliveryStatus END AS deliveryStatus
+			, A.deliveryType
+			, A.payType
+			, A.orderQty
+			, A.deliveryTip
+			, A.payAmount
+			, A.lastAmount
+			, A.subPayAmount
+			, A.shopNumber
+			, A.itemsSummary
+			, A.paymentType
+			, A.paymentMethod
+			, A.subPaymentMethods
+			, IFNULL(A.address, A.pickupAddress)  AS address
+ 		    , IFNULL(A.roadNameAddress, A.pickupAddress)  AS roadNameAddress
+ 		    , IFNULL(A.addressDetail, A.pickupAddress)  AS addressDetail
+			, A.pickupAddress
+			, A.shopAddress
+			, A.latitude
+			, A.longitude
+			, A.phoneNo
+			, A.storeMemo
+			, A.riderMemo
+			, A.memo
+			, A.orderDateTime
+			, A.acceptDateTime
+			, A.deliveryDateTime
+			, A.pickupDateTime
+			, A.reservDateTime
+		<choose>
+		    <when test='SQLMODE == "mariadb"'>
+		    , DATE_FORMAT(A.reservDateTime,'%H시%i분') AS reservDT
+		    </when>
+		    <otherwise>
+		     , TO_CHAR(A.reservDateTime,'HH24시%MI분') AS reservDT
+		    </otherwise>
+		  </choose>
+			, A.cancelDateTime
+			, A.pointId
+			, A.pointKey
+			, A.smallOrderFee
+			, A.takeOutDcAmt
+			, A.employeeDcAmt
+			, A.ownerChgCpnDcAmt
+			, A.bamChgCpnDcAmt
+			, A.shopUID
+			, A.orgOrderUid
+			, A.borgUID
+		<choose>
+		    <when test='SQLMODE == "mariadb"'>
+		    , (IFNULL(A.takeOutDcAmt,0) +  IFNULL(A.employeeDcAmt,0) + IFNULL(A.ownerChgCpnDcAmt,0) + IFNULL(A.bamChgCpnDcAmt,0)) AS dcAmt
+		    </when>
+		    <otherwise>
+		     , (NVL(A.takeOutDcAmt,0) +  NVL(A.employeeDcAmt,0) + NVL(A.ownerChgCpnDcAmt,0) + NVL(A.bamChgCpnDcAmt,0)) AS dcAmt
+		    </otherwise>
+		  </choose>
+			, A.createDT
+			, A.createrID
+			, A.updateDT
+			, A.updaterID
+			, A.dbSTS
+			, CASE WHEN A.reservDateTime IS NOT NULL then TIMESTAMPDIFF(minute, A.acceptDateTime,A.reservDateTime) 
+			ELSE TIMESTAMPDIFF(minute, A.acceptDateTime,A.deliveryDateTime) 
+			END AS promiseDT  
+			, CASE
+			  WHEN A.`status` = 'CANCELLED' THEN '-'
+			  WHEN A.reservDateTime IS NOT NULL THEN  TIMESTAMPDIFF(minute, A.reservDateTime,NOW())
+			  WHEN A.finalDelDateTime IS NOT NULL THEN TIMESTAMPDIFF(minute, A.finalDelDateTime, A.deliveryDateTime)
+   <![CDATA[  WHEN TIMESTAMPDIFF(minute, A.reservDateTime,NOW()) < 0 THEN CONCAT('+',TIMESTAMPDIFF(minute, A.reservDateTime,NOW()))   ]]>
+   			  WHEN A.deliveryDateTime IS NULL THEN TIMESTAMPDIFF(minute, now(), A.acceptDateTime)
+   			  WHEN A.finalDelDateTime = A.deliveryDateTime THEN TIMESTAMPDIFF(minute, A.finalDelDateTime, A.acceptDateTime)
+			  ELSE  TIMESTAMPDIFF(minute, A.deliveryDateTime,NOW()) end AS lapseDT  
+			, B.shopInName
+			, B.brandUID
+			, BG.addr1
+			, BG.addr2
+			, BG.latitude AS ownerLat
+			, BG.longitude  AS ownerLong
+			, A.finalDelDateTime
+			, (SELECT delAgentUid FROM o2o_delrequest DR WHERE DR.orderUid = A.orderUid AND DR.deliveryUid = (SELECT MAX(deliveryUid) FROM o2o_delrequest WHERE orderUid = A.orderUid)) AS delAgentUid
+			, (SELECT delAgentYN FROM o2o_delrequest DR WHERE DR.orderUid = A.orderUid AND DR.deliveryUid = (SELECT MAX(deliveryUid) FROM o2o_delrequest WHERE orderUid = A.orderUid)) AS delAgentYN
+			, (SELECT deliveryLiderNM FROM o2o_delrequest DR WHERE DR.orderUid = A.orderUid AND DR.deliveryUid = (SELECT MAX(deliveryUid) FROM o2o_delrequest WHERE orderUid = A.orderUid)) AS deliveryLiderNM
+			, (SELECT delLiderPhoneNo FROM o2o_delrequest DR WHERE DR.orderUid = A.orderUid AND DR.deliveryUid = (SELECT MAX(deliveryUid) FROM o2o_delrequest WHERE orderUid = A.orderUid)) AS delLiderPhoneNo
+			, (SELECT delAgentNM FROM o2o_delrequest DR WHERE DR.orderUid = A.orderUid AND DR.deliveryUid = (SELECT MAX(deliveryUid) FROM o2o_delrequest WHERE orderUid = A.orderUid)) AS delAgentNM
+		FROM o2o_orderlist A
+		INNER JOIN o2o_shopin B ON A.shopUID = B.shopUID
+		INNER JOIN o2o_brands C ON C.brandUID = B.brandUID
+		INNER JOIN o2o_channels CH ON CH.channel = A.channel
+		INNER JOIN o2o_borgs BG ON A.borgUID = BG.borgUID
+		WHERE A.dbSTS = 'Y'
+		<choose>
+		    <when test='SQLMODE == "mariadb"'>
+<!-- 		  AND  A.createDT >=DATE_ADD(NOW(), INTERVAL -1 DAY) -->
+			AND DATE_FORMAT(A.createDT, "%Y-%m-%d") = CURDATE()
+<!-- 			AND DATE_FORMAT(A.createDT, "%Y-%m-%d") = '2022-04-29' -->
+		    </when>
+		    <otherwise>
+		    AND TO_CHAR(A.createDT,'YYYYMMDD') = TO_CHAR(SYSDATE,'YYYYMMDD')
+		    </otherwise>
+		</choose>
+		<if test='deliveryType != null and deliveryType != ""'>
+		    AND A.deliveryType = #{deliveryType}
+		</if>
+		<if test='custBorgUID != null and custBorgUID != ""'>
+		    AND A.borgUID = #{custBorgUID}
+		</if>
+		<if test='brandUID != null and brandUID != ""'>
+		    AND C.brandUID = #{brandUID}
+		</if>
+		<if test='chFilter != null'>
+			<if test='chFilter.size !=0'>
+	    AND	A.channel IN
+				<foreach item="item" collection="chFilter" open="(" close=")" separator=",">
+	     #{item}
+			    </foreach>				
+			</if>
+		</if>
+		<if test='ptFilter != null'>
+			<if test='ptFilter.size !=0'>
+	    AND	A.paymentType IN
+				<foreach item="item" collection="ptFilter" open="(" close=")" separator=",">
+	     #{item}
+			    </foreach>				
+			</if>
+		</if>
+		<if test='osFilter != null'>
+			<if test='osFilter.size !=0'>
+	    AND	A.deliveryStatus IN
+				<foreach item="item" collection="osFilter" open="(" close=")" separator=",">
+	     #{item}
+			    </foreach>				
+			</if>
+		</if>
+		<if test='otFilter != null'>
+			<if test='otFilter.size !=0'>
+	    AND	A.deliveryType IN
+				<foreach item="item" collection="otFilter" open="(" close=")" separator=",">
+	     #{item}
+			    </foreach>				
+			</if>
+		</if>
+		<if test='srchText != null and srchText != ""'>
+		   	<choose>
+			    <when test='SQLMODE == "mariadb"'>
+				<!-- 가게요청,라이더요청, 메모 , 고객연락처, 주문번호, 채널, 주소, 주문금액 ,라이더명-->
+			AND CONCAT(IFNULL(A.orderNumber,''), IFNULL(A.addressDetail, IFNULL(A.address, IFNULL(A.roadNameAddress, IFNULL(A.pickupAddress, ''))))
+			, IFNULL( CH.channelName,'') , IFNULL( A.storeMemo,''), IFNULL( A.riderMemo,''), IFNULL( A.memo,''), IFNULL( A.phoneNo,''), IFNULL( A.payAmount,'')) REGEXP #{srchText}
+			    </when>
+			    <otherwise>
+			AND (NVL(A.orderNumber,'') || NVL(A.pickupAddress,'') || NVL(CH.channelName,'')) LIKE '%'|| #{srchText} ||'%'
+			    </otherwise>
+			  </choose>
+	    </if>
+		ORDER BY A.createDT DESC
+	</select>
+	
+	<select id="getOrderDetail" parameterType="hashmap" resultType="hashmap">
+		SELECT 
+			AA.orderDUid
+			, AA.orderOUid
+			, AA.orderUid
+			, AA.channel
+			, AA.shopNumber
+			, AA.orderNumber
+			, AA.lineNo
+			, AA.itemName
+			, AA.cItemName
+			, AA.cOptName
+			, AA.itemUID
+			, AA.totalPrice
+			, AA.unitPrice
+			, AA.quantity
+			, AA.discountPrice
+			, AA.optLineNo
+			, AA.cancelYn
+			, AA.createDT		
+			, AA.createrID
+			, AA.pcGubun
+			, AA.sorts
+			FROM (
+				SELECT 
+						OD.orderDUid
+						, 0 AS orderOUid
+						, OD.orderUid
+						, OD.channel
+						, OD.shopNumber
+						, OD.orderNumber
+						, OD.lineNo
+						, OD.itemName
+						, OD.cItemName
+						, '' AS cOptName
+						, OD.itemUID
+						, OD.totalPrice
+						, OD.unitPrice
+						, OD.quantity
+						, OD.discountPrice
+						, 0 AS optLineNo
+						, OD.cancelYn
+						, OD.createDT		
+						, OD.createrID
+						, 'P' AS pcGubun
+						, 1 AS sorts
+					FROM o2o_orderdetail OD
+					WHERE OD.orderNumber = #{orderNumber}
+				     AND OD.dbSTS = 'Y'
+				     AND OD.cancelYn = 'N'
+				     
+			UNION ALL
+			
+			SELECT 
+					OD2.orderDUid
+					, ODP.orderOUid
+					, OD2.orderUid
+					, OD2.channel
+					, OD2.shopNumber
+					, OD2.orderNumber
+					, ODP.lineNo
+					, CONCAT(' <![CDATA[&#x2514]]>  ', ODP.optName) AS itemName
+					, OD2.cItemName
+					, ODP.cOptName
+					, ODP.itemUID
+					, ODP.optTotalPrice AS totalPrice
+					, ODP.optPrice AS unitPrice
+					, ODP.quantity AS quantity
+					, ODP.discountPrice
+					, ODP.optLineNo
+					, OD2.cancelYn
+					, ODP.createDT		
+					, ODP.createrID
+					, 'C' AS pcGubun
+					, 999 AS sorts
+					, OD2.updCha
+				FROM o2o_odoption ODP
+				INNER JOIN o2o_orderdetail OD2 ON ODP.orderDUid = OD2.orderDUid AND ODP.cItemName = OD2.cItemName
+				WHERE OD2.orderNumber = #{orderNumber}
+				  AND ODP.dbSTS = 'Y'
+				  AND OD2.cancelYn = 'N'
+		) AA
+		ORDER BY AA.lineNo, AA.sorts, AA.unitPrice DESC
+		
+		<!-- 
+		SELECT 
+		<choose>
+			    <when test='SQLMODE == "mariadb"'>
+	     CASE WHEN SS.pcGubun = 'P' then SS.itemName 
+		  ELSE CONCAT('    <![CDATA[&#x2514]]>   ',SS.optName) END AS itemName
+	 	,CASE WHEN SS.pcGubun = 'P' then IFNULL(SS.quantity,0)
+	      ELSE IFNULL(SS.optQuantity, 1) END AS quantity
+	    ,CASE WHEN SS.pcGubun = 'P' THEN IFNULL(SS.unitPrice,0)
+		  ELSE IFNULL(SS.optPrice,0) END AS unitPrice
+		,CASE WHEN SS.pcGubun = 'P' THEN IFNULL(SS.totalPrice, 0)
+		  ELSE IFNULL((SS.optPrice * SS.optQuantity),0) END AS totalPrice
+			    </when>
+			    <otherwise>
+		CASE WHEN SS.pcGubun = 'P' then SS.itemName 
+		  ELSE CONCAT('  <![CDATA[&#x2514]]>   ',SS.optName) END AS itemName
+	 	,CASE WHEN SS.pcGubun = 'P' then NVL(SS.quantity,0)
+	      ELSE NVL(SS.optQuantity, 1) END AS quantity
+	    ,CASE WHEN SS.pcGubun = 'P' THEN NVL(SS.unitPrice,0)
+		  ELSE NVL(SS.optPrice,0) END AS unitPrice
+		,CASE WHEN SS.pcGubun = 'P' THEN NVL(SS.totalPrice, 0)
+		  ELSE NVL((SS.optPrice * SS.optQuantity),0) END AS totalPrice
+			    </otherwise>
+	    </choose>
+		,SS.pcGubun 
+		,SS.orderDUid		   
+		,SS.channel		
+		,SS.shopNumber
+		,SS.orderNumber	   
+		,SS.lineNo	
+		,SS.quantity		
+		,SS.discountPrice
+		,SS.itemUID          
+		,SS.createDT		
+		,SS.createrID
+		,SS.updateDT         
+		,SS.updaterID		
+		,SS.dbSTS
+		,SS.cItemName
+		,SS.cOptName
+		,SS.shopUID
+		,SS.orderOUid
+		,SS.cancelYn
+		,SS.optCancelYn
+		,'O' AS insMenu 
+		FROM (
+			SELECT 
+			case when tt.test = 1 then 'P'
+			ELSE 'C' END AS pcGubun
+			, tt.*
+				FROM (
+				 SELECT  
+					ROW_NUMBER() OVER(PARTITION BY B.lineNo ORDER BY B.optLineNO DESC) AS test
+					,A.orderDUid
+					,A.channel		
+					,A.shopNumber
+				    ,A.orderNumber	   
+					,A.lineNo		
+					,A.itemName
+				    ,A.totalPrice       
+				    ,A.unitPrice 
+					,A.quantity		
+					,A.discountPrice
+				    ,A.itemUID          
+					,A.createDT		
+					,A.createrID
+				    ,A.updateDT         
+					,A.updaterID		
+					,A.cancelYn		
+					,A.dbSTS
+					,A.cItemName
+					,A.orderDUid AS ppparOrderDUid
+					,B.optName
+				    ,B.orderOUid      
+					,B.orderDUid AS optOrderDUid 	
+					,B.channel AS optChannel
+				    ,B.shopNumber AS optShopNumber    
+					,B.orderNumber	AS optOrderNumber
+					,B.lineNo AS opt_LineNO
+				    ,B.optLineNo 	 
+					,B.optPrice
+					,B.quantity AS optQuantity
+					,B.outOptionID
+					,B.cancelYn AS optCancelYn
+				    ,B.createDT	AS optCreateDT	   
+					,B.createrID AS optCreaterID
+					,B.updateDT AS optUpdateDT
+				    ,B.updaterID  AS optUpdaterID      
+					,B.dbSTS  AS optDbSTS
+					,B.cOptName AS cOptName
+					,C.shopUID
+						FROM  o2o_orderdetail A 
+						LEFT JOIN o2o_odoption B ON A.orderDUid = B.orderDUid
+						LEFT JOIN o2o_shopin C ON B.shopNumber = C.shopNumber
+						WHERE A.orderNumber =  #{orderNumber}
+				)tt
+		)SS -->
+	</select>
+	
+	<!-- 주문관리 > 주문취소 -->
+	<update id="upd4CancleOrdList" parameterType="hashmap">
+		UPDATE o2o_orderlist SET 
+		<choose>
+		    <when test='SQLMODE == "mariadb"'>
+			updateDT  = now()
+		   ,cancelDateTime = now()
+		    </when>
+		    <otherwise>
+		    updateDT  = SYSDATE
+		   ,cancelDateTime = SYSDATE
+		    </otherwise>
+		 </choose>
+           ,updaterID = #{userUID}	
+		<if test='deliveryStatus != null and deliveryStatus != ""'>
+			,deliveryStatus = #{deliveryStatus}
+		</if>	
+		<if test='status != null and status != ""'>
+			,status = #{status}
+		</if>
+		<if test='status != null and status != ""'>
+			,status = #{status}
+		</if>
+		WHERE orderUid = #{orderUid}		
+	</update>
+	<update id="upd4CancleOrdDetail" parameterType="hashmap">
+		UPDATE o2o_orderdetail SET 
+		<choose>
+		    <when test='SQLMODE == "mariadb"'>
+			updateDT  = now()
+		    </when>
+		    <otherwise>
+		    updateDT  = SYSDATE
+		    </otherwise>
+		 </choose>
+           ,updaterID = #{userUID}	
+		<if test='cancelYn != null and cancelYn != ""'>
+			,cancelYn = #{cancelYn}
+		</if>
+		WHERE dbSTS = 'Y'
+		<if test='orderDUidList.size !=0'>
+	    AND	orderDUid IN
+				<foreach item="item" collection="optList" open="(" close=")" separator=",">
+	     #{item}
+			    </foreach>				
+		</if>
+	</update>
+	<update id="upd4CancleOrdOption" parameterType="hashmap">
+		UPDATE o2o_odoption SET 
+		<choose>
+		    <when test='SQLMODE == "mariadb"'>
+				updateDT  = now()
+		    </when>
+		    <otherwise>
+		    	updateDT  = SYSDATE
+		    </otherwise>
+		 </choose>
+           ,updaterID = #{userUID}
+		<if test='cancelYn != null and cancelYn != ""'>
+			,cancelYn = #{cancelYn}
+		</if>
+		WHERE dbSTS = 'Y'
+		<if test='orderDUidList.size !=0'>
+	    AND	orderDUid IN
+				<foreach item="item" collection="optList" open="(" close=")" separator=",">
+	     #{item}
+			    </foreach>				
+		</if>		
+	</update>
+	<!-- 주문관리 > 메뉴조회 -->
+	<select id="getOptions4Menu" parameterType="hashmap" resultType="hashmap">
+		SELECT
+			A.bogOptMUID
+			, A.bogOptUID
+			, A.bogOptPrice
+			, A.bogOptMName
+			, C.menuUID
+			, C.menuName
+			, C.cMenuName
+		 FROM o2o_borgoptionmenus A
+		 left JOIN o2o_borgmenuoptions B ON A.bogOptUID = B.bogOptUID
+		 left JOIN o2o_borgmenus C ON C.menuUID = B.menuUID
+	  	WHERE A.dbSTS =   #{dbSTS}
+	  	<if test='menuUID != null and menuUID != ""'>
+	    AND	C.menuUID =   #{menuUID}		
+		</if>
+	  	<if test='cMenuName != null and cMenuName != ""'>
+	    AND	C.cMenuName =   #{cMenuName}
+		</if>
+	  	<if test='optList.size !=0'>
+	    AND	A.bogOptUID IN
+				<foreach item="item" collection="optList" open="(" close=")" separator=",">
+	     #{item}
+			    </foreach>				
+		</if>
+		ORDER BY A.createDT
+	</select>
+	
+	<!-- 주문관리 > 주문수정 -->
+	<update id="updOrderlist" parameterType="hashmap">
+		UPDATE o2o_orderlist SET 
+		<choose>
+		    <when test='SQLMODE == "mariadb"'>
+			updateDT  = now()
+		    </when>
+		    <otherwise>
+		    updateDT  = SYSDATE
+		    </otherwise>
+		 </choose>
+           ,updaterID = #{userUID}
+        <if test='reservDateTime != null and reservDateTime != ""'>
+	   	  <choose>
+		    <when test='SQLMODE == "mariadb"'>
+		    ,reservDateTime = CONCAT(CURDATE(), #{reservDateTime})
+		    </when>
+		    <otherwise>
+		    ,reservDateTime = (TO_CHAR(SYSDATE,'yyyy-mm-dd') || #{reservDateTime})
+		    </otherwise>
+		  </choose>
+	    </if>
+        <if test='pickupDateTime != null and pickupDateTime != ""'>
+	   	  <choose>
+		    <when test='SQLMODE == "mariadb"'>
+		    <!-- 현재시간 + 분 -->
+		    ,pickupDateTime = DATE_ADD(NOW(), INTERVAL #{pickupDateTime} MINUTE)
+		    </when>
+		    <otherwise>
+		    ,pickupDateTime = curtime + (interval #{pickupDateTime} minute)
+		    </otherwise>
+		  </choose>
+	    </if>
+		<if test='deliveryStatus != null and deliveryStatus != ""'>
+			,deliveryStatus = #{deliveryStatus}
+		</if>	
+		<if test='status != null and status != ""'>
+			,status = #{status}
+		</if>
+		<if test='paymentType != null and paymentType != ""'>
+			,paymentType = #{paymentType}
+		</if>
+		<if test='payAmount != null and payAmount != ""'>
+			,payAmount = #{payAmount}
+		</if>
+		<if test='deliveryType != null and deliveryType != ""'>
+			,deliveryType = #{deliveryType}
+		</if>
+		<if test='deliveryTip != null and deliveryTip != ""'>
+			,deliveryTip = #{deliveryTip}
+		</if>
+		<if test='plusTip != null and plusTip != ""'>
+			,plusTip = #{plusTip}
+		</if>
+		<if test='phoneNo != null and phoneNo != ""'>
+			,phoneNo = #{phoneNo}
+		</if>
+		<if test='roadNameAddress != null and roadNameAddress != ""'>
+			,roadNameAddress = #{roadNameAddress}
+		</if>
+		<if test='address != null and address != ""'>
+			,address = #{address}
+		</if>
+		<if test='addressDetail != null and addressDetail != ""'>
+			,addressDetail = #{addressDetail}
+		</if>
+		<if test='pickupAddress != null and pickupAddress != ""'>
+			,pickupAddress = #{pickupAddress}
+		</if>
+		<if test='latitude != null and latitude != ""'>
+			,latitude = #{latitude}
+		</if>
+		<if test='longitude != null and longitude != ""'>
+			,longitude = #{longitude}
+		</if>
+		<if test='deliveryDistance != null and deliveryDistance != ""'>
+			,deliveryDistance = #{deliveryDistance}
+		</if>
+		<if test='storeMemo != null and storeMemo != ""'>
+			,storeMemo = #{storeMemo}
+		</if>
+		<if test='riderMemo != null and riderMemo != ""'>
+			,riderMemo = #{riderMemo}
+		</if>
+		<if test='memo != null and memo != ""'>
+			,memo = #{memo}
+		</if>
+		<if test='dbSTS != null and dbSTS != ""'>
+			,dbSTS = #{dbSTS}
+		</if>
+		WHERE orderUid = #{orderUid}		
+	</update>
+	<update id="updOrderDetail" parameterType="hashmap">
+		<foreach item="item" collection="list" separator=";">
+			UPDATE o2o_orderdetail SET 
+		<choose>
+		    <when test='item.SQLMODE == "mariadb"'>
+				updateDT  = now()
+		    </when>
+		    <otherwise>
+		    	updateDT  = SYSDATE
+		    </otherwise>
+		 </choose>
+              ,updaterID = #{item.userUID}	
+		<if test='item.quantity != null and item.quantity != ""'>
+			  ,quantity = #{item.quantity}
+		</if>
+		<if test='item.unitPrice != null and item.unitPrice != ""'>
+			  ,unitPrice = #{item.unitPrice}
+		</if>
+		<if test='item.discountPrice != null and item.discountPrice != ""'>
+			  ,discountPrice = #{item.discountPrice}
+		</if>
+		<if test='item.totalPrice != null and item.totalPrice != ""'>
+			  ,totalPrice = #{item.totalPrice}
+		</if>
+		<if test='item.cancelYn != null and item.cancelYn != ""'>
+			,cancelYn = #{item.cancelYn}
+		</if>
+			WHERE orderDUid = #{item.orderDUid}
+		</foreach>
+	</update>
+	<update id="updOdOption" parameterType="hashmap">
+	<foreach item="item" collection="list" separator=";">
+			UPDATE o2o_odoption SET 
+		<choose>
+		    <when test='item.SQLMODE == "mariadb"'>
+				updateDT  = now()
+		    </when>
+		    <otherwise>
+		    	updateDT  = SYSDATE
+		    </otherwise>
+		 </choose>
+              ,updaterID = #{item.userUID}	
+		<if test='item.quantity != null and item.quantity != ""'>
+			  ,quantity = #{item.quantity}
+		</if>
+		<if test='item.unitPrice != null and item.unitPrice != ""'>
+			  ,optPrice = #{item.unitPrice}
+		</if>
+		<if test='item.discountPrice != null and item.discountPrice != ""'>
+			  ,discountPrice = #{item.discountPrice}
+		</if>
+		<if test='item.cancelYn != null and item.cancelYn != ""'>
+			,cancelYn = #{item.cancelYn}
+		</if>
+			WHERE orderOUid = #{item.orderOUid}
+		</foreach>
+	</update>
+	<insert id="insOrdDetail" parameterType="hashmap">
+		<foreach item="item" collection="list" separator=";">
+			INSERT INTO o2o_orderdetail (
+						orderDUid
+						,orderUid
+						,channel
+						,shopNumber
+						,orderNumber
+						,lineNo
+						,itemName
+						,cItemName
+						,totalPrice
+						,unitPrice
+						,quantity
+						,discountPrice
+						,itemUID
+						<if test='item.outItemID != null and item.outItemID != ""'>
+						,outItemID
+						</if>
+						<if test='item.outMenuID != null and item.outMenuID != ""'>
+						,outMenuID
+						</if>
+						,cancelYn
+						,createrID
+						,updaterID
+						,createDT
+						,updateDT
+						,dbSTS
+					) 
+					values(
+					    getUUID('o2o_orderdetail')
+						,#{item.orderUid}
+						,#{item.channel}
+						,#{item.shopNumber}
+						,#{item.orderNumber}
+						,#{item.lineNo}
+						,#{item.itemName}
+						,#{item.cItemName}
+						,#{item.totalPrice}
+						,#{item.unitPrice}
+						,#{item.quantity}
+						,#{item.discountPrice}
+						,#{item.itemUID}
+						<if test='item.outItemID != null and item.outItemID != ""'>
+						,#{item.outItemID}
+						</if>
+						<if test='item.outMenuID != null and item.outMenuID != ""'>
+						,#{item.outMenuID}
+						</if>
+						,#{item.cancelYn}
+						,#{item.userUID}
+						,#{item.userUID}
+			<choose>
+			    <when test='item.SQLMODE == "mariadb"'>
+						 ,now()
+						 ,now()
+			    </when>
+			    <otherwise>
+				    	,SYSDATE
+				    	,SYSDATE
+			    </otherwise>
+			 </choose>
+						,'Y'
+			)
+		</foreach>
+	</insert>
+	<insert id="insOrdOption" parameterType="hashmap">
+		<foreach item="item" collection="list" separator=";">
+			INSERT INTO o2o_odoption (
+					orderOUid
+					,orderDUid
+					,channel
+					,shopNumber
+					,orderNumber
+					,lineNo
+					,cItemName
+					,optLineNo
+					,optName
+					,cOptName
+					,optPrice
+					,quantity
+					,outOptionID
+					,cancelYn
+					,createrID
+					,updaterID
+					,createDT
+					,updateDT
+					,dbSTS
+				)
+				SELECT 
+						getUUID('o2o_odoption') AS orderOUid
+						,ODD.orderDUid          AS orderDUid
+						,ODD.channel 			AS channel
+						,ODD.shopNumber 		AS shopNumber
+						,ODD.orderNumber 		AS orderNumber
+						,ODD.lineNo  			AS lineNo 
+						,itemName
+						,#{item.cItemName} 		AS cItemName 
+						,#{item.optLineNo} 		AS optLineNo
+						,#{item.itemName} 		AS optName
+						,#{item.cOptName} 		AS  cOptName
+						,#{item.unitPrice} 		AS  optPrice
+						,#{item.quantity} 		AS  quantity
+						,#{item.outOptionID} 	AS outOptionID
+						,#{item.cancelYn}		AS  cancelYn
+						,#{item.userUID} 		AS createrID
+						,#{item.userUID} 		AS updaterID					
+			<choose>
+			    <when test='item.SQLMODE == "mariadb"'>
+						 ,now() 				AS createDT
+						 ,now() 				AS updateDT
+			    </when>
+			    <otherwise>
+				    	,SYSDATE 				AS createDT
+				    	,SYSDATE 				AS updateDT
+			    </otherwise>
+			 </choose>
+						,'Y'					AS dbSTS
+			FROM o2o_orderdetail ODD
+			WHERE ODD.orderNumber = #{item.orderNumber}
+				AND ODD.orderUid  = #{item.orderUid}
+				AND ODD.lineNo    = #{item.lineNo}
+		</foreach>
+	</insert>
+	<!-- 주문관리 > 배달요청 > 배달업체리스트 O2O0020 getBorgDelAgentsList -->
+	<select id="getBorgDelAgentsList" parameterType="hashmap" resultType="hashmap">
+		SELECT 
+			 bda.borgUID
+		    ,bda.delAgentUid
+		    ,bda.delAgentID
+		    ,bda.integITAgentID
+		    ,bda.createDT
+		    ,bda.createrID
+		    ,bda.updateDT
+		    ,bda.updaterID
+		    ,bda.dbSTS
+		    ,dal.delAgentNM
+		FROM o2o_borgsdelagents bda
+		INNER JOIN o2o_delagentlist dal ON bda.delAgentUid = dal.delAgentUid
+		WHERE bda.borgUID = #{custIDs}
+	</select>
+	
+	<select id="getUsersList" parameterType="hashmap" resultType="hashmap">
+		SELECT 
+			U.userUID
+			,U.loginID
+			,U.agentID
+			,U.borgUID
+			,U.userName
+			,U.userPwd
+			,U.email
+			,U.zipCode
+			,U.addr1
+			,U.addr2
+			,U.telNo
+			,U.hpNo
+			,U.roleID
+			,U.gender
+			,U.workStatus
+			,U.job
+			,U.pay
+			,U.payType
+			,U.joinDT
+			,U.createDT
+			,U.createrID
+			,U.updateDT
+			,U.updaterID
+			,U.dbSTS
+		FROM  o2o_users U
+		WHERE U.dbSTS = #{dbSTS}
+		AND U.borgUID = #{custIDs}
+		<if test='job != null and job != ""'>
+		AND U.job = #{job}
+		</if>
+	</select>
+	<!-- 배달요청 > 배달요청 O2O0022_01 -->
+	<insert id="insDelRequest" parameterType="hashmap">
+	INSERT INTO o2o_delrequest (
+		    deliveryUid
+		    ,orderUid
+		    ,channel
+		    ,borgUid
+		    ,delAgentUid
+<!-- 		    ,trafficCondition -->
+<!-- 		    ,delayTime -->
+		    ,delAgentYN
+		    ,delAgentNM
+		    ,deliveryStatus
+		    ,cancelYN
+		    ,orderNumber
+<!-- 		    ,delOrderNumber -->
+		    ,deliveryLiderNM
+		    ,delLiderPhoneNo
+		    ,paymentType
+		    ,deliveryTip
+		    ,pointAccBalance
+		    ,storeMemo
+		    ,riderMemo
+		    ,memo
+		    ,orderDateTime
+		    ,requestTime
+		    ,reqPickupTime
+<!-- 		    ,assignmentTime -->
+<!-- 		    ,pickupTime -->
+<!-- 		    ,completeTime -->
+<!-- 		    ,cancellationTime -->
+		    ,createDT
+		    ,updateDT
+		    ,createrID
+		    ,updaterID
+		    ,dbSTS
+		) values(
+		    getUUID('o2o_delrequest')
+		    ,#{orderUid}
+		    ,#{channel}
+		    ,#{custIDs}
+		    ,#{delAgentUid}
+<!-- 		    ,#{trafficCondition} -->
+<!-- 		    ,#{delayTime} -->
+		    ,#{delAgentYN}
+		    ,#{delAgentNM}
+		    ,#{deliveryStatus}
+		    ,#{cancelYN}
+		    ,#{orderNumber}
+<!-- 		    ,#{delOrderNumber} -->
+		    ,#{deliveryLiderNM}
+		    ,#{delLiderPhoneNo}
+		    ,#{paymentType}
+		    ,#{deliveryTip}
+		    ,#{pointAccBalance}
+		    ,#{storeMemo}
+		    ,#{riderMemo}
+		    ,#{memo}
+		    ,#{orderDateTime}
+		    <choose>
+			    <when test='SQLMODE == "mariadb"'>
+			,now()
+			    </when>
+			    <otherwise>
+			,SYSDATE
+			    </otherwise>
+			</choose>
+		    <if test='reqPickupTime != null and reqPickupTime != ""'>
+		    	<choose>
+			    <when test='reqPickupTime == "immedi"'>
+					<choose>
+					    <when test='SQLMODE == "mariadb"'>
+			,now()
+					    </when>
+					    <otherwise>
+			,SYSDATE
+					    </otherwise>
+					 </choose>
+			    </when>
+			    <otherwise>
+			    	<choose>
+					    <when test='SQLMODE == "mariadb"'>
+			, DATE_ADD(NOW(), INTERVAL #{reqPickupTime} MINUTE) 
+					    </when>
+					    <otherwise>
+			,SYSDATE + (INTERVAL #{reqPickupTime} MINUTE)
+					    </otherwise>
+					 </choose>
+			    </otherwise>
+			 </choose>
+			</if>
+<!-- 		    ,#{assignmentTime} -->
+<!-- 		    ,#{pickupTime} -->
+<!-- 		    ,#{completeTime} -->
+<!-- 		    ,#{cancellationTime} -->
+   <choose>
+    <when test='SQLMODE == "mariadb"'>
+			 ,now()
+			 ,now()
+    </when>
+    <otherwise>
+	    	,SYSDATE
+	    	,SYSDATE
+    </otherwise>
+ </choose>
+		    ,#{userUID}
+		    ,#{userUID}
+		    ,#{dbSTS}
+		)
+	</insert>
+	<!-- O2O0023_01 주문관리 > 배달완료 -->
+	<!-- 주문관리 > 주문수정 -->
+	<update id="updOrderlist4Finish" parameterType="hashmap">
+		UPDATE o2o_orderlist SET 
+		<choose>
+		    <when test='SQLMODE == "mariadb"'>
+			updateDT  = now()
+		    </when>
+		    <otherwise>
+		    updateDT  = SYSDATE
+		    </otherwise>
+		 </choose>
+           ,updaterID = #{userUID}
+		<if test='deliveryStatus != null and deliveryStatus != ""'>
+			,deliveryStatus = #{deliveryStatus}
+		</if>	
+		<if test='status != null and status != ""'>
+			,status = #{status}
+		</if>
+		<choose>
+		    <when test='finalTime == "D"'>
+			<choose>
+				<when test='SQLMODE == "mariadb"'>
+			,finalDelDateTime = NOW()
+				</when>
+				<otherwise>
+			,finalDelDateTime = SYSDATE	
+				</otherwise>
+			</choose>
+		    </when>
+		    <otherwise>
+		    <choose>
+				<when test='SQLMODE == "mariadb"'>
+			,finalTakeDateTime = NOW()
+				</when>
+				<otherwise>
+			,finalTakeDateTime = SYSDATE	
+				</otherwise>
+			</choose>
+		    </otherwise>
+		 </choose>
+		<if test='pickupDateTime == "immedi"'>
+		    <choose>
+				<when test='SQLMODE == "mariadb"'>
+			,pickupDateTime = NOW()
+				</when>
+				<otherwise>
+			,pickupDateTime = SYSDATE	
+				</otherwise>
+			</choose>
+		</if>
+		
+		WHERE orderUid = #{orderUid}		
+	</update>
+	<update  id="updDelRequest" parameterType="hashmap">
+	UPDATE o2o_delrequest
+		SET
+<choose>
+    <when test='SQLMODE == "mariadb"'>
+		 updateDT = now()
+    </when>
+    <otherwise>
+	     updateDT =SYSDATE
+    </otherwise>
+ </choose>
+		,updaterID = #{userUID}
+<if test='completeT == "Y"'>
+<choose>
+    <when test='SQLMODE == "mariadb"'>
+		 ,completeTime = now()
+    </when>
+    <otherwise>
+	     ,completeTime =SYSDATE
+    </otherwise>
+ </choose>
+</if>
+<if test='cancelYN == "Y"'>
+<choose>
+    <when test='SQLMODE == "mariadb"'>
+		 ,cancellationTime = now()
+    </when>
+    <otherwise>
+	     ,cancellationTime =SYSDATE
+    </otherwise>
+ </choose>
+</if>
+
+<if test='cancelYN != null and cancelYN != ""'>
+		,cancelYN = #{cancelYN}
+</if>	
+<if test='deliveryStatus != null and deliveryStatus != ""'>
+		,deliveryStatus = #{deliveryStatus}
+</if>	
+<if test='dbSTS != null and dbSTS != ""'>
+		,dbSTS = #{dbSTS}
+</if>	
+	WHERE orderUid    = #{orderUid}
+	  AND borgUid     = #{custIds}
+	  AND orderNumber = #{orderNumber}
+	</update>
+	<select id="getDeliveryRequest" parameterType="hashmap" resultType="hashmap">
+		SELECT 
+		   A.roadNameAddress , A.address , A.addressDetail 
+		 , A.pickupAddress , A.orderNumber ,A.orderUid
+		FROM o2o_orderlist A 
+		WHERE A.orderNumber = #{orderNumber}
+		AND A.orderUid = #{orderUid}
+	</select>
+	
+	<!-- O2O0500 : 마스터 > 카테고리/메뉴관리 -->
+	<select id="getCategoryList" parameterType="hashmap" resultType="hashmap">
+		SELECT AA.* FROM (	
+			 SELECT
+			 	ROW_NUMBER() OVER (order by A.sortORD) AS pages
+			 	, A.borgCateUID
+			 	, A.brandUID
+			    , A.borgCateName
+			 	, A.borgUID
+			 	, A.dbSTS
+			 	, A.createDT
+			 	, A.sortORD
+			 FROM o2o_borgcategory A
+			 WHERE A.dbSTS = #{dbSTS}
+			  AND A.borgUID = #{custIDs}
+			  <if test='brandUID != null and brandUID != ""'>
+			    AND A.brandUID = #{brandUID}
+			  </if>
+			) AA
+		  <if test='(catStartCnt != null and catStartCnt != "") and (catEndCnt != null and catEndCnt != "")'>
+		    WHERE AA.pages <![CDATA[ > ]]> #{catStartCnt} AND AA.pages <![CDATA[ <= ]]> #{catEndCnt}
+		  </if>
+			 ORDER BY AA.sortORD
+		
+	</select>
+	
+	<select id="getCategoryMenuList" parameterType="hashmap" resultType="hashmap">
+		 SELECT
+			A.menuUID
+			, A.shopInUID
+			, (SELECT GROUP_CONCAT(AA.bogOptUID)  FROM o2o_borgmenuoptions AA
+				WHERE AA.menuUID = A.menuUID) AS bogOptUID
+			, (SELECT GROUP_CONCAT(BB.bogOptName)  FROM o2o_borgmenuoptions AA
+				INNER JOIN o2o_borgoptions BB ON BB.bogOptUID = AA.bogOptUID
+				WHERE AA.menuUID = A.menuUID) AS bogOptName
+			, A.borgCateUID
+			, A.menuName
+			, A.cMenuName
+			, A.menuPrice
+			, B.sortORD
+		 FROM o2o_borgmenus A
+		 INNER JOIN o2o_borgcategory B ON A.borgCateUID = B.borgCateUID
+	  	 WHERE A.dbSTS =  #{dbSTS}
+	  	 <if test='borgCateUID != null and borgCateUID != ""'>
+			AND A.borgCateUID = #{borgCateUID}
+		</if>
+	  	 <if test='cItemName != null and cItemName != ""'>
+			AND A.cMenuName = #{cItemName}
+		</if>
+	  	  <choose>
+	  	  	<when test='shopUID != null and shopUID != ""'>
+	  	  		AND A.shopInUID =  #{shopUID}
+	  	  	</when>
+	  	  	<otherwise>
+	  	  		AND A.shopInUID = (SELECT A.shopUID FROM o2o_shopin A WHERE A.borgUID = #{custIDs} AND A.brandUID = #{brandUID} AND A.channel = 'POS')
+	  	  	</otherwise>
+	  	  </choose>
+		ORDER BY A.createDT
+	</select>
+	
+	<insert id="saveCategoryList" parameterType="hashmap" >
+		<foreach item="item" collection="list" separator=";">
+			INSERT INTO o2o_borgcategory (
+				 borgCateUID
+				,borgCateName
+				,borgUID
+				,brandUID
+ 				,sortORD
+				,dbSTS
+				,createrID
+				,createDT
+			) value (
+				 getUUID('o2o_borgcategory')
+				,#{item.borgCateName}
+				,#{item.custUID}
+				,#{item.brandUID}
+ 				,(SELECT COUNT(*) + 1 FROM o2o_borgcategory WHERE borgUID = #{item.custUID} AND brandUID = #{item.brandUID})
+				,'Y'
+				,#{item.userUID}
+		  <choose>
+		    <when test='item.SQLMODE == "mariadb"'>
+				,NOW()
+		    </when>
+		    <otherwise>
+		    	,SYSDATE
+		    </otherwise>
+		 </choose>
+			)
+		 </foreach>
+	</insert>
+	
+	<update id="updBorgCategory" parameterType="hashmap">
+		UPDATE o2o_borgcategory SET 
+			updateDT  = now()
+           ,updaterID = #{userUID}
+		<if test='dbSTS != null and dbSTS != ""'>
+			,dbSTS = #{dbSTS}
+		</if>	
+		<if test='borgCateName != null and borgCateName != ""'>
+			,borgCateName = #{borgCateName}
+		</if>
+		WHERE borgCateUID = #{borgCateUID}		
+	</update>
+	
+	<insert id="saveCategoryMenuList" parameterType="hashmap" >
+		<foreach item="item" collection="list" separator=";">
+			INSERT INTO o2o_borgmenus (
+				 menuUID
+				,shopInUID
+				,borgCateUID
+				,menuName
+				,cMenuName
+				,menuPrice
+				,dbSTS
+				,createrID
+				,createDT
+			) value (
+				 #{item.menuUID}
+				 , (SELECT A.shopUID FROM o2o_shopin A WHERE A.borgUID = #{item.custUID} AND A.brandUID = #{item.brandUID} AND A.channel = 'POS')
+				,#{item.borgCateUID}
+				,#{item.menuName}
+				,#{item.cMenuName}
+				,#{item.menuPrice}
+				,'Y'
+				,#{item.userUID}
+		  <choose>
+		    <when test='item.SQLMODE == "mariadb"'>
+				,NOW()
+		    </when>
+		    <otherwise>
+		    	,sysdate
+		    </otherwise>
+		 </choose>
+			)
+		 </foreach>
+	</insert>
+	
+	<insert id="saveMenuOptionList" parameterType="hashmap" >
+		<foreach item="item" collection="list" separator=";">
+			INSERT INTO o2o_borgmenuoptions (
+				 menuUID
+				,bogOptUID
+				,dbSTS
+				,createrID
+				,createDT
+			) value (
+				 #{item.menuUID}
+				,#{item.bogOptUID}
+				,'Y'
+				,#{item.userUID}
+		  <choose>
+		    <when test='item.SQLMODE == "mariadb"'>
+				,NOW()
+		    </when>
+		    <otherwise>
+		    	,sysdate
+		    </otherwise>
+		 </choose>
+			)
+		</foreach>
+	</insert>
+	
+	<update id="updBorgCategoryMenu" parameterType="hashmap">
+		UPDATE o2o_borgmenus SET 
+			updateDT  = now()
+           ,updaterID = #{userUID}
+		<if test='dbSTS != null and dbSTS != ""'>
+			,dbSTS = #{dbSTS}
+		</if>	
+		<if test='menuName != null and menuName != ""'>
+			,menuName = #{menuName}
+		</if>
+		<if test='cMenuName != null and cMenuName != ""'>
+			,cMenuName = #{cMenuName}
+		</if>
+		<if test='menuPrice != null and menuPrice != ""'>
+			,menuPrice = #{menuPrice}
+		</if>
+		WHERE menuUID = #{menuUID}		
+	</update>
+	
+	<update id="updBorgCategoryMenuOption" parameterType="hashmap">
+		UPDATE o2o_borgmenuoptions SET 
+			updateDT  = now()
+           ,updaterID = #{userUID}
+		<if test='dbSTS != null and dbSTS != ""'>
+			,dbSTS = #{dbSTS}
+		</if>	
+		<if test='bogOptUID != null and bogOptUID != ""'>
+			,bogOptUID = #{bogOptUID}
+		</if>
+		WHERE menuUID = #{menuUID}		
+	</update>
+	
+	<delete id="delBorgCategoryMenuOption" parameterType="hashmap">
+		DELETE FROM o2o_borgmenuoptions where menuUID = #{menuUID}
+	</delete>
+	
+	<!-- O2O0510 : 마스터 > 옵션관리 -->
+	<select id="getOptionList" parameterType="hashmap" resultType="hashmap">
+		 SELECT
+		 	A.bogOptUID
+		 	, A.brandUID
+		 	, (SELECT GROUP_CONCAT(BB.menuName)
+				FROM o2o_borgmenuoptions AA
+		    	INNER JOIN o2o_borgmenus BB ON BB.menuUID = AA.menuUID
+		    	WHERE AA.bogOptUID = A.bogOptUID) AS menuNames
+		    , A.bogOptName
+		    , A.cBogOptName
+		 	, A.borgUID
+		 	, A.dbSTS
+		 FROM o2o_borgoptions A
+		 WHERE A.dbSTS = #{dbSTS}
+		  AND A.borgUID = #{custIDs}
+		  <if test='brandUID != null and brandUID != ""'>
+		    AND A.brandUID = #{brandUID}
+		  </if>
+		 ORDER BY A.createDT
+	</select>
+	
+	<select id="getOptionMenuList" parameterType="hashmap" resultType="hashmap">
+		 SELECT
+			A.bogOptMUID
+			, A.bogOptPrice
+			, A.bogOptMName
+		 FROM o2o_borgoptionmenus A
+	  	WHERE A.dbSTS =  #{dbSTS}
+	  	  AND A.bogOptUID = #{bogOptUID}
+		ORDER BY A.createDT
+	</select>
+	
+	<select id="getOptionsMenuList" parameterType="hashmap" resultType="hashmap">
+		 SELECT
+			A.bogOptMUID
+			, A.bogOptUID
+			, A.bogOptPrice
+			, A.bogOptMName
+		 FROM o2o_borgoptionmenus A
+	  	WHERE A.dbSTS =  #{dbSTS}
+	  	<if test='optList.size !=0'>
+	    AND	A.bogOptUID IN
+				<foreach item="item" collection="optList" open="(" close=")" separator=",">
+	     #{item}
+			    </foreach>				
+		</if>
+		ORDER BY A.createDT
+	</select>
+	
+	<select id="getChnCategoryList" parameterType="hashmap" resultType="hashmap">
+		 SELECT
+			A.cateUID
+			, A.cateName
+		 FROM o2o_category A
+	  	WHERE A.dbSTS =  #{dbSTS}
+	  	  AND A.channel = #{channel}
+		ORDER BY A.createDT
+	</select>
+	
+	<insert id="saveOptionList" parameterType="hashmap" >
+		<foreach item="item" collection="list" separator=";">
+			INSERT INTO o2o_borgoptions (
+				 bogOptUID
+				,bogOptName
+				,cBogOptName
+				,borgUID
+				,brandUID
+				,dbSTS
+				,createrID
+				,createDT
+			) value (
+				 getUUID('o2o_borgoptions')
+				,#{item.bogOptName}
+				,#{item.cBogOptName}
+				,#{item.custUID}
+				,#{item.brandUID}
+				,'Y'
+				,#{item.userUID}
+		  <choose>
+		    <when test='item.SQLMODE == "mariadb"'>
+				,NOW()
+		    </when>
+		    <otherwise>
+		    	,sysdate
+		    </otherwise>
+		 </choose>
+			)
+		 </foreach>
+	</insert>
+	
+	<update id="updBorgOption" parameterType="hashmap">
+		UPDATE o2o_borgoptions SET 
+			updateDT  = now()
+           ,updaterID = #{userUID}
+		<if test='dbSTS != null and dbSTS != ""'>
+			,dbSTS = #{dbSTS}
+		</if>	
+		<if test='bogOptName != null and bogOptName != ""'>
+			,bogOptName = #{bogOptName}
+		</if>
+		<if test='cBogOptName != null and cBogOptName != ""'>
+			,cBogOptName = #{cBogOptName}
+		</if>
+		WHERE bogOptUID = #{bogOptUID}		
+	</update>
+	
+	<insert id="saveOptionMenuList" parameterType="hashmap" >
+		<foreach item="item" collection="list" separator=";">
+			INSERT INTO o2o_borgoptionmenus (
+				 bogOptMUID
+				,bogOptMName
+				,bogOptUID
+				,bogOptPrice
+				,dbSTS
+				,createrID
+				,createDT
+			) value (
+				 getUUID('o2o_borgoptionmenus')
+				,#{item.bogOptMName}
+				,#{item.bogOptUID}
+				,#{item.bogOptPrice}
+				,'Y'
+				,#{item.userUID}
+		  <choose>
+		    <when test='item.SQLMODE == "mariadb"'>
+				,NOW()
+		    </when>
+		    <otherwise>
+		    	,sysdate
+		    </otherwise>
+		 </choose>
+			)
+		 </foreach>
+	</insert>
+	
+	<update id="updBorgOptionMenu" parameterType="hashmap">
+		UPDATE o2o_borgoptionmenus SET 
+			updateDT  = now()
+           ,updaterID = #{userUID}
+		<if test='dbSTS != null and dbSTS != ""'>
+			,dbSTS = #{dbSTS}
+		</if>	
+		<if test='bogOptMName != null and bogOptMName != ""'>
+			,bogOptMName = #{bogOptMName}
+		</if>
+		<if test='bogOptPrice != null and bogOptPrice != ""'>
+			,bogOptPrice = #{bogOptPrice}
+		</if>
+		WHERE bogOptMUID = #{bogOptMUID}
+	</update>
+	
+	<select id="getBrandList" parameterType="hashmap" resultType="hashmap">
+		 SELECT
+			 A.brandUID
+			 , A.brandName
+			 , A.bizRegNo
+			 , A.addr1
+			 , A.addr2
+			 , A.telNo
+			 , A.faxNo
+			 , A.dbSTS
+			 , A.repName
+			 , (SELECT COUNT(*) FROM o2o_borgbrands WHERE A.brandUID = brandUID) AS borgCnt
+ 			 , (SELECT COUNT(*) FROM o2o_shopin WHERE A.brandUID = brandUID) AS shopCnt
+		FROM o2o_brands A
+	  	WHERE 1 = 1
+	  	<if test='dbSTS != null and dbSTS != ""'>
+		    AND A.dbSTS = #{dbSTS} 
+		</if>
+	  	<if test='srchText != null and srchText != ""'>
+   		  <choose>
+		    <when test='SQLMODE == "mariadb"'>
+		  AND CONCAT(A.brandName, A.bizRegNo) REGEXP #{srchText}
+		    </when>
+		    <otherwise>
+		  AND (A.brandName || A.bizRegNo) LIKE '%'|| #{srchText} ||'%'
+		    </otherwise>
+		  </choose>
+        </if>
+		ORDER BY A.createDT
+	</select>
+	
+	<insert id="saveBrandList" parameterType="hashmap" >
+		<foreach item="item" collection="list" separator=";">
+			INSERT INTO o2o_brands (
+				 brandUID
+				 , brandName
+				 , bizRegNo
+				 , addr1
+				 , addr2
+				 , telNo
+				 , faxNo
+				 , repName
+				 , dbSTS
+				 , createrID
+				 , createDT
+			) value (
+				 getUUID('o2o_brands')
+				,#{item.brandName}
+				,#{item.bizRegNo}
+				,#{item.addr1}
+				,#{item.addr2}
+				,#{item.telNo}
+				,#{item.faxNo}
+				,#{item.repName}
+				,'Y'
+				,#{item.userUID}
+		  <choose>
+		    <when test='item.SQLMODE == "mariadb"'>
+				,NOW()
+		    </when>
+		    <otherwise>
+		    	,sysdate
+		    </otherwise>
+		 </choose>
+			)
+		 </foreach>
+	</insert>
+	
+	<update id="updBrands" parameterType="hashmap">
+		UPDATE o2o_brands SET 
+			updateDT  = now()
+           ,updaterID = #{userUID}
+		<if test='dbSTS != null and dbSTS != ""'>
+			,dbSTS = #{dbSTS}
+		</if>
+			,brandName = #{brandName}
+			,bizRegNo = #{bizRegNo}
+			,addr1 = #{addr1}
+			,addr2 = #{addr2}
+			,telNo = #{telNo}
+			,faxNo = #{faxNo}
+			,repName = #{repName}
+		WHERE brandUID = #{brandUID}
+	</update>
+	
+	<select id="getCheckOrderShop" parameterType="hashmap" resultType="hashmap">
+		 SELECT COUNT(*) AS cnt FROM o2o_orderlist A
+		 INNER JOIN o2o_shopin B ON A.shopUID = B.shopUID
+		 WHERE B.borgUID = #{pBorgUID}
+		   AND B.brandUID = #{brandUID}
+	</select>
+	
+	<insert id="saveCampainList" parameterType="hashmap" >
+		<foreach item="item" collection="list" separator=";">
+			INSERT INTO o2o_point (
+				 pointUID
+				, shopUID
+				, borgUID
+				, channel
+				, ownerID
+				, cateUID
+				, cateName
+				, shopNumber
+				, shopInName
+				, brandUID
+				, pointId
+				, pointKey
+				, pointLoc
+				, latitude
+				, longitude
+				, dbSTS
+				, createrID
+				, createDT
+			) value (
+				 getUUID('o2o_point')
+				,#{item.shopUID}
+				,#{item.custUID}
+				,#{item.channel}
+				,#{item.ownerID}
+				,#{item.cateUID}
+				,#{item.cateName}
+				,#{item.shopNumber}
+				,#{item.shopInName}
+				,#{item.brandUID}
+				,#{item.pointId}
+				,#{item.pointKey}
+				,#{item.pointLoc}
+				,#{item.latitude}
+				,#{item.longitude}
+				,'Y'
+				,#{item.userUID}
+		  <choose>
+		    <when test='item.SQLMODE == "mariadb"'>
+				,NOW()
+		    </when>
+		    <otherwise>
+		    	,sysdate
+		    </otherwise>
+		 </choose>
+			)
+		 </foreach>
+	</insert>
+	
+	<update id="updCampain" parameterType="hashmap">
+		UPDATE o2o_point SET 
+			updateDT  = now()
+           ,updaterID = #{userUID}
+		<if test='dbSTS != null and dbSTS != ""'>
+			,dbSTS = #{dbSTS}
+		</if>	
+		<if test='pointId != null and pointId != ""'>
+			,pointId = #{pointId}
+		</if>
+		<if test='pointKey != null and pointKey != ""'>
+			,pointKey = #{pointKey}
+		</if>
+		<if test='pointLoc != null and pointLoc != ""'>
+			,pointLoc = #{pointLoc}
+		</if>
+		<if test='latitude != null and latitude != ""'>
+			,latitude = #{latitude}
+		</if>
+		<if test='longitude != null and longitude != ""'>
+			,longitude = #{longitude}
+		</if>
+		WHERE pointUID = #{pointUID}
+	</update>
+	
+	<!-- O2O0520 : 마스터 > 원산지관리 -->
+	<select id="getOrginList" parameterType="hashmap" resultType="hashmap">
+		 SELECT
+		 	A.origin
+			,A.borgUID
+			,A.brandUID
+			,'Y' AS chkYN
+		 FROM o2o_borgbrands A
+		 WHERE A.dbSTS = #{dbSTS}
+		  AND A.borgUID = #{custIDs}
+		  AND A.brandUID = #{brandUID}
+		 ORDER BY A.createDT
+	</select>
+	
+	<update id="updOrgin" parameterType="hashmap">
+		UPDATE o2o_borgbrands SET 
+			updateDT  = now()
+           ,updaterID = #{userUID}
+           ,origin = #{orgTEXT}
+		<if test='dbSTS != null and dbSTS != ""'>
+			,dbSTS = #{dbSTS}
+		</if>	
+		WHERE borgUID = #{custIDs}
+		  AND brandUID = #{brandUID}
+	</update>
+	
+	<!-- Daum Map API 주소 맵핑 대상 조회 -->
+	<select id="getDaumMapAddress" parameterType="hashmap" resultType="hashmap">
+		 SELECT 
+			A.orderUid
+			, A.pickupAddress
+		FROM o2o_orderlist A
+		WHERE A.pickupAddress IS NOT NULL
+		  AND A.dbSTS = 'Y'
+		  AND A.addrChkYN = 'N'
+		 ORDER BY A.createDT
+		 LIMIT 100
+	</select>
+	
+	<update id="updDaumMapAddress" parameterType="hashmap">
+		<foreach item="item" collection="list" separator=";">
+			UPDATE o2o_orderlist SET 
+				updateDT  = now()
+	           ,updaterID = 'batch'
+	           ,addrChkYN = #{item.addrChkYN}
+			<if test='item.roadNameAddress != null and item.roadNameAddress != ""'>
+				,roadNameAddress = #{item.roadNameAddress}
+			</if>	
+			<if test='item.address != null and item.address != ""'>
+				,address = #{item.address}
+			</if>	
+			<if test='item.addressDetail != null and item.addressDetail != ""'>
+				,addressDetail = #{item.addressDetail}
+			</if>	
+			<if test='item.latitude != null and item.latitude != ""'>
+				,latitude = #{item.latitude}
+			</if>	
+			<if test='item.longitude != null and item.longitude != ""'>
+				,longitude = #{item.longitude}
+			</if>	
+			WHERE orderUid = #{item.orderUid}
+		</foreach>
+	</update>
+	
+	<!-- 영수증 출력용 시작  
+	{"ownerId":"13250580","orderData": {totalSize, contents { order {channel / takeoutNo / printNo / orderNumber / orderDateTime / phoneNo 
+	 pickupAddress / roadNameAddress / storeMemo / riderMemo / memo / items / options 
+	 totalAmount / deliveryTip / payAmount / lastAmount / paymentType / shopNumber} } }
+	-->
+	<select id="getOrderInfo" parameterType="hashmap" resultType="hashmap">
+		SELECT 
+			  A.orderUid
+			, A.ownerID
+			, A.channel			
+			, A.takeoutNo
+			, A.printNo			
+			, A.orderNumber
+			, A.orderDateTime
+			, A.phoneNo
+			, A.pickupAddress
+			, A.roadNameAddress
+			, A.storeMemo
+			, A.riderMemo
+			, A.memo
+			, A.paymentType
+			, A.shopNumber
+			, A.totalAmount
+			, A.deliveryTip
+			, A.payAmount
+			, A.lastAmount
+			, IFNULL(A.smallOrderFee, 0) + IFNULL(A.takeOutDcAmt, 0) + IFNULL(A.employeeDcAmt, 0) + IFNULL(A.ownerChgCpnDcAmt, 0) + IFNULL(A.bamChgCpnDcAmt, 0) AS discountPrice
+		FROM o2o_orderlist A
+		WHERE A.dbSTS = 'Y'
+		<if test='orderUid != null and orderUid != ""'>
+		    AND A.orderUid = #{orderUid}
+		</if>
+		<if test='channel != null and channel != ""'>
+		    AND A.channel = #{channel}
+		</if>
+		<if test='orderNumber != null and orderNumber != ""'>
+		    AND A.orderNumber = #{orderNumber}
+		</if>
+		<if test='shopNumber != null and shopNumber != ""'>
+		    AND A.shopNumber = #{shopNumber}
+		</if>
+		<if test='deliveryType != null and deliveryType != ""'>
+		    AND A.deliveryType = #{deliveryType}
+		</if>
+	</select>
+	
+	<select id="getOrderItems" parameterType="hashmap" resultType="hashmap">
+		SELECT A.orderDUid, A.lineNo AS seq, A.itemName, A.totalPrice, A.quantity 
+		 FROM o2o_orderdetail A 
+		WHERE A.dbSTS = 'Y'
+		<if test='orderUid != null and orderUid != ""'>
+		    AND A.orderUid = #{orderUid}
+		</if>
+		<if test='channel != null and channel != ""'>
+		    AND A.channel = #{channel}
+		</if>
+		<if test='orderNumber != null and orderNumber != ""'>
+		    AND A.orderNumber = #{orderNumber}
+		</if>
+		<if test='shopNumber != null and shopNumber != ""'>
+		    AND A.shopNumber  = #{shopNumber}
+		</if>
+		ORDER BY A.lineNo
+	</select>
+	
+	<select id="getOrderOptions" parameterType="hashmap" resultType="hashmap">
+		SELECT orderOUid, lineNo AS seq, optName, optPrice, quantity
+		 FROM o2o_odoption A 
+		WHERE orderDUid = #{orderDUid}
+		  AND optName != '-'
+		  AND dbSTS = 'Y'
+		ORDER BY lineNo
+	</select>
+	
+	<select id="getLocalGrpcIP" parameterType="hashmap" resultType="java.lang.String">
+		SELECT bb.localIP FROM o2o_devices bb WHERE bb.borgUID = #{borgUID} AND bb.dbSTS = 'Y' LIMIT 1
+	</select>
+	<!-- 영수증 출력용 끝  -->
+	
+	<select id="getOrderAddrList" resultType="hashmap">
+    SELECT 
+		A.orderUid
+		, A.orderNumber
+		, (SELECT GROUP_CONCAT(AA.itemName) FROM o2o_orderdetail AA 
+			WHERE AA.orderUid = A.orderUid AND AA.dbSTS = 'Y') AS menuNM
+		, CASE WHEN A.roadNameAddress IS NULL THEN A.pickupAddress
+		       ELSE CONCAT(A.roadNameAddress, ' ', A.addressDetail) END AS roadNameAddress
+		, CASE WHEN A.address IS NULL THEN A.pickupAddress
+		       ELSE CONCAT(A.address, ' ', A.addressDetail) END AS address
+		, A.addressDetail
+		, A.phoneNo
+		, A.latitude
+		, A.longitude
+		, A.storeMemo
+		, A.riderMemo
+		, A.memo
+	FROM o2o_orderlist A
+	INNER JOIN o2o_shopin B ON A.shopUID = B.shopUID AND B.dbSTS = 'Y'
+	WHERE A.dbSTS   = #{dbSTS}
+   	  AND A.borgUID = #{custIDs}
+   	  AND B.brandUID = #{brandUID}
+   	  <if test='phoneNo != null and phoneNo != ""'>
+		    AND A.phoneNo = #{phoneNo}
+	  </if>
+   	  <if test='keyword != null and keyword != ""'>
+	    <choose>
+		    <when test='SQLMODE == "mariadb"'>
+			<!-- 가게요청,라이더요청, 메모 , 고객연락처, 주문번호, 채널, 주소, 주문금액 ,라이더명-->
+		AND CONCAT(IFNULL(A.addressDetail, ''), IFNULL(A.address, ""), IFNULL(A.roadNameAddress, ''), IFNULL(A.pickupAddress, '')) REGEXP #{keyword}
+		    </when>
+		    <otherwise>
+		AND (NVL(A.addressDetail,'') || NVL(A.address,'') || NVL(CH.roadNameAddress,'') || NVL(CH.roadNameAddress,'')) LIKE '%'|| #{keyword} ||'%'
+		    </otherwise>
+		  </choose>
+	  </if>
+  		<choose>
+    		<when test='SQLMODE == "mariadb"'>
+	AND DATE_FORMAT(A.createDT, "%Y-%m-%d")  <![CDATA[ <= ]]> DATE_ADD(CURDATE(), INTERVAL +3 MONTH)  
+		    </when>
+		    <otherwise>
+    AND TO_CHAR(A.createDT,'YYYYMMDD') <![CDATA[ <= ]]> TO_CHAR(ADD_MONTHS(SYSDATE, 3),'YYYYMMDD')
+		    </otherwise>
+   	 	</choose>
+	</select>
+	
+	<insert id="saveOrderList" parameterType="hashmap" >
+		INSERT INTO o2o_orderlist(
+		  orderUid
+		  ,channel
+		  ,orderNumber
+		  ,borgUID
+		  ,orgOrderUid
+		  ,ownerID
+		  ,shopNumber
+		  ,shopUID
+		<if test='deliveryType != null and deliveryType == "TAKEOUT"'>
+		  ,printNo
+		  ,takeoutNo
+		  ,takeOutDcAmt
+		  <if test='pickupDateTime != null and pickupDateTime != ""'>
+	    	 ,pickupDateTime
+	      </if>
+	      <if test='reservDateTime != null and reservDateTime != ""'>
+	    	,reservDateTime
+	      </if>
+		</if>
+		  ,status
+		  ,deliveryStatus
+		  ,deliveryType
+		  ,payType
+		  ,payAmount
+		  ,totDcAmount
+		  ,lastAmount
+		  ,itemsSummary
+		  ,paymentType
+		  ,paymentMethod
+		  ,roadNameAddress
+		  ,address
+		  ,addressDetail
+		  ,pickupAddress
+		  ,shopAddress
+		  ,latitude
+		  ,longitude
+		  ,addrChkYN
+		  ,phoneNo
+		  ,storeMemo
+		  ,riderMemo
+		  ,memo
+		  ,orderDateTime
+		  ,createDT
+		  ,createrID 
+		  ,dbSTS
+		)
+		SELECT
+		 #{uuid} AS  orderUid
+		 ,#{channels}
+		 ,#{uuid} AS  orderNumber
+		 ,#{custIDs}
+		 , #{orgOrderUid} AS orgOrderUid
+		 ,A.ownerID
+		 ,A.shopNumber
+		 ,A.shopUID
+		<if test='deliveryType != null and deliveryType == "TAKEOUT"'>
+		  ,#{uuid} AS  printNo
+		  ,#{uuid} AS  takeoutNo
+		  ,#{takeOutDcAmt}
+		 
+		  <choose>
+		    <when test='SQLMODE == "mariadb"'>
+		    <if test='pickupDateTime != null and pickupDateTime != ""'>
+		    	 , DATE_ADD(NOW(), INTERVAL #{pickupDateTime} MINUTE) AS pickupDateTime
+		    </if>
+		    <if test='reservDateTime != null and reservDateTime != ""'>
+		    	, CONCAT(CURDATE(), #{reservDateTime})
+		    </if>
+		    </when>
+		    <otherwise>
+		    <if test='pickupDateTime != null and pickupDateTime != ""'>
+		    	 , SYSDATE + (INTERVAL #{pickupDateTime} MINUTE) AS pickupDateTime
+		    </if>
+		    <if test='reservDateTime != null and reservDateTime != ""'>
+		    	 , (TO_CHAR(SYSDATE,'yyyy-mm-dd') || #{reservDateTime})
+		    </if>
+		    </otherwise>
+		  </choose>
+		</if>
+		 ,'ACCEPTED' AS status
+		 ,'0' AS deliveryStatus
+		 ,#{deliveryType}
+		 ,'MEET' AS payType
+		 ,#{ordPrice}
+		 ,#{totalDisPrice}
+		 ,#{lastAmount}
+		 ,#{itemsSummary}
+		 ,#{paymentType} AS paymentType
+		 ,#{paymentMethod} AS paymentMethod
+		 ,#{road_addr}
+		 ,#{addr}
+		 ,#{dtlAddr}
+		 ,#{pickupAddress} AS pickupAddress
+		 ,CONCAT(B.addr1, ' ',B.addr2) AS shopAddress
+		 ,#{latitude}
+		 ,#{longitude}
+		 ,'Y' AS addrChkYN
+		 ,#{phoneNO}
+		 ,#{storeMemo}
+		 ,#{riderMemo}
+		 ,#{memo}
+		 ,NOW()
+		 ,NOW()
+		 ,#{userUID}
+		 ,#{dbSTS}
+		 FROM o2o_shopin A
+		 INNER JOIN o2o_borgs B ON A.borgUID = B.borgUID
+		 WHERE A.borgUID = #{custIDs}
+		   AND A.brandUID = #{brandUID}
+		   AND A.channel = #{channels}
+		   AND A.dbSTS = 'Y'
+	</insert>
+	
+	<insert id="saveOrderMenuList" parameterType="hashmap" >
+		<foreach item="item" collection="list" separator=";" index="index">
+			INSERT INTO o2o_orderdetail(
+			  orderDUid
+			  , orderUid
+			  , channel
+			  , shopNumber
+			  , orderNumber
+			  , lineNo
+			  , itemName
+			  , cItemName
+			  , totalPrice
+			  , unitPrice
+			  , quantity
+			  , discountPrice
+			  , itemUID
+			  , createDT
+			  , createrID
+			  , dbSTS
+			)
+			SELECT
+			 getUUID('o2o_orderdetail') AS orderDUid
+			 , #{item.uuid} AS orderUid
+			 , #{item.channels}
+			 , A.shopNumber
+			 , #{item.uuid} AS orderNumber
+			 , #{item.lineNo} AS lineNo
+			 , #{item.itemName} as itemName
+			 , #{item.cItemName} as cItemName
+			 , ((#{item.unitPrice} * #{item.quantity}) - #{item.discountPrice}) AS totalPrice
+			 , #{item.unitPrice} AS unitPrice
+			 , #{item.quantity} AS quantity
+			 , #{item.discountPrice} AS discountPrice
+			 , #{item.itemUID} AS itemUID
+		 <choose>
+		    <when test='item.SQLMODE == "mariadb"'>
+				,NOW()
+		    </when>
+		    <otherwise>
+		    	,sysdate
+		    </otherwise>
+		 </choose>
+			 , #{item.userUID}
+			 , 'Y' AS dbSTS
+			FROM o2o_shopin A
+			WHERE A.borgUID = #{item.custUID}
+			  AND A.brandUID = #{item.brandUID}
+			  AND A.channel = #{item.channels}
+			  AND A.dbSTS = 'Y'
+		 </foreach>
+	</insert>
+	
+	<insert id="saveOrderOptList" parameterType="hashmap" >
+		<foreach item="item" collection="list" separator=";" index="index">
+			INSERT INTO o2o_odoption(
+			  orderOUid
+			  ,orderDUid
+			  ,channel
+			  ,shopNumber
+			  ,orderNumber
+			  ,lineNo
+			  ,cItemName
+			  ,optLineNo
+			  ,optName
+			  ,cOptName
+			  ,optPrice
+			  ,quantity
+			  ,discountPrice
+			  ,optTotalPrice
+			  ,itemUID
+			  ,createDT
+			  ,createrID
+			  ,dbSTS
+			)
+			SELECT
+			 getUUID('o2o_odoption') AS orderOUid
+			 , A.orderDUid
+			 , A.channel
+			 , A.shopNumber
+			 , A.orderNumber
+			 , A.lineNo
+			 , A.cItemName
+			 , #{index} AS optLineNo
+			 , #{item.itemName} as optName
+			 , #{item.cItemName} as cOptName
+			 , #{item.unitPrice} AS optPrice
+			 , #{item.quantity} AS quantity
+			 , #{item.discountPrice} AS discountPrice
+			 , ((#{item.unitPrice} * #{item.quantity}) - #{item.discountPrice}) AS optTotalPrice
+			 , #{item.itemUID} AS itemUID
+			<choose>
+			  <when test='item.SQLMODE == "mariadb"'>
+				,NOW()
+			  </when>
+			  <otherwise>
+			  	,sysdate
+			  </otherwise>
+			</choose>
+			 , #{item.userUID}
+			 , 'Y' AS dbSTS
+			FROM o2o_orderdetail A
+			WHERE A.orderUid = #{item.uuid}
+			  AND A.lineNo = #{item.lineNo}
+		 </foreach>
+	</insert>
+	
+	<select id="getOrderOnerList" resultType="hashmap">
+    SELECT 
+		A.orderUid
+		, A.orderNumber
+		, A.channel
+		, A.payType
+		, A.deliveryType
+		, CASE WHEN A.roadNameAddress IS NULL THEN A.pickupAddress
+		       ELSE A.roadNameAddress END AS roadNameAddress
+		, CASE WHEN A.address IS NULL THEN A.pickupAddress
+		       ELSE A.address END AS address
+		, A.addressDetail
+		, A.phoneNo
+		, A.latitude
+		, A.longitude
+		, A.storeMemo
+		, A.riderMemo
+		, A.paymentType
+		, A.paymentMethod
+		, A.memo
+	FROM o2o_orderlist A
+	INNER JOIN o2o_shopin B ON A.shopUID = B.shopUID AND B.dbSTS = 'Y'
+	WHERE A.dbSTS   = #{dbSTS}
+   	  AND A.borgUID = #{custIDs}
+   	  AND B.brandUID = #{brandUID}
+   	  <if test='orderNumber != null and orderNumber != ""'>
+		    AND A.orderNumber = #{orderNumber}
+	  </if>
+	</select>
+	
+</mapper>

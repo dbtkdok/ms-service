@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<services>
+	<proc>
+        <step PID="O2O0UID" method="query4Data" query="getBorgUUID" service="commService"/>
+    </proc>
+	<proc><step PID="COM0000"  service="commService" query="N" method="query4Test"/></proc>	
+	<!-- O2O0001 카테고리 -->
+	<proc><step PID="O2O0001"  service="commService" query="getChnCategoryList" method="query4Data"/></proc>
+	<!-- O2O0002 사업체브랜드 -->
+	<proc><step PID="O2O0002"  service="commService" query="getBorgBrandsList" method="query4Data"/></proc>
+	<!-- O2O0003 사업체 -->
+	<proc><step PID="O2O0003"  service="commService" query="getBorgsList" method="query4Data"/></proc>
+	<!-- O2O0004 채널 -->
+	<proc><step PID="O2O0004"  service="commService" query="getChannels" method="query4Data"/></proc>
+	<!-- O2O0005 브랜드 -->
+	<proc><step PID="O2O0005"  service="commService" query="getBrandsList" method="query4Data"/></proc>
+	<!-- O2O0005 옵션 -->
+	<proc><step PID="O2O0006"  service="commService" query="getOptionsMenuList" method="query4Data"/></proc>
+	
+	<!-- O2O0400 주문관리 > 주문조회 -->
+	<proc><step PID="O2O0010"  service="commService" method="query4Data"  query="getOrderList" /></proc>
+	<proc><step PID="O2O0011"  service="o2bOrderService" query="N" method="getOrderDetail"/></proc>
+	<proc><step PID="O2O0012"  service="commService" query="getDeliveryRequest" method="query4Data"/></proc>
+	<proc><step PID="O2O0013"  service="commService" query="getOrdCnt" method="query4Data"/></proc>
+	<!--O2O0014 주문관리 > 주문취소  -->
+	<proc>
+		<step PID="O2O0015"  service="commService" query="upd4CancleOrdList" method="query4Update"/>
+        <step PID="O2O0015_01" method="update4sub" query="upd4CancleOrdDetail" service="commService" />
+        <step PID="O2O0015_02" method="update4sub" query="upd4CancleOrdOption" service="commService" />
+	</proc>
+	<!-- menu -->
+	<proc><step PID="O2O0017"  service="commService" method="query4Data"  query="getOptions4Menu" /></proc>
+	<proc>
+		<step PID="O2O0018" method="updOrder" query="N" service="o2bOrderService"/>
+	</proc>
+
+	<!-- 주문관리 >  배달요청 > 배달업체리스트 -->
+	<proc><step PID="O2O0020"  service="commService" query="getBorgDelAgentsList" method="query4Data"/></proc>
+	<!-- 주문관리 >  배달요청 > 자체배달라이더 -->
+	<proc><step PID="O2O0021"  service="commService" query="getUsersList" method="query4Data"/></proc>
+	<!-- 주문관리 >  배달요청 -->
+	<proc>
+		<step PID="O2O0022"  service="commService" query="updOrderlist" method="query4Update"/>
+		<step PID="O2O0022_01"  service="commService" query="insDelRequest" method="update4sub"/>
+	</proc>
+	<!-- 주문관리 > 배달요청완료 -->
+	<proc>
+		<step PID="O2O0023"  service="commService" query="updOrderlist4Finish" method="query4Update"/>
+		<step PID="O2O0023_01"  service="commService" query="updDelRequest" method="update4sub"/>
+	</proc>
+	
+	
+	<proc><step PID="O2O0030"  service="commService" method="query4Data"  query="getPhoneMList" /></proc>
+	<proc><step PID="O2O0031"  service="commService" method="query4Data"  query="getOrderAddrList" /></proc>
+	<proc>
+		<step PID="O2O0032"   service="o2bOrderService" query="N"   method="saveOrderRegistList" />
+	</proc>
+	<proc><step PID="O2O0035"  service="commService" method="query4Data"  query="getOrderOnerList" /></proc>
+	
+	<!-- O2O0400 운영관리 > 가게관리 -->
+	<proc><step PID="O2O0400"  service="commService" query="getShopInList" method="query4Data"/></proc>
+	<proc>
+        <step PID="O2O0402" method="query4Updates" query="saveShopInList" service="commService"/>
+    </proc>
+	<proc>
+        <step PID="O2O0403" method="query4Update" query="updShopIn" service="commService"/>
+    </proc>
+    <proc><step PID="O2O0405"  service="commService" query="getCheckOwnerId" method="query4Data"/></proc>
+	
+	<!-- O2O0410 기준정보 > 마스터관리 > 채널관리 -->
+	<proc><step PID="O2O0410"  service="commService" query="getChannelList" method="query4Data"/></proc>
+	<proc>
+        <step PID="O2O0412" method="query4Updates" query="saveChannelList" service="commService"/>
+    </proc>
+	<proc>
+        <step PID="O2O0413" method="query4Update" query="updChannel" service="commService"/>
+    </proc>
+	
+	<!-- O2O0420 운영관리 > 주문연동관리 -->
+	<proc><step PID="O2O0420"  service="o2bOrderService" query="N" method="getOrderChannelList"/></proc>
+	
+	<proc>
+        <step PID="O2O0422" method="saveOrderChannelList" query="N" service="o2bOrderService"/>
+    </proc>
+	
+	<!-- O2O0430 운영관리 > 캠페인등록관리 -->
+	<proc><step PID="O2O0430"  service="commService" query="getCampainList" method="query4Data"/></proc>
+	<proc>
+        <step PID="O2O0432" method="query4Updates" query="saveCampainList" service="commService"/>
+    </proc>
+	<proc>
+        <step PID="O2O0433" method="query4Update" query="updCampain" service="commService"/>
+    </proc>
+	
+	<!-- O2O0460 기준정보 > 마스터관리 > 브랜드관리 -->
+	<proc><step PID="O2O0460"  service="commService" query="getBrandList" method="query4Data"/></proc>
+	<proc>
+        <step PID="O2O0462" method="query4Updates" query="saveBrandList" service="commService"/>
+    </proc>
+	<proc>
+        <step PID="O2O0463" method="query4Update" query="updBrands" service="commService"/>
+    </proc>
+	
+	<!-- O2O0470 기준정보 > 마스터관리 > 가게브랜드관리 -->
+	<proc>
+        <step PID="O2O0472" method="query4Updates" query="saveBorgBrandList" service="commService"/>
+    </proc>
+	<proc>
+        <step PID="O2O0473" method="query4Update" query="updBorgBrands" service="commService"/>
+    </proc>
+    <proc><step PID="O2O0475"  service="commService" query="getCheckOrderShop" method="query4Data"/></proc>
+	
+	<!-- O2O0480 기준정보 > 마스터관리 > 가게채널관리 -->
+	<proc><step PID="O2O0480"  service="commService" query="getBorgChannelList" method="query4Data"/></proc>
+	<proc>
+        <step PID="O2O0482" method="saveBorgChannelList" query="N" service="o2bOrderService"/>
+    </proc>
+	<proc>
+        <step PID="O2O0483" method="updBorgChannelList" query="N" service="o2bOrderService"/>
+    </proc>
+	<proc><step PID="O2O0485"  service="commService" query="getCheckOrderBorgChannel" method="query4Data"/></proc>
+	
+	<!-- O2O0500 마스터 > 카테고리/메뉴 -->
+	<proc><step PID="O2O0500"  service="commService" query="getCategoryList" method="query4Data"/></proc>
+	<proc><step PID="O2O0501"  service="commService" query="getCategoryMenuList" method="query4Data" /></proc>
+	<proc>
+        <step PID="O2O0502" method="query4Updates" query="saveCategoryList" service="commService"/>
+    </proc>
+	<proc>
+        <step PID="O2O0503" method="query4Update" query="updBorgCategory" service="commService"/>
+    </proc>
+    <proc>
+        <step PID="O2O0504" method="saveCategoryMenuList" query="N" service="o2bOrderService"/>
+    </proc>
+	<proc>
+        <step PID="O2O0505" method="updCategoryMenuList" query="N" service="o2bOrderService"/>
+    </proc>
+	
+	<!-- O2O0500 마스터 > 옵션관리 -->
+	<proc><step PID="O2O0510"  service="commService" query="getOptionList" method="query4Data"/></proc>
+	<proc><step PID="O2O0511"  service="commService" query="getOptionMenuList" method="query4Data"/></proc>
+	<proc>
+        <step PID="O2O0512" method="query4Updates" query="saveOptionList" service="commService"/>
+    </proc>
+	<proc>
+        <step PID="O2O0513" method="query4Update" query="updBorgOption" service="commService"/>
+    </proc>
+	<proc>
+        <step PID="O2O0514" method="query4Updates" query="saveOptionMenuList" service="commService"/>
+    </proc>
+	<proc>
+        <step PID="O2O0515" method="query4Update" query="updBorgOptionMenu" service="commService"/>
+    </proc>
+    
+    <!-- O2O0520 마스터 > 옵션관리 -->
+    <proc><step PID="O2O0520"  service="commService" query="getOrginList" method="query4Data"/></proc>
+	<proc>
+        <step PID="O2O0523" method="query4Update" query="updOrgin" service="commService"/>
+    </proc>
+    
+    <!-- 영수증 프린트용 주문 정보 -->
+	<proc><step PID="O2O0902"  service="o2bOrderService" query="N" method="getPrintOrderInfo"/></proc>	
+</services>

@@ -1,0 +1,286 @@
+INFO  22-05-12 17:59:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1004] -Disable delta property : true
+INFO  22-05-12 17:59:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1005] -Single vip registry refresh property : null
+INFO  22-05-12 17:59:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1006] -Force full registry fetch : false
+INFO  22-05-12 17:59:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1007] -Application is null : false
+INFO  22-05-12 17:59:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1008] -Registered Applications size is zero : false
+INFO  22-05-12 17:59:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1010] -Application version is -1: false
+INFO  22-05-12 17:59:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1093] -Getting all instance registry info from the eureka server
+INFO  22-05-12 17:59:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1102] -The response status is 200
+INFO  22-05-12 17:59:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1004] -Disable delta property : true
+INFO  22-05-12 17:59:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1005] -Single vip registry refresh property : null
+INFO  22-05-12 17:59:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1006] -Force full registry fetch : false
+INFO  22-05-12 17:59:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1007] -Application is null : false
+INFO  22-05-12 17:59:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1008] -Registered Applications size is zero : false
+INFO  22-05-12 17:59:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1010] -Application version is -1: false
+INFO  22-05-12 17:59:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1093] -Getting all instance registry info from the eureka server
+INFO  22-05-12 17:59:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1102] -The response status is 200
+INFO  22-05-12 17:59:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1004] -Disable delta property : true
+INFO  22-05-12 17:59:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1005] -Single vip registry refresh property : null
+INFO  22-05-12 17:59:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1006] -Force full registry fetch : false
+INFO  22-05-12 17:59:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1007] -Application is null : false
+INFO  22-05-12 17:59:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1008] -Registered Applications size is zero : false
+INFO  22-05-12 17:59:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1010] -Application version is -1: false
+INFO  22-05-12 17:59:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1093] -Getting all instance registry info from the eureka server
+INFO  22-05-12 17:59:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1102] -The response status is 200
+INFO  22-05-12 18:00:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1004] -Disable delta property : true
+INFO  22-05-12 18:00:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1005] -Single vip registry refresh property : null
+INFO  22-05-12 18:00:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1006] -Force full registry fetch : false
+INFO  22-05-12 18:00:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1007] -Application is null : false
+INFO  22-05-12 18:00:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1008] -Registered Applications size is zero : false
+INFO  22-05-12 18:00:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1010] -Application version is -1: false
+INFO  22-05-12 18:00:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1093] -Getting all instance registry info from the eureka server
+INFO  22-05-12 18:00:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1102] -The response status is 200
+INFO  22-05-12 18:00:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1004] -Disable delta property : true
+INFO  22-05-12 18:00:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1005] -Single vip registry refresh property : null
+INFO  22-05-12 18:00:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1006] -Force full registry fetch : false
+INFO  22-05-12 18:00:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1007] -Application is null : false
+INFO  22-05-12 18:00:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1008] -Registered Applications size is zero : false
+INFO  22-05-12 18:00:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1010] -Application version is -1: false
+INFO  22-05-12 18:00:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1093] -Getting all instance registry info from the eureka server
+INFO  22-05-12 18:00:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1102] -The response status is 200
+INFO  22-05-12 18:00:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1004] -Disable delta property : true
+INFO  22-05-12 18:00:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1005] -Single vip registry refresh property : null
+INFO  22-05-12 18:00:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1006] -Force full registry fetch : false
+INFO  22-05-12 18:00:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1007] -Application is null : false
+INFO  22-05-12 18:00:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1008] -Registered Applications size is zero : false
+INFO  22-05-12 18:00:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1010] -Application version is -1: false
+INFO  22-05-12 18:00:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1093] -Getting all instance registry info from the eureka server
+INFO  22-05-12 18:00:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1102] -The response status is 200
+INFO  22-05-12 18:01:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1004] -Disable delta property : true
+INFO  22-05-12 18:01:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1005] -Single vip registry refresh property : null
+INFO  22-05-12 18:01:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1006] -Force full registry fetch : false
+INFO  22-05-12 18:01:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1007] -Application is null : false
+INFO  22-05-12 18:01:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1008] -Registered Applications size is zero : false
+INFO  22-05-12 18:01:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1010] -Application version is -1: false
+INFO  22-05-12 18:01:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1093] -Getting all instance registry info from the eureka server
+INFO  22-05-12 18:01:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1102] -The response status is 200
+INFO  22-05-12 18:01:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1004] -Disable delta property : true
+INFO  22-05-12 18:01:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1005] -Single vip registry refresh property : null
+INFO  22-05-12 18:01:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1006] -Force full registry fetch : false
+INFO  22-05-12 18:01:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1007] -Application is null : false
+INFO  22-05-12 18:01:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1008] -Registered Applications size is zero : false
+INFO  22-05-12 18:01:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1010] -Application version is -1: false
+INFO  22-05-12 18:01:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1093] -Getting all instance registry info from the eureka server
+INFO  22-05-12 18:01:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1102] -The response status is 200
+INFO  22-05-12 18:01:47[AsyncResolver-bootstrap-executor-0] [ConfigClusterResolver:43] -Resolving eureka endpoints via configuration
+INFO  22-05-12 18:01:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1004] -Disable delta property : true
+INFO  22-05-12 18:01:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1005] -Single vip registry refresh property : null
+INFO  22-05-12 18:01:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1006] -Force full registry fetch : false
+INFO  22-05-12 18:01:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1007] -Application is null : false
+INFO  22-05-12 18:01:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1008] -Registered Applications size is zero : false
+INFO  22-05-12 18:01:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1010] -Application version is -1: false
+INFO  22-05-12 18:01:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1093] -Getting all instance registry info from the eureka server
+INFO  22-05-12 18:01:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1102] -The response status is 200
+INFO  22-05-12 18:02:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1004] -Disable delta property : true
+INFO  22-05-12 18:02:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1005] -Single vip registry refresh property : null
+INFO  22-05-12 18:02:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1006] -Force full registry fetch : false
+INFO  22-05-12 18:02:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1007] -Application is null : false
+INFO  22-05-12 18:02:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1008] -Registered Applications size is zero : false
+INFO  22-05-12 18:02:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1010] -Application version is -1: false
+INFO  22-05-12 18:02:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1093] -Getting all instance registry info from the eureka server
+INFO  22-05-12 18:02:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1102] -The response status is 200
+INFO  22-05-12 18:02:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1004] -Disable delta property : true
+INFO  22-05-12 18:02:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1005] -Single vip registry refresh property : null
+INFO  22-05-12 18:02:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1006] -Force full registry fetch : false
+INFO  22-05-12 18:02:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1007] -Application is null : false
+INFO  22-05-12 18:02:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1008] -Registered Applications size is zero : false
+INFO  22-05-12 18:02:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1010] -Application version is -1: false
+INFO  22-05-12 18:02:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1093] -Getting all instance registry info from the eureka server
+INFO  22-05-12 18:02:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1102] -The response status is 200
+INFO  22-05-12 18:02:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1004] -Disable delta property : true
+INFO  22-05-12 18:02:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1005] -Single vip registry refresh property : null
+INFO  22-05-12 18:02:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1006] -Force full registry fetch : false
+INFO  22-05-12 18:02:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1007] -Application is null : false
+INFO  22-05-12 18:02:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1008] -Registered Applications size is zero : false
+INFO  22-05-12 18:02:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1010] -Application version is -1: false
+INFO  22-05-12 18:02:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1093] -Getting all instance registry info from the eureka server
+INFO  22-05-12 18:02:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1102] -The response status is 200
+INFO  22-05-12 18:03:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1004] -Disable delta property : true
+INFO  22-05-12 18:03:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1005] -Single vip registry refresh property : null
+INFO  22-05-12 18:03:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1006] -Force full registry fetch : false
+INFO  22-05-12 18:03:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1007] -Application is null : false
+INFO  22-05-12 18:03:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1008] -Registered Applications size is zero : false
+INFO  22-05-12 18:03:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1010] -Application version is -1: false
+INFO  22-05-12 18:03:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1093] -Getting all instance registry info from the eureka server
+INFO  22-05-12 18:03:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1102] -The response status is 200
+INFO  22-05-12 18:03:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1004] -Disable delta property : true
+INFO  22-05-12 18:03:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1005] -Single vip registry refresh property : null
+INFO  22-05-12 18:03:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1006] -Force full registry fetch : false
+INFO  22-05-12 18:03:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1007] -Application is null : false
+INFO  22-05-12 18:03:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1008] -Registered Applications size is zero : false
+INFO  22-05-12 18:03:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1010] -Application version is -1: false
+INFO  22-05-12 18:03:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1093] -Getting all instance registry info from the eureka server
+INFO  22-05-12 18:03:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1102] -The response status is 200
+INFO  22-05-12 18:03:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1004] -Disable delta property : true
+INFO  22-05-12 18:03:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1005] -Single vip registry refresh property : null
+INFO  22-05-12 18:03:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1006] -Force full registry fetch : false
+INFO  22-05-12 18:03:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1007] -Application is null : false
+INFO  22-05-12 18:03:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1008] -Registered Applications size is zero : false
+INFO  22-05-12 18:03:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1010] -Application version is -1: false
+INFO  22-05-12 18:03:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1093] -Getting all instance registry info from the eureka server
+INFO  22-05-12 18:03:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1102] -The response status is 200
+INFO  22-05-12 18:04:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1004] -Disable delta property : true
+INFO  22-05-12 18:04:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1005] -Single vip registry refresh property : null
+INFO  22-05-12 18:04:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1006] -Force full registry fetch : false
+INFO  22-05-12 18:04:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1007] -Application is null : false
+INFO  22-05-12 18:04:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1008] -Registered Applications size is zero : false
+INFO  22-05-12 18:04:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1010] -Application version is -1: false
+INFO  22-05-12 18:04:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1093] -Getting all instance registry info from the eureka server
+INFO  22-05-12 18:04:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1102] -The response status is 200
+INFO  22-05-12 18:04:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1004] -Disable delta property : true
+INFO  22-05-12 18:04:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1005] -Single vip registry refresh property : null
+INFO  22-05-12 18:04:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1006] -Force full registry fetch : false
+INFO  22-05-12 18:04:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1007] -Application is null : false
+INFO  22-05-12 18:04:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1008] -Registered Applications size is zero : false
+INFO  22-05-12 18:04:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1010] -Application version is -1: false
+INFO  22-05-12 18:04:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1093] -Getting all instance registry info from the eureka server
+INFO  22-05-12 18:04:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1102] -The response status is 200
+INFO  22-05-12 18:04:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1004] -Disable delta property : true
+INFO  22-05-12 18:04:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1005] -Single vip registry refresh property : null
+INFO  22-05-12 18:04:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1006] -Force full registry fetch : false
+INFO  22-05-12 18:04:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1007] -Application is null : false
+INFO  22-05-12 18:04:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1008] -Registered Applications size is zero : false
+INFO  22-05-12 18:04:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1010] -Application version is -1: false
+INFO  22-05-12 18:04:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1093] -Getting all instance registry info from the eureka server
+INFO  22-05-12 18:04:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1102] -The response status is 200
+INFO  22-05-12 18:05:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1004] -Disable delta property : true
+INFO  22-05-12 18:05:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1005] -Single vip registry refresh property : null
+INFO  22-05-12 18:05:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1006] -Force full registry fetch : false
+INFO  22-05-12 18:05:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1007] -Application is null : false
+INFO  22-05-12 18:05:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1008] -Registered Applications size is zero : false
+INFO  22-05-12 18:05:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1010] -Application version is -1: false
+INFO  22-05-12 18:05:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1093] -Getting all instance registry info from the eureka server
+INFO  22-05-12 18:05:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1102] -The response status is 200
+INFO  22-05-12 18:05:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1004] -Disable delta property : true
+INFO  22-05-12 18:05:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1005] -Single vip registry refresh property : null
+INFO  22-05-12 18:05:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1006] -Force full registry fetch : false
+INFO  22-05-12 18:05:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1007] -Application is null : false
+INFO  22-05-12 18:05:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1008] -Registered Applications size is zero : false
+INFO  22-05-12 18:05:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1010] -Application version is -1: false
+INFO  22-05-12 18:05:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1093] -Getting all instance registry info from the eureka server
+INFO  22-05-12 18:05:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1102] -The response status is 200
+INFO  22-05-12 18:05:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1004] -Disable delta property : true
+INFO  22-05-12 18:05:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1005] -Single vip registry refresh property : null
+INFO  22-05-12 18:05:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1006] -Force full registry fetch : false
+INFO  22-05-12 18:05:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1007] -Application is null : false
+INFO  22-05-12 18:05:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1008] -Registered Applications size is zero : false
+INFO  22-05-12 18:05:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1010] -Application version is -1: false
+INFO  22-05-12 18:05:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1093] -Getting all instance registry info from the eureka server
+INFO  22-05-12 18:05:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1102] -The response status is 200
+INFO  22-05-12 18:06:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1004] -Disable delta property : true
+INFO  22-05-12 18:06:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1005] -Single vip registry refresh property : null
+INFO  22-05-12 18:06:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1006] -Force full registry fetch : false
+INFO  22-05-12 18:06:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1007] -Application is null : false
+INFO  22-05-12 18:06:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1008] -Registered Applications size is zero : false
+INFO  22-05-12 18:06:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1010] -Application version is -1: false
+INFO  22-05-12 18:06:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1093] -Getting all instance registry info from the eureka server
+INFO  22-05-12 18:06:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1102] -The response status is 200
+INFO  22-05-12 18:06:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1004] -Disable delta property : true
+INFO  22-05-12 18:06:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1005] -Single vip registry refresh property : null
+INFO  22-05-12 18:06:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1006] -Force full registry fetch : false
+INFO  22-05-12 18:06:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1007] -Application is null : false
+INFO  22-05-12 18:06:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1008] -Registered Applications size is zero : false
+INFO  22-05-12 18:06:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1010] -Application version is -1: false
+INFO  22-05-12 18:06:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1093] -Getting all instance registry info from the eureka server
+INFO  22-05-12 18:06:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1102] -The response status is 200
+INFO  22-05-12 18:06:47[AsyncResolver-bootstrap-executor-0] [ConfigClusterResolver:43] -Resolving eureka endpoints via configuration
+INFO  22-05-12 18:06:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1004] -Disable delta property : true
+INFO  22-05-12 18:06:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1005] -Single vip registry refresh property : null
+INFO  22-05-12 18:06:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1006] -Force full registry fetch : false
+INFO  22-05-12 18:06:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1007] -Application is null : false
+INFO  22-05-12 18:06:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1008] -Registered Applications size is zero : false
+INFO  22-05-12 18:06:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1010] -Application version is -1: false
+INFO  22-05-12 18:06:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1093] -Getting all instance registry info from the eureka server
+INFO  22-05-12 18:06:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1102] -The response status is 200
+INFO  22-05-12 18:07:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1004] -Disable delta property : true
+INFO  22-05-12 18:07:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1005] -Single vip registry refresh property : null
+INFO  22-05-12 18:07:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1006] -Force full registry fetch : false
+INFO  22-05-12 18:07:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1007] -Application is null : false
+INFO  22-05-12 18:07:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1008] -Registered Applications size is zero : false
+INFO  22-05-12 18:07:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1010] -Application version is -1: false
+INFO  22-05-12 18:07:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1093] -Getting all instance registry info from the eureka server
+INFO  22-05-12 18:07:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1102] -The response status is 200
+INFO  22-05-12 18:07:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1004] -Disable delta property : true
+INFO  22-05-12 18:07:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1005] -Single vip registry refresh property : null
+INFO  22-05-12 18:07:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1006] -Force full registry fetch : false
+INFO  22-05-12 18:07:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1007] -Application is null : false
+INFO  22-05-12 18:07:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1008] -Registered Applications size is zero : false
+INFO  22-05-12 18:07:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1010] -Application version is -1: false
+INFO  22-05-12 18:07:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1093] -Getting all instance registry info from the eureka server
+INFO  22-05-12 18:07:39[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1102] -The response status is 200
+INFO  22-05-12 18:07:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1004] -Disable delta property : true
+INFO  22-05-12 18:07:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1005] -Single vip registry refresh property : null
+INFO  22-05-12 18:07:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1006] -Force full registry fetch : false
+INFO  22-05-12 18:07:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1007] -Application is null : false
+INFO  22-05-12 18:07:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1008] -Registered Applications size is zero : false
+INFO  22-05-12 18:07:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1010] -Application version is -1: false
+INFO  22-05-12 18:07:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1093] -Getting all instance registry info from the eureka server
+INFO  22-05-12 18:07:59[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1102] -The response status is 200
+INFO  22-05-12 18:08:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1004] -Disable delta property : true
+INFO  22-05-12 18:08:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1005] -Single vip registry refresh property : null
+INFO  22-05-12 18:08:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1006] -Force full registry fetch : false
+INFO  22-05-12 18:08:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1007] -Application is null : false
+INFO  22-05-12 18:08:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1008] -Registered Applications size is zero : false
+INFO  22-05-12 18:08:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1010] -Application version is -1: false
+INFO  22-05-12 18:08:19[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1093] -Getting all instance registry info from the eureka server
+INFO  22-05-12 18:08:20[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1102] -The response status is 200
+INFO  22-05-12 18:08:40[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1004] -Disable delta property : true
+INFO  22-05-12 18:08:40[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1005] -Single vip registry refresh property : null
+INFO  22-05-12 18:08:40[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1006] -Force full registry fetch : false
+INFO  22-05-12 18:08:40[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1007] -Application is null : false
+INFO  22-05-12 18:08:40[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1008] -Registered Applications size is zero : false
+INFO  22-05-12 18:08:40[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1010] -Application version is -1: false
+INFO  22-05-12 18:08:40[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1093] -Getting all instance registry info from the eureka server
+INFO  22-05-12 18:08:40[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1102] -The response status is 200
+INFO  22-05-12 18:09:00[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1004] -Disable delta property : true
+INFO  22-05-12 18:09:00[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1005] -Single vip registry refresh property : null
+INFO  22-05-12 18:09:00[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1006] -Force full registry fetch : false
+INFO  22-05-12 18:09:00[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1007] -Application is null : false
+INFO  22-05-12 18:09:00[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1008] -Registered Applications size is zero : false
+INFO  22-05-12 18:09:00[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1010] -Application version is -1: false
+INFO  22-05-12 18:09:00[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1093] -Getting all instance registry info from the eureka server
+INFO  22-05-12 18:09:00[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1102] -The response status is 200
+INFO  22-05-12 18:09:20[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1004] -Disable delta property : true
+INFO  22-05-12 18:09:20[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1005] -Single vip registry refresh property : null
+INFO  22-05-12 18:09:20[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1006] -Force full registry fetch : false
+INFO  22-05-12 18:09:20[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1007] -Application is null : false
+INFO  22-05-12 18:09:20[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1008] -Registered Applications size is zero : false
+INFO  22-05-12 18:09:20[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1010] -Application version is -1: false
+INFO  22-05-12 18:09:20[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1093] -Getting all instance registry info from the eureka server
+INFO  22-05-12 18:09:20[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1102] -The response status is 200
+INFO  22-05-12 18:09:40[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1004] -Disable delta property : true
+INFO  22-05-12 18:09:40[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1005] -Single vip registry refresh property : null
+INFO  22-05-12 18:09:40[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1006] -Force full registry fetch : false
+INFO  22-05-12 18:09:40[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1007] -Application is null : false
+INFO  22-05-12 18:09:40[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1008] -Registered Applications size is zero : false
+INFO  22-05-12 18:09:40[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1010] -Application version is -1: false
+INFO  22-05-12 18:09:40[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1093] -Getting all instance registry info from the eureka server
+INFO  22-05-12 18:09:40[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1102] -The response status is 200
+INFO  22-05-12 18:10:00[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1004] -Disable delta property : true
+INFO  22-05-12 18:10:00[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1005] -Single vip registry refresh property : null
+INFO  22-05-12 18:10:00[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1006] -Force full registry fetch : false
+INFO  22-05-12 18:10:00[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1007] -Application is null : false
+INFO  22-05-12 18:10:00[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1008] -Registered Applications size is zero : false
+INFO  22-05-12 18:10:00[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1010] -Application version is -1: false
+INFO  22-05-12 18:10:00[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1093] -Getting all instance registry info from the eureka server
+INFO  22-05-12 18:10:00[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1102] -The response status is 200
+INFO  22-05-12 18:10:20[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1004] -Disable delta property : true
+INFO  22-05-12 18:10:20[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1005] -Single vip registry refresh property : null
+INFO  22-05-12 18:10:20[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1006] -Force full registry fetch : false
+INFO  22-05-12 18:10:20[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1007] -Application is null : false
+INFO  22-05-12 18:10:20[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1008] -Registered Applications size is zero : false
+INFO  22-05-12 18:10:20[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1010] -Application version is -1: false
+INFO  22-05-12 18:10:20[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1093] -Getting all instance registry info from the eureka server
+INFO  22-05-12 18:10:20[DiscoveryClient-CacheRefreshExecutor-0] [DiscoveryClient:1102] -The response status is 200
+INFO  22-05-12 18:10:27[RMI TCP Connection(8)-127.0.0.1] [SpringApplicationAdminMXBeanRegistrar$SpringApplicationAdmin:159] -Application shutdown requested.
+INFO  22-05-12 18:10:27[RMI TCP Connection(8)-127.0.0.1] [EurekaServiceRegistry:65] -Unregistering application TRUEO2B with eureka with status DOWN
+WARN  22-05-12 18:10:27[RMI TCP Connection(8)-127.0.0.1] [DiscoveryClient:1351] -Saw local status change event StatusChangeEvent [timestamp=1652346627107, current=DOWN, previous=UP]
+INFO  22-05-12 18:10:27[DiscoveryClient-InstanceInfoReplicator-0] [DiscoveryClient:870] -DiscoveryClient_TRUEO2B/DESKTOP-M2JJIC8:trueO2b:17997: registering service...
+INFO  22-05-12 18:10:27[RMI TCP Connection(8)-127.0.0.1] [ThreadPoolTaskScheduler:218] -Shutting down ExecutorService 'taskScheduler'
+INFO  22-05-12 18:10:27[RMI TCP Connection(8)-127.0.0.1] [HikariDataSource:350] -hikariPool - Shutdown initiated...
+INFO  22-05-12 18:10:27[DiscoveryClient-InstanceInfoReplicator-0] [DiscoveryClient:879] -DiscoveryClient_TRUEO2B/DESKTOP-M2JJIC8:trueO2b:17997 - registration status: 204
+INFO  22-05-12 18:10:27[RMI TCP Connection(8)-127.0.0.1] [HikariDataSource:352] -hikariPool - Shutdown completed.
+INFO  22-05-12 18:10:27[RMI TCP Connection(8)-127.0.0.1] [DiscoveryClient:932] -Shutting down DiscoveryClient ...
+INFO  22-05-12 18:10:30[RMI TCP Connection(8)-127.0.0.1] [DiscoveryClient:968] -Unregistering ...
+INFO  22-05-12 18:10:30[RMI TCP Connection(8)-127.0.0.1] [DiscoveryClient:970] -DiscoveryClient_TRUEO2B/DESKTOP-M2JJIC8:trueO2b:17997 - deregister  status: 200
+INFO  22-05-12 18:10:30[RMI TCP Connection(8)-127.0.0.1] [DiscoveryClient:957] -Completed shut down of DiscoveryClient

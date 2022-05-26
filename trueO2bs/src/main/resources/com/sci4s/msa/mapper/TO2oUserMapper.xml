@@ -1,0 +1,833 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sci4s.msa.mapper.TO2oUserMapper">
+	<select id="getBrandsList" parameterType="hashmap" resultType="hashmap">
+		SELECT 
+			A.brandUID
+			, A.brandName
+		FROM o2o_borgbrands A
+		WHERE A.borgUID = #{custID}
+		  AND A.dbSTS = 'Y'
+	</select>
+	
+	<select id="getBorgsList" parameterType="hashmap" resultType="hashmap">
+		SELECT 
+			A.borgUID
+			, A.shopName
+			, A.bizRegNo
+		FROM o2o_borgs A
+		WHERE A.dbSTS = #{dbSTS}
+		<if test='srchText != null and srchText != ""'>
+   		  <choose>
+		    <when test='SQLMODE == "mariadb"'>
+		  AND CONCAT(A.shopName) REGEXP #{srchText}
+		    </when>
+		    <otherwise>
+		  AND (A.shopName) LIKE '%'|| #{srchText} ||'%'
+		    </otherwise>
+		  </choose>
+        </if>
+	</select>
+	
+	<select id="getChannels" parameterType="hashmap" resultType="hashmap">
+		SELECT 
+			A.channelUID
+			, A.channel
+			, A.channelName
+		FROM o2o_channels A
+		WHERE A.dbSTS = #{dbSTS}
+		<if test='conYn != null and conYn != ""'>
+   		  AND conYn = #{conYn}
+        </if>
+		<if test='srchText != null and srchText != ""'>
+   		  <choose>
+		    <when test='SQLMODE == "mariadb"'>
+		  AND CONCAT(A.shopName) REGEXP #{srchText}
+		    </when>
+		    <otherwise>
+		  AND (A.shopName) LIKE '%'|| #{srchText} ||'%'
+		    </otherwise>
+		  </choose>
+        </if>
+	</select>
+	
+	<select id="getChannelUID" parameterType="hashmap" resultType="String">
+		SELECT 
+			A.channelUID
+		FROM o2o_channels A
+		WHERE A.dbSTS = #{dbSTS}
+		  AND A.channel = #{channel}
+	</select>
+	
+	<select id="getBorgsChannels" parameterType="hashmap" resultType="hashmap">
+		SELECT 
+			A.channelUID
+			, A.borgUID
+			, A.loginUser
+			, A.loginPwd
+			, A.logInYn
+		FROM o2o_borgchannels A
+		WHERE A.dbSTS = #{dbSTS}
+		AND A.borgUID = #{pBorgUID}
+		AND A.userUID = #{userUID}
+	</select>
+	
+	<select id="getShopInList" parameterType="hashmap" resultType="hashmap">
+		SELECT 
+			A.shopUID
+			, A.borgUID
+			, A.channel
+			, B.channelName
+			, A.cateUID
+			, D.cateName
+			, A.ownerID
+			, A.shopNumber
+			, A.cateUID
+			, A.brandUID
+			, C.brandName
+			, A.shopInName
+		 FROM o2o_shopin A
+		 INNER JOIN o2o_channels B ON A.channel = B.CHANNEL
+		 INNER JOIN o2o_brands C ON A.brandUID = C.brandUID
+		 LEFT JOIN o2o_category D ON A.cateUID = D.cateUID
+		 WHERE A.dbSTS = #{dbSTS}
+		   AND A.borgUID = #{custIDs}
+		  <if test='brandUID != null and brandUID != ""'>
+		    AND A.brandUID = #{brandUID}
+		  </if>
+		  <if test='channel != null and channel != ""'>
+		    AND A.channel = #{channel}
+		  </if>
+		  <if test='cateUID != null and cateUID != ""'>
+		    AND A.cateUID = #{cateUID}
+		  </if>
+	</select>
+	
+	<select id="getBorgBrandsList" parameterType="hashmap" resultType="hashmap">
+		SELECT 
+			A.brandUID
+			, B.brandName
+			, A.brandName AS borgBrandNM
+			, A.borgUID AS pBorgUID
+			, C.shopName
+			, 'Y' AS borgsBrandUID
+			, A.bizRegNo
+			, A.dbSTS
+		FROM o2o_borgbrands A
+		INNER JOIN o2o_brands B ON A.brandUID = B.brandUID
+		INNER JOIN o2o_borgs C ON A.borgUID = C.borgUID
+		WHERE 1 = 1
+		<if test='dbSTS != null and dbSTS != ""'>
+		    AND A.dbSTS = #{dbSTS} 
+		  </if>
+		<if test='custID != null and custID != ""'>
+		    AND A.borgUID = #{custID}
+		  </if>
+		  <if test='srchText != null and srchText != ""'>
+   		  <choose>
+		    <when test='SQLMODE == "mariadb"'>
+		  AND CONCAT(A.brandName, A.bizRegNo) REGEXP #{srchText}
+		    </when>
+		    <otherwise>
+		  AND (A.brandName | A.bizRegNo) LIKE '%'|| #{srchText} ||'%'
+		    </otherwise>
+		  </choose>
+        </if>
+	</select>
+	
+	<insert id="saveShopInList" parameterType="hashmap" >
+		<foreach item="item" collection="list" separator=";">
+			INSERT INTO o2o_shopin (
+				 shopUID
+				, borgUID
+				, channel
+				, ownerID
+				, shopNumber
+				, cateUID
+				, brandUID
+				, loginUserUID
+				, shopInName
+				, dbSTS
+				, createrID
+				, createDT
+			) value (
+				 getUUID('o2o_shopin')
+				,#{item.custUID}
+				,#{item.channel}
+				, (SELECT A.ownerID FROM o2o_borgchannels A WHERE A.channelUID = (SELECT channelUID FROM o2o_channels WHERE CHANNEL = #{item.channel}) AND A.borgUID = #{item.custUID} AND A.userUID = #{item.userUID})
+				,#{item.shopNumber}
+				,#{item.cateUID}
+				,#{item.brandUID}
+				,#{item.loginUserUID}
+				,#{item.shopInName}
+				,'Y'
+				,#{item.userUID}
+		  <choose>
+		    <when test='item.SQLMODE == "mariadb"'>
+				,NOW()
+		    </when>
+		    <otherwise>
+		    	,sysdate
+		    </otherwise>
+		 </choose>
+			)
+		 </foreach>
+	</insert>
+	
+	<update id="updShopIn" parameterType="hashmap">
+		UPDATE o2o_shopin SET 
+			updateDT  = now()
+           ,updaterID = #{userUID}
+           ,cateUID = #{cateUID}
+           ,brandUID = #{brandUID}
+           ,channel = #{channel}
+		<if test='dbSTS != null and dbSTS != ""'>
+			,dbSTS = #{dbSTS}
+		</if>	
+		<if test='shopNumber != null and shopNumber != ""'>
+			,shopNumber = #{shopNumber}
+		</if>
+		<if test='shopInName != null and shopInName != ""'>
+			,shopInName = #{shopInName}
+		</if>
+		WHERE shopUID = #{shopUID}		
+	</update>
+	
+	<select id="getCheckOwnerId" parameterType="hashmap" resultType="hashmap">
+		SELECT COUNT(A.ownerID) AS cnt 
+		  FROM o2o_borgchannels A 
+		 WHERE A.channelUID = (SELECT channelUID FROM o2o_channels WHERE CHANNEL = #{channel}) 
+		   AND A.borgUID = #{custUID} 
+		   AND A.userUID = #{userUID}
+	</select>
+	
+	<select id="getChannelList" parameterType="hashmap" resultType="hashmap">
+		 SELECT
+			A.channelUID
+			,A.channel
+			,A.channelName
+			,A.dataYn
+			,A.conYn
+			,A.homeUrl
+			,A.loginAct
+			,A.loginIdObj
+			,A.loginPwdObj
+			,A.loginReqObj
+			,A.mainAct
+			,A.svcAct
+			,A.repeatAct
+			,A.svcUrl1
+			,A.svcUrl2
+			,A.svcUrl3
+			,A.sessionKey
+			,A.domainUrl
+			,A.createDT
+			,A.createrID
+			,A.updateDT
+			,A.updaterID
+			, (SELECT COUNT(*) FROM o2o_borgchannels WHERE A.channelUID = channelUID) AS borgCnt
+			,A.dbSTS
+		 FROM o2o_channels A
+	  	WHERE 1 = 1
+	  	<if test='dbSTS != null and dbSTS != ""'>
+		    AND A.dbSTS = #{dbSTS} 
+		</if>
+	  	<if test='srchText != null and srchText != ""'>
+   		  <choose>
+		    <when test='SQLMODE == "mariadb"'>
+		  AND CONCAT(A.channelName, A.channel) REGEXP #{srchText}
+		    </when>
+		    <otherwise>
+		  AND (A.channelName | A.channel) LIKE '%'|| #{srchText} ||'%'
+		    </otherwise>
+		  </choose>
+        </if>
+		ORDER BY A.createDT
+	</select>
+	
+	<insert id="saveChannelList" parameterType="hashmap" >
+		<foreach item="item" collection="list" separator=";">
+			INSERT INTO o2o_channels (
+				 channelUID
+				,channel
+				,channelName
+				,dataYn
+				,conYn
+				,homeUrl
+				,loginAct
+				,loginIdObj
+				,loginPwdObj
+				,loginReqObj
+				,mainAct
+				,svcAct
+				,repeatAct
+				,svcUrl1
+				,svcUrl2
+				,svcUrl3
+				,sessionKey
+				,domainUrl
+				,dbSTS
+				,createrID
+				,createDT
+			) value (
+				 getUUID('o2o_channels')
+				,#{item.channel}
+				,#{item.channelName}
+				,#{item.dataYn}
+				,#{item.conYn}
+				,#{item.homeUrl}
+				,#{item.loginAct}
+				,#{item.loginIdObj}
+				,#{item.loginPwdObj}
+				,#{item.loginReqObj}
+				,#{item.mainAct}
+				,#{item.svcAct}
+				,#{item.repeatAct}
+				,#{item.svcUrl1}
+				,#{item.svcUrl2}
+				,#{item.svcUrl3}
+				,#{item.sessionKey}
+				,#{item.domainUrl}
+				,#{item.dbSTS}
+				,#{item.userUID}
+		  <choose>
+		    <when test='item.SQLMODE == "mariadb"'>
+				,NOW()
+		    </when>
+		    <otherwise>
+		    	,sysdate
+		    </otherwise>
+		 </choose>
+			)
+		 </foreach>
+	</insert>
+	
+	<update id="updChannel" parameterType="hashmap">
+		UPDATE o2o_channels SET 
+			updateDT  = now()
+            ,updaterID = #{userUID}
+            ,channelName = #{channelName}
+			,dataYn      = #{dataYn     }
+			,conYn       = #{conYn      }
+			,homeUrl     = #{homeUrl    }
+			,loginAct    = #{loginAct   }
+			,loginIdObj  = #{loginIdObj }
+			,loginPwdObj = #{loginPwdObj}
+			,loginReqObj = #{loginReqObj}
+			,mainAct     = #{mainAct    }
+			,svcAct      = #{svcAct     }
+			,repeatAct   = #{repeatAct  }
+			,svcUrl1     = #{svcUrl1    }
+			,svcUrl2     = #{svcUrl2    }
+			,svcUrl3     = #{svcUrl3    }
+			,sessionKey  = #{sessionKey }
+			,domainUrl   = #{domainUrl  }
+		<if test='dbSTS != null and dbSTS != ""'>
+			,dbSTS = #{dbSTS}
+		</if>	
+		WHERE channelUID = #{channelUID}		
+	</update>
+	
+	<insert id="saveBorgBrandList" parameterType="hashmap" >
+		<foreach item="item" collection="list" separator=";">
+			INSERT INTO o2o_borgbrands (
+				 borgUID
+				, brandUID
+				, bizRegNo
+				, brandName
+				, dbSTS
+				, createrID
+				, createDT
+			) value (
+				 #{item.pBorgUID}
+				,#{item.brandUID}
+				,#{item.bizRegNo}
+				,#{item.borgBrandNM}
+				,'Y'
+				,#{item.userUID}
+		  <choose>
+		    <when test='item.SQLMODE == "mariadb"'>
+				,NOW()
+		    </when>
+		    <otherwise>
+		    	,sysdate
+		    </otherwise>
+		 </choose>
+			)
+		 </foreach>
+	</insert>
+	
+	<update id="updBorgBrands" parameterType="hashmap">
+		UPDATE o2o_borgbrands SET 
+			dbSTS = #{dbSTS}
+			,brandName = #{borgBrandNM}
+		WHERE borgUID = #{pBorgUID}		
+		  AND brandUID = #{brandUID}
+	</update>
+	
+	<select id="getBorgChannelList" parameterType="hashmap" resultType="hashmap">
+		SELECT 
+			A.borgUID as pBorgUID
+			,BG.shopName
+			,A.channelUID
+			,CH.channelName
+			,A.userUID AS puserUID
+			,US.userName
+			,A.ownerID
+			,A.shopNumber
+			,A.logInYn
+			,A.loginUser
+			,A.loginPwd
+			,A.loginPwd as rawPwd
+			,A.delayTimeA
+			,A.delayTimeB
+			,A.delayTimeC
+			,A.holidaysA
+			,A.holidaysB
+			,A.hideYn
+			,A.receiverVPort
+			,A.channelVPort
+			,A.createDT
+			,A.createrID
+			,A.dbSTS
+			,'Y' AS chkUID
+		FROM o2o_borgchannels A
+		INNER JOIN o2o_borgs BG ON BG.borgUID = A.borgUID
+		INNER JOIN o2o_users US ON US.userUID = A.userUID
+		INNER JOIN o2o_channels CH ON CH.channelUID = A.channelUID
+		WHERE A.dbSTS = #{dbSTS}
+		<if test='srchText != null and srchText != ""'>
+   		  <choose>
+		    <when test='SQLMODE == "mariadb"'>
+		  AND CONCAT(A.shopNumber) REGEXP #{srchText}
+		    </when>
+		    <otherwise>
+		  AND (A.shopNumber) LIKE '%'|| #{srchText} ||'%'
+		    </otherwise>
+		  </choose>
+        </if>
+		ORDER BY A.createDT
+	</select>
+	
+	<insert id="saveBorgChannelList" parameterType="hashmap" >
+		<foreach item="item" collection="list" separator=";">
+			INSERT INTO o2o_borgchannels (
+				 borgUID
+				,channelUID
+				,userUID
+				,ownerID
+				,shopNumber
+				,logInYn
+				,loginUser
+				,loginPwd
+			<if test='item.delayTimeA != null and item.delayTimeA != ""'>
+				,delayTimeA
+			</if>
+			<if test='item.delayTimeB != null and item.delayTimeB != ""'>
+				,delayTimeB
+			</if>
+			<if test='item.delayTimeC != null and item.delayTimeC != ""'>
+				,delayTimeC
+			</if>
+			<if test='item.holidaysA != null and item.holidaysA != ""'>
+				,holidaysA
+			</if>
+			<if test='item.holidaysB != null and item.holidaysB != ""'>
+				,holidaysB
+			</if>
+				,hideYn
+				,receiverVPort
+				,channelVPort
+				,dbSTS
+				,createrID
+				,createDT
+				
+			) value (
+				 #{item.pBorgUID}
+				,#{item.channelUID}
+				,#{item.puserUID}
+				,#{item.ownerID}
+				,#{item.shopNumber}
+				,#{item.logInYn}
+				,#{item.loginUser}
+				,#{item.loginPwd}
+			<if test='item.delayTimeA != null and item.delayTimeA != ""'>
+				,#{item.delayTimeA}
+			</if>
+			<if test='item.delayTimeB != null and item.delayTimeB != ""'>
+				,#{item.delayTimeB}
+			</if>
+			<if test='item.delayTimeC != null and item.delayTimeC != ""'>
+				,#{item.delayTimeC}
+			</if>
+			<if test='item.holidaysA != null and item.holidaysA != ""'>
+				,#{item.holidaysA}
+			</if>
+			<if test='item.holidaysB != null and item.holidaysB != ""'>
+				,#{item.holidaysB}
+			</if>
+				,#{item.hideYn}
+				,#{item.receiverVPort}
+				,#{item.channelVPort}
+				,'Y'
+				,#{item.userUID}
+		  <choose>
+		    <when test='item.SQLMODE == "mariadb"'>
+				,NOW()
+		    </when>
+		    <otherwise>
+		    	,sysdate
+		    </otherwise>
+		 </choose>
+			)
+		 </foreach>
+	</insert>
+	
+	<update id="updBorgChannel" parameterType="hashmap">
+		UPDATE o2o_borgchannels SET 
+			updateDT  = now()
+            ,updaterID = #{userUID}
+		<if test='dbSTS != null and dbSTS != ""'>
+			,dbSTS = #{dbSTS}
+		</if>
+			,ownerID = #{ownerID}
+			,shopNumber = #{shopNumber}
+			,logInYn = #{logInYn}
+			,loginUser = #{loginUser}
+			,loginPwd = #{loginPwd}
+			,delayTimeA = #{delayTimeA}
+			,delayTimeB = #{delayTimeB}
+			,delayTimeC = #{delayTimeC}
+			,holidaysA = #{holidaysA}
+			,holidaysB = #{holidaysB}
+		WHERE borgUID = #{pBorgUID}
+		  AND channelUID = #{channelUID}
+		  AND userUID = #{puserUID}
+	</update>
+	
+	<insert id="saveBorgChannel" parameterType="hashmap" >
+			INSERT INTO o2o_borgchannels (
+				 borgUID
+				,channelUID
+				,userUID
+			<if test='ownerID != null and ownerID != ""'>
+				,ownerID
+			</if>
+			<if test='shopNumber != null and shopNumber != ""'>
+				,shopNumber
+			</if>
+				,logInYn
+				,loginUser
+				,loginPwd
+			<if test='delayTimeA != null and delayTimeA != ""'>
+				,delayTimeA
+			</if>
+			<if test='delayTimeB != null and delayTimeB != ""'>
+				,delayTimeB
+			</if>
+			<if test='delayTimeC != null and delayTimeC != ""'>
+				,delayTimeC
+			</if>
+			<if test='holidaysA != null and holidaysA != ""'>
+				,holidaysA
+			</if>
+			<if test='holidaysB != null and holidaysB != ""'>
+				,holidaysB
+			</if>
+			<if test='hideYn != null and hideYn != ""'>
+				,hideYn
+			</if>
+			<if test='receiverVPort != null and receiverVPort != ""'>
+				,receiverVPort
+			</if>
+			<if test='channelVPort != null and channelVPort != ""'>
+				,channelVPort
+			</if>
+				,dbSTS
+				,createrID
+				,createDT
+				
+			) value (
+				 #{pBorgUID}
+				,#{channelUID}
+				,#{puserUID}
+			<if test='ownerID != null and ownerID != ""'>
+				,#{ownerID}
+			</if>
+			<if test='shopNumber != null and shopNumber != ""'>
+				,#{shopNumber}
+			</if>
+				,#{logInYn}
+				,#{loginUser}
+				,#{loginPwd}
+			<if test='delayTimeA != null and delayTimeA != ""'>
+				,#{delayTimeA}
+			</if>
+			<if test='delayTimeB != null and delayTimeB != ""'>
+				,#{delayTimeB}
+			</if>
+			<if test='delayTimeC != null and delayTimeC != ""'>
+				,#{delayTimeC}
+			</if>
+			<if test='holidaysA != null and holidaysA != ""'>
+				,#{holidaysA}
+			</if>
+			<if test='holidaysB != null and holidaysB != ""'>
+				,#{holidaysB}
+			</if>
+			<if test='hideYn != null and hideYn != ""'>
+				,#{hideYn}
+			</if>
+			<if test='receiverVPort != null and receiverVPort != ""'>
+				,#{receiverVPort}
+			</if>
+			<if test='channelVPort != null and channelVPort != ""'>
+				,#{channelVPort}
+			</if>
+				,'Y'
+				,#{userUID}
+		  <choose>
+		    <when test='SQLMODE == "mariadb"'>
+				,NOW()
+		    </when>
+		    <otherwise>
+		    	,sysdate
+		    </otherwise>
+		 </choose>
+			)
+	</insert>
+	
+	<select id="getCheckOrderBorgChannel" parameterType="hashmap" resultType="hashmap">
+		 SELECT COUNT(*) AS cnt FROM o2o_orderlist A
+		 INNER JOIN o2o_shopin B ON A.shopUID = B.shopUID
+		 INNER JOIN o2o_channels C ON A.channel = C.channel
+		 WHERE B.borgUID = #{pBorgUID}
+		   AND C.channelUID = #{channelUID}
+	</select>
+	
+	
+	<select id="getCampainList" parameterType="hashmap" resultType="hashmap">
+		 SELECT
+			A.pointUID
+			,A.shopUID
+			,A.borgUID
+			,A.channel
+			,A.ownerID
+			,A.cateUID
+			,A.cateName
+			,A.shopNumber
+			,A.shopInName
+			,A.brandUID
+			,A.pointId
+			,A.pointKey
+			,A.pointLoc
+			,A.latitude
+			,A.longitude
+			,A.createDT
+			,A.createrID
+			,A.dbSTS
+		FROM o2o_point A
+	  	WHERE A.dbSTS =  #{dbSTS}
+	  	<if test='custIDs != null and custIDs != ""'>
+   			AND borgUID = #{custIDs}
+        </if>
+        <if test='brandUID != null and brandUID != ""'>
+   			AND brandUID = #{brandUID}
+        </if>
+	  	<if test='channel != null and channel != ""'>
+   			AND channel = #{channel}
+        </if>
+		ORDER BY A.createDT
+	</select>
+	
+	<insert id="saveUserInfoUsers" parameterType="hashmap" >
+		<foreach item="item" collection="list" separator=";">
+			INSERT INTO o2o_users(
+				userUID
+				, loginID
+				, agentID
+				, borgUID
+				, userName
+				, userPwd
+				, email
+				, zipCode
+				, addr1
+				, addr2
+				, telNo
+				, hpNo
+				, roleID
+				, gender
+				, workStatus
+				, job
+				, pay
+				, payType
+				, joinDT
+				, createDT
+				, createrID
+				, updateDT
+				, updaterID
+				, dbSTS
+			) VALUES (
+				#{item.userUID}
+				, #{item.loginID}
+				, #{item.agentID}
+				, #{item.custID}
+				, #{item.userNM}
+				, #{item.pwd}
+				, #{item.email}
+				, #{item.zipCD}
+				, #{item.addr1}
+				, #{item.addr2}
+				, #{item.telNo}
+				, #{item.mobile}
+				, #{item.roleID}
+				, #{item.gender}
+				, #{item.workStatus}
+				, #{item.job}
+				, #{item.pay}
+				, #{item.payType}
+				, #{item.joinDT}
+				, #{item.createDT}
+				, #{item.createrID}
+				, #{item.updateDT}
+				, #{item.updaterID}
+				, #{item.dbSTS}
+			) ON DUPLICATE KEY UPDATE
+				loginID      = #{item.loginID}
+				, agentID    = #{item.agentID}
+				, borgUID    = #{item.custID}
+				, userName   = #{item.userNM}
+				, userPwd    = #{item.pwd}
+				, email      = #{item.email}
+				, zipCode    = #{item.zipCD}
+				, addr1      = #{item.addr1}
+				, addr2      = #{item.addr2}
+				, telNo      = #{item.telNo}
+				, hpNo       = #{item.mobile}
+				, roleID     = #{item.roleID}
+				, gender     = #{item.gender}
+				, workStatus = #{item.workStatus}
+				, job        = #{item.job}
+				, pay        = #{item.pay}
+				, payType    = #{item.payType}
+				, joinDT     = #{item.joinDT}
+				, createDT   = #{item.createDT}
+				, createrID  = #{item.createrID}
+				, updateDT   = #{item.updateDT}
+				, updaterID  = #{item.updaterID}
+				, dbSTS      = #{item.dbSTS}
+		</foreach>
+	</insert>
+	
+	<insert id="saveCustInfoBorgs" parameterType="hashmap" >
+		<foreach item="item" collection="list" separator=";">
+			INSERT INTO o2o_borgs(
+				borgUID
+				, bizRegNo
+				, shopName
+				, bizType
+				, bizKind
+				, repName
+				, repMobile
+				, bizStartDt
+				, addr1
+				, addr2
+				, latitude
+				, longitude
+				, faxNo
+				, telNo
+				, headOfficeYn
+				, localFolder
+				, createDT
+				, createrID
+				, updateDT
+				, updaterID
+				, dbSTS
+			) VALUES (
+				#{item.custRUID}
+				, #{item.bizNO}
+				, #{item.custNM}
+				, #{item.bizTP}
+				, #{item.bizCon}
+				, #{item.repNM}
+				, #{item.repMobile}
+				, #{item.bizStartDT}
+				, #{item.addr1}
+				, #{item.addr2}
+				, #{item.latitude}
+				, #{item.longitude}
+				, #{item.faxNO}
+				, #{item.telNO}
+				, #{item.headOfficeYn}
+				, #{item.localFolder}
+				, #{item.createDT}
+				, #{item.createrID}
+				, #{item.updateDT}
+				, #{item.updaterID}
+				, #{item.dbSTS}
+			) ON DUPLICATE KEY UPDATE
+				bizRegNo     = #{item.bizNO}       
+				, shopName     = #{item.custNM}      
+				, bizType      = #{item.bizTP}       
+				, bizKind      = #{item.bizCon}      
+				, repName      = #{item.repNM}       
+				, repMobile    = #{item.repMobile}   
+				, bizStartDt   = #{item.bizStartDT}  
+				, addr1        = #{item.addr1}       
+				, addr2        = #{item.addr2}       
+				, faxNo        = #{item.faxNO}       
+				, telNo        = #{item.telNO}       
+				, latitude     = #{item.latitude}
+				, longitude    = #{item.longitude}
+				, headOfficeYn = #{item.headOfficeYn}
+				, localFolder  = #{item.localFolder} 
+				, createDT     = #{item.createDT}    
+				, createrID    = #{item.createrID}   
+				, updateDT     = #{item.updateDT}    
+				, updaterID    = #{item.updaterID}   
+				, dbSTS        = #{item.dbSTS}       
+		</foreach>
+	</insert>
+	
+	<insert id="saveUserCustInfoUserBorgs" parameterType="hashmap" >
+		<foreach item="item" collection="list" separator=";">
+			INSERT INTO o2o_usersborgs(
+				userUID
+				,borgUID
+				,createDT
+				,createrID
+				,dbSTS
+			) VALUES (
+				#{item.userUID}
+				, #{item.custID}
+				, #{item.createDT}
+				, #{item.createrID}
+				, #{item.dbSTS}
+			) ON DUPLICATE KEY UPDATE
+				userUID       = #{item.userUID}       
+				, borgUID      = #{item.custID}      
+				, createDT    = #{item.createDT}       
+				, createrID   = #{item.createrID}      
+				, dbSTS       = #{item.dbSTS}
+		</foreach>
+	</insert>
+	
+	<select id="getPhoneMList" parameterType="hashmap" resultType="hashmap">
+		SELECT 
+			A.mmUID
+			, A.pNo
+		FROM o2o_mlist A
+		WHERE A.dbSTS = #{dbSTS}
+		<if test='phoneNO != null and phoneNO != ""'>
+   		  <choose>
+		    <when test='SQLMODE == "mariadb"'>
+		  AND CONCAT(A.pNo) REGEXP #{phoneNO}
+		    </when>
+		    <otherwise>
+		  AND (A.pNo) LIKE '%'|| #{phoneNO} ||'%'
+		    </otherwise>
+		  </choose>
+        </if>
+	</select>
+	
+</mapper>
